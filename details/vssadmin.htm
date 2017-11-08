@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>vssadmin</title>
+    <link rel="stylesheet" type="text/css" href="common/style.css" />
+    <script language="JavaScript" type="text/javascript" src="common/script.js"></script>
+  </head>
+  <body>
+    <h1 class="title">vssadmin</h1>
+      <h2 class="toc"><a href="#toc" class="collapse" id="a-toc" onclick="showhide('toc');">-</a> <a name="toc">目次</a></h2>
+        <div class="toc" id="div-toc">
+          <ul>
+            <li><a href="#Summary">ツール概要</a></li>
+            <li><a href="#ExecCondition">ツール動作概要</a></li>
+            <li><a href="#Findings">ログから得られる情報</a></li>
+            <li><a href="#SuccessCondition">実行成功時に確認できる痕跡</a></li>
+            <li><a href="#KeyEvents">実行時に記録される主要な情報</a></li>
+            <li><a href="#ADDetails">詳細：ドメインコントローラー</a></li>
+            <li><a href="#Notes">備考</a></li>
+          </ul>
+          <p class="toc_command"><a href="#" onclick="collapseall('s');">全てのセクションを開く</a> | <a href="#" onclick="collapseall('h');">全てのセクションを閉じる</a></p>
+          <hr class="section_divider" />
+        </div>
+      <h2 class="section"><a href="#Summary" class="collapse" id="a-Summary" onclick="showhide('Summary');">-</a> <a name="Summary">ツール概要</a></h2>
+        <div class="section" id="div-Summary">
+          <dl class="table">
+            <dt class="table">カテゴリ</dt>
+              <dd class="table">情報収集</dd>
+            <dt class="table">説明</dt>
+              <dd class="table">Volume Shadow Copyを作成し、NTDS.DITやレジストリなどのシステムファイルを抽出する。</dd>
+            <dt class="table">攻撃時における想定利用例</dt>
+              <dd class="table">NTDSのデータベースであるNTDS.DITを抽出し、他のツールを用いてパスワードを解析する。</dd>
+          </dl>
+        </div>
+      <h2 class="section"><a href="#ExecCondition" class="collapse" id="a-ExecCondition" onclick="showhide('ExecCondition');">-</a> <a name="ExecCondition">ツール動作概要</a></h2>
+        <div class="section" id="div-ExecCondition">
+          <table class="border">
+            <thead>
+              <tr class="border">
+                <th class="border_header">項目</th>
+                <th class="border_header">内容</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border">
+                <td class="border_header">ドメインへの所属</td>
+                <td class="border">要</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">権限</td>
+                <td class="border">管理者ユーザー</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">サービス</td>
+                <td class="border">Active Directory Domain Services, Volume Shadow Copy</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">OS</td>
+                <td class="border">Windows Server</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      <h2 class="section"><a href="#Findings" class="collapse" id="a-Findings" onclick="showhide('Findings');">-</a> <a name="Findings">ログから得られる情報</a></h2>
+        <div class="section" id="div-Findings">
+          <dl class="table">
+            <dt class="table">標準設定</dt>
+              <dd class="table"><ul>
+                <li>ドメインコントローラー<ul>
+                  <li>サービスの開始、ストレージデバイスに対するドライバのインストール履歴 (システム イベントログ)</li>
+                  <li>シャドウコピーを作成した履歴 (セキュリティ イベントログ)</li>
+                  </ul></li>
+                </ul></dd>
+            <dt class="table">追加設定</dt>
+              <dd class="table"><ul>
+                <li>ドメインコントローラー<ul>
+                  <li>実行履歴 (監査ポリシー, Sysmon)</li>
+                  </ul></li>
+                </ul></dd>
+          </dl>
+        </div>
+      <h2 class="section"><a href="#SuccessCondition" class="collapse" id="a-SuccessCondition" onclick="showhide('SuccessCondition');">-</a> <a name="SuccessCondition">実行成功時に確認できる痕跡</a></h2>
+        <div class="section" id="div-SuccessCondition">
+          <ul>
+            <li>イベントログ「セキュリティ」にイベントID: 8222が記録されている</li>
+            <li>イベントログ「セキュリティ」のイベントID: 4663で通常は読み出せない C:\Windows\NTDS 配下のファイルをコピーしたログが記録されている</li>
+          </ul>
+        </div>
+      <h2 class="section"><a href="#KeyEvents" class="collapse" id="a-KeyEvents" onclick="showhide('KeyEvents');">-</a> <a name="KeyEvents">実行時に記録される主要な情報</a></h2>
+        <div class="section" id="div-KeyEvents">
+          <h3 class="subsection"><a href="#KeyEvents-AD" class="collapse" id="a-KeyEvents-AD" onclick="showhide('KeyEvents-AD');">-</a> <a name="KeyEvents-AD">ドメインコントローラー</a></h3>
+            <div class="section" id="div-KeyEvents-AD">
+              <h4>イベントログ</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ログ</th>
+                      <th class="border_header">イベントID</th>
+                      <th class="border_header">タスクのカテゴリ</th>
+                      <th class="border_header">イベント内容</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">1</td>
+                      <td class="border">Process Create (rule: ProcessCreate)</td>
+                      <td class="border">Process Create.<ul>
+                        <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\vssadmin.exe)</li>
+                        <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (vssadmin create shadow /For=C:)</li>
+                        <li><span class="strong">User</span>: 実行ユーザー</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">システム</td>
+                      <td class="border">7036</td>
+                      <td class="border">Service Control Manager</td>
+                      <td class="border">[サービス名] サービスは [状態] に移行しました。<ul>
+                        <li><span class="strong">サービス名</span>: 対象のサービス名 (Volume Shadow Copy, Microsoft Software Shadow Copy Provider, Device Setup Manager)</li>
+                        <li><span class="strong">状態</span>: 移行後の状態 (実行中)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">3</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">12/13</td>
+                      <td class="border">Registry object added or deleted / Registry value set (rule: RegistryEvent)</td>
+                      <td class="border">Registry object added or deleted. / Registry value set.<ul>
+                        <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\vssvc.exe)</li>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\VSS 及びその配下)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">4</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">4663</td>
+                      <td class="border">ファイル システム</td>
+                      <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                        <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                        <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (ntds.dit など、通常では読みだせないファイル)</li>
+                        <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (SYNCHRONIZE, WRITE_DAC, WriteDataまたはAddFile, AppendData, WriteAttributes を含む)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">5</td>
+                      <td class="border">システム</td>
+                      <td class="border">7036</td>
+                      <td class="border">Service Control Manager</td>
+                      <td class="border">[サービス名] サービスは [状態] に移行しました。<ul>
+                        <li><span class="strong">サービス名</span>: 対象のサービス名 (Device Setup Manager, Volume Shadow Copy, Microsoft Software Shadow Copy Provider)</li>
+                        <li><span class="strong">状態</span>: 移行後の状態 (停止)</li>
+                        </ul></td>
+                    </tr>
+                  </tbody>
+                </table>
+              <h4>MFT</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">パス</th>
+                      <th class="border_header">ヘッダフラグ</th>
+                      <th class="border_header">有効</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">[抽出されたファイル]</td>
+                      <td class="border">FILE</td>
+                      <td class="border">ALLOCATED</td>
+                    </tr>
+                  </tbody>
+                </table>
+              <h4>レジストリエントリ</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">パス</th>
+                      <th class="border_header">値</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Class\{533c5b84-ec70-11d2-9505-00c04f79deaf}\0000 配下</td>
+                      <td class="border">(複数のレジストリエントリ)</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}\##?#STORAGE#VolumeSnapshot#HarddiskVolumeSnapshot[番号]#{53f5630d-b6bf-11d0-94f2-00a0c91efb8b} 配下</td>
+                      <td class="border">(複数のレジストリエントリ)</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">3</td>
+                      <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Enum\STORAGE\VolumeSnapshot 配下</td>
+                      <td class="border">(複数のレジストリエントリ)</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">4</td>
+                      <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS 配下</td>
+                      <td class="border">(複数のレジストリエントリ)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              <h4>USNジャーナル</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ファイル名</th>
+                      <th class="border_header">処理</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">[抽出されたファイル]</td>
+                      <td class="border">BASIC_INFO_CHANGE+CLOSE+DATA_EXTEND+DATA_OVERWRITE+SECURITY_CHANGE</td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+        </div>
+        <hr class="section_divider">
+      <h2 class="section"><a href="#ADDetails" class="collapse" id="a-ADDetails" onclick="showhide('ADDetails');">-</a> <a name="ADDetails">詳細：ドメインコントローラー</a></h2>
+        <div class="section" id="div-ADDetails">
+          <h3 class="subsection"><a href="#ADDetails-EventLogs" class="collapse" id="a-ADDetails-EventLogs" onclick="showhide('ADDetails-EventLogs');">-</a> <a name="ADDetails-EventLogs">イベントログ</a></h3>
+            <div class="section" id="div-ADDetails-EventLogs">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">イベントログ</th>
+                    <th class="border_header">イベントID</th>
+                    <th class="border_header">タスクのカテゴリ</th>
+                    <th class="border_header">イベント内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="2">1</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\vssadmin.exe)</li>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (vssadmin create shadow /For=C:)</li>
+                      <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">IntegrityLevel</span>: 特権レベル (High)</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (C:\Windows\System32\vssadmin.exe)</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">2</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4672</td>
+                    <td class="border">特殊なログオン</td>
+                    <td class="border">新しいログオンに特権が割り当てられました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (NT AUTHORITY)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">特権</span>: 割り当てられた特権 (SeAssignPrimaryTokenPrivilege, SeTcbPrivilege, SeSecurityPrivilege, SeTakeOwnershipPrivilege, SeLoadDriverPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeDebugPrivilege, SeAuditPrivilege, SeSystemEnvironmentPrivilege, SeImpersonatePrivilege)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">3</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4670</td>
+                    <td class="border">ポリシー変更の承認</td>
+                    <td class="border">オブジェクトのアクセス許可が変更されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (Token)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\services.exe)</li>
+                      <li><span class="strong">アクセス許可の変更 > 元のセキュリティ記述子</span>: 変更前のセキュリティ記述子 (D:(A;;GA;;;SY)(A;;RCGXGR;;;BA))</li>
+                      <li><span class="strong">アクセス許可の変更 > 新しいセキュリティ記述子</span>: 変更後のセキュリティ記述子 (D:(A;;GA;;;SY)(A;;RC;;;OW)(A;;GA;;;[SID]))</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (変更成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="5">4</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\VSSVC.exe)</li>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (C:\Windows\system32\vssvc.exe)</li>
+                      <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ (C:\Windows\system32)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">IntegrityLevel</span>: 特権レベル (System)</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル (C:\Windows\System32\services.exe)</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン (C:\Windows\System32\services.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (C:\Windows\System32\VSSVC.exe)</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">システム</td>
+                    <td class="border">7036</td>
+                    <td class="border">Service Control Manager</td>
+                    <td class="border">[サービス名] サービスは [状態] に移行しました。<ul>
+                      <li><span class="strong">サービス名</span>: 対象のサービス名 (Volume Shadow Copy)</li>
+                      <li><span class="strong">状態</span>: 移行後の状態 (実行中)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">システム</td>
+                    <td class="border">7036</td>
+                    <td class="border">Service Control Manager</td>
+                    <td class="border">[サービス名] サービスは [状態] に移行しました。<ul>
+                      <li><span class="strong">サービス名</span>: 対象のサービス名 (Microsoft Software Shadow Copy Provider)</li>
+                      <li><span class="strong">状態</span>: 移行後の状態 (実行中)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">システム</td>
+                    <td class="border">7036</td>
+                    <td class="border">Service Control Manager</td>
+                    <td class="border">[サービス名] サービスは [状態] に移行しました。<ul>
+                      <li><span class="strong">サービス名</span>: 対象のサービス名 (Device Setup Manager)</li>
+                      <li><span class="strong">状態</span>: 移行後の状態 (実行中)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">5</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4661</td>
+                    <td class="border">SAM</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクト サーバー</span>: SecurityAccount Manager (Security Account Manager)</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (SAM_DOMAIN)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のオブジェクト名 (CN=Builtin,DC=[ドメイン名])</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, ReadPasswordParameters, WritePasswordParameters, ReadOtherParameters, WriteOtherParameters, CreateUser, CreateGlobalGroup, CreateLocalGroup, GetLocalGroupMembership, ListAccounts)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4661で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (C:\Windows\System32\lsass.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4661</td>
+                    <td class="border">SAM</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクト サーバー</span>: SecurityAccount Manager (Security Account Manager)</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (SAM_DOMAIN)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のオブジェクト名 (CN=Builtin,DC=[ドメイン名])</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, AddMember, RemoveMember, ListMembers, ReadInformation, WriteAccount)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4661で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (C:\Windows\System32\lsass.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">6</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4624</td>
+                    <td class="border">ログオン</td>
+                    <td class="border">アカウントが正常にログオンしました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: 認証を実行したユーザーのセッションID</li>
+                      <li><span class="strong">ログオンの種類</span>: ログオンの経路・方式など (5=サービス)</li>
+                      <li><span class="strong">新しいログオン > セキュリティID/アカウント名/アカウント ドメイン</span>: ログオンされたユーザーSID/アカウント名/ドメイン (SYSTEM)</li>
+                      <li><span class="strong">新しいログオン > ログオンID/ログオンGUID</span>: ログオンされたユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (C:\Windows\System32\services.exe)</li>
+                      <li><span class="strong">詳細な認証情報 > ログオン プロセス</span>: ログオンに使用されたプロセス (Advapi)</li>
+                      <li><span class="strong">詳細な認証情報 > 認証パッケージ</span>: 使用された認証パッケージ (Negotiate)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4672</td>
+                    <td class="border">特殊なログオン</td>
+                    <td class="border">新しいログオンに特権が割り当てられました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (NT AUTHORITY)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">特権</span>: 割り当てられた特権 (SeAssignPrimaryTokenPrivilege, SeTcbPrivilege, SeSecurityPrivilege, SeTakeOwnershipPrivilege, SeLoadDriverPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeDebugPrivilege, SeAuditPrivilege, SeSystemEnvironmentPrivilege, SeImpersonatePrivilege)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4670</td>
+                    <td class="border">ポリシー変更の承認</td>
+                    <td class="border">オブジェクトのアクセス許可が変更されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (Token)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\services.exe)</li>
+                      <li><span class="strong">アクセス許可の変更 > 元のセキュリティ記述子</span>: 変更前のセキュリティ記述子 (D:(A;;GA;;;SY)(A;;RCGXGR;;;BA))</li>
+                      <li><span class="strong">アクセス許可の変更 > 新しいセキュリティ記述子</span>: 変更後のセキュリティ記述子 (D:(A;;GA;;;SY)(A;;RC;;;OW)(A;;GA;;;[SID]))</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (変更成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">7</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">10</td>
+                    <td class="border">Process accessed (rule: ProcessAccess)</td>
+                    <td class="border">Process accessed.<ul>
+                      <li><span class="strong">SourceProcessGUID/SourceProcessId/SourceThreadId</span>: アクセス元プロセスのプロセス/スレッドID</li>
+                      <li><span class="strong">SourceImage</span>: アクセス元プロセスのパス (C:\Windows\system32\services.exe)</li>
+                      <li><span class="strong">TargetProcessGUID/TargetProcessId</span>: アクセス先プロセスのプロセスID</li>
+                      <li><span class="strong">TargetImage</span>: アクセス先プロセスのパス (C:\Windows\system32\vssvc.exe)</li>
+                      <li><span class="strong">GrantedAccess</span>: 許可されたアクセスの内容 (0x1FFFFF, 0x1000)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">10</td>
+                    <td class="border">Process accessed (rule: ProcessAccess)</td>
+                    <td class="border">Process accessed.<ul>
+                      <li><span class="strong">SourceProcessGUID/SourceProcessId/SourceThreadId</span>: アクセス元プロセスのプロセス/スレッドID</li>
+                      <li><span class="strong">SourceImage</span>: アクセス元プロセスのパス (C:\Windows\system32\csrss.exe)</li>
+                      <li><span class="strong">TargetProcessGUID/TargetProcessId</span>: アクセス先プロセスのプロセスID</li>
+                      <li><span class="strong">TargetImage</span>: アクセス先プロセスのパス (C:\Windows\system32\vssvc.exe)</li>
+                      <li><span class="strong">GrantedAccess</span>: 許可されたアクセスの内容 (0x1FFFFF, 0x1000)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">10</td>
+                    <td class="border">Process accessed (rule: ProcessAccess)</td>
+                    <td class="border">Process accessed.<ul>
+                      <li><span class="strong">SourceProcessGUID/SourceProcessId/SourceThreadId</span>: アクセス元プロセスのプロセス/スレッドID</li>
+                      <li><span class="strong">SourceImage</span>: アクセス元プロセスのパス (C:\Windows\system32\svchost.exe)</li>
+                      <li><span class="strong">TargetProcessGUID/TargetProcessId</span>: アクセス先プロセスのプロセスID</li>
+                      <li><span class="strong">TargetImage</span>: アクセス先プロセスのパス (C:\Windows\system32\vssvc.exe)</li>
+                      <li><span class="strong">GrantedAccess</span>: 許可されたアクセスの内容 (0x100000)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="8">8</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">12/13</td>
+                    <td class="border">Registry object added or deleted / Registry value set (rule: RegistryEvent)</td>
+                    <td class="border">Registry object added or deleted. / Registry value set.<ul>
+                      <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\vssvc.exe)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\VSS 及びその配下)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">12</td>
+                    <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+                    <td class="border">Registry object added or deleted.<ul>
+                      <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (System)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID (4)</li>
+                      <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\MACHINE\SYSTEM\ControlSet001\Enum)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">12</td>
+                    <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+                    <td class="border">Registry object added or deleted.<ul>
+                      <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (System)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID (4)</li>
+                      <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\MACHINE\SYSTEM\ControlSet001\Enum\STORAGE)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">12</td>
+                    <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+                    <td class="border">Registry object added or deleted.<ul>
+                      <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (System)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID (4)</li>
+                      <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\MACHINE\SYSTEM\ControlSet001\Enum\STORAGE\VolumeSnapshot)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">12/13</td>
+                    <td class="border">Registry object added or deleted / Registry value set (rule: RegistryEvent)</td>
+                    <td class="border">Registry object added or deleted. / Registry value set.<ul>
+                      <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (System)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID (4)</li>
+                      <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\MACHINE\SYSTEM\ControlSet001\Enum\STORAGE\VolumeSnapshot\HarddiskVolumeSnapshot[番号] 及びその配下)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">12/13</td>
+                    <td class="border">Registry object added or deleted / Registry value set (rule: RegistryEvent)</td>
+                    <td class="border">Registry object added or deleted. / Registry value set.<ul>
+                      <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (System)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID (4)</li>
+                      <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\MACHINE\SYSTEM\ControlSet001\Control\DeviceContainers\{00000000-0000-0000-FFFF-FFFFFFFFFFFF} 及びその配下)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">12</td>
+                    <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+                    <td class="border">Registry object added or deleted.<ul>
+                      <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (System)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID (4)</li>
+                      <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b})</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">12/13</td>
+                    <td class="border">Registry object added or deleted / Registry value set (rule: RegistryEvent)</td>
+                    <td class="border">Registry object added or deleted. / Registry value set.<ul>
+                      <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (System)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID (4)</li>
+                      <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}\##?#STORAGE#VolumeSnapshot#HarddiskVolumeSnapshot[番号]#{53f5630d-b6bf-11d0-94f2-00a0c91efb8b} 及びその配下)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">9</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4904</td>
+                    <td class="border">ポリシーの変更の監査</td>
+                    <td class="border">セキュリティ イベント ソースの登録が試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: 登録を試行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス > プロセスID</span>: 登録を試行したプロセスID</li>
+                      <li><span class="strong">プロセス > プロセス名</span>: 登録を試行したプロセス名 (C:\Windows\System32\VSSVC.exe)</li>
+                      <li><span class="strong">イベント ソース > ソース名</span>: 登録されたイベント ソース名 (VSSAudit)</li>
+                      <li><span class="strong">イベント ソース > イベント ソース ID</span>: イベント ソースID (0x1273D5)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">8222</td>
+                    <td class="border">VSSAudit</td>
+                    <td class="border">シャドウ コピーが作成されました。<ul>
+                      <li><span class="strong">ユーザー SID</span>: 作成したユーザーのSID</li>
+                      <li><span class="strong">ユーザー名</span>: 作成したユーザー名</li>
+                      <li><span class="strong">プロセスID</span>: 作成したプロセスID</li>
+                      <li><span class="strong">プロセスのイメージ名</span>: 作成したプロセスのGUID</li>
+                      <li><span class="strong">シャドウ セットID/シャドウID</span>: 作成したシャドウのID</li>
+                      <li><span class="strong">プロバイダーID</span>: 作成したホスト (ホスト名)</li>
+                      <li><span class="strong">元のコンピューター</span>: 作成元ホスト・パーティション名 (\\?\Volume{[ボリュームGUID]}\)</li>
+                      <li><span class="strong">元のボリューム</span>: 作成元となったボリューム (\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy[シャドウコピー数])</li>
+                      <li><span class="strong">シャドウ デバイス名</span>: 作成されたシャドウデバイスの名前</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4905</td>
+                    <td class="border">ポリシーの変更の監査</td>
+                    <td class="border">セキュリティ イベント ソースの登録解除が試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: 登録の解除を試行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス > プロセスID</span>: 登録の解除を試行したプロセスID</li>
+                      <li><span class="strong">プロセス > プロセス名</span>: 登録の解除を試行したプロセス名 (C:\Windows\System32\VSSVC.exe)</li>
+                      <li><span class="strong">イベント ソース > ソース名</span>: 登録が解除されたイベント ソース名 (VSSAudit)</li>
+                      <li><span class="strong">イベント ソース > イベント ソース ID</span>: イベント ソースID (0x1273D5)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">10</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">5</td>
+                    <td class="border">Process terminated (rule: ProcessTerminate)</td>
+                    <td class="border">Process terminated.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス終了日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\vssadmin.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4689</td>
+                    <td class="border">プロセス終了</td>
+                    <td class="border">プロセスが終了しました。<ul>
+                      <li><span class="strong">ログの日時</span>: プロセス終了日時 (ローカル時刻)</li>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (C:\Windows\System32\vssadmin.exe)</li>
+                      <li><span class="strong">プロセス情報 > 終了状態</span>: プロセスの戻り値 (0x0)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">11</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">5</td>
+                    <td class="border">Process terminated (rule: ProcessTerminate)</td>
+                    <td class="border">Process terminated.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス終了日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\VSSVC.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4689</td>
+                    <td class="border">プロセス終了</td>
+                    <td class="border">プロセスが終了しました。<ul>
+                      <li><span class="strong">ログの日時</span>: プロセス終了日時 (ローカル時刻)</li>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (C:\Windows\System32\VSSVC.exe)</li>
+                      <li><span class="strong">プロセス情報 > 終了状態</span>: プロセスの戻り値 (0x0)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">12</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\vssadmin.exe)</li>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (vssadmin list shadows)</li>
+                      <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ (C:\Windows\system32)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">IntegrityLevel</span>: 特権レベル (High)</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (C:\Windows\System32\vssadmin.exe)</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">13</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\VSSVC.exe)</li>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (C:\Windows\system32\vssvc.exe)</li>
+                      <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ (C:\Windows\system32)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">IntegrityLevel</span>: 特権レベル (System)</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル (C:\Windows\System32\services.exe)</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン (C:\Windows\System32\services.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (C:\Windows\System32\VSSVC.exe)</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">14</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4661</td>
+                    <td class="border">SAM</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクト サーバー</span>: SecurityAccount Manager (Security Account Manager)</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (SAM_DOMAIN)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のオブジェクト名 (CN=Builtin,DC=[ドメイン名])</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, ReadPasswordParameters, WritePasswordParameters, ReadOtherParameters, WriteOtherParameters, CreateUser, CreateGlobalGroup, CreateLocalGroup, GetLocalGroupMembership, ListAccounts)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4661で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (C:\Windows\System32\lsass.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4661</td>
+                    <td class="border">SAM</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクト サーバー</span>: SecurityAccount Manager (Security Account Manager)</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (SAM_DOMAIN)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のオブジェクト名 (CN=Builtin,DC=[ドメイン名])</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, AddMember, RemoveMember, ListMembers, ReadInformation, WriteAccount)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4661で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (C:\Windows\System32\lsass.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">15</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">11</td>
+                    <td class="border">File created (rule: FileCreate)</td>
+                    <td class="border">File created.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\vssvc.exe)</li>
+                      <li><span class="strong">TargetFilename</span>: 作成されたファイル (C:\System Volume Information\RemoteVss)</li>
+                      <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\System Volume Information\RemoteVss)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\VSSVC.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (SYNCHRONIZE, WriteAttributes)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\System Volume Information\RemoteVss)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\VSSVC.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (SYNCHRONIZE, WriteAttributes)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (C:\Windows\System32\VSSVC.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">16</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">11</td>
+                    <td class="border">File created (rule: FileCreate)</td>
+                    <td class="border">File created.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\vssvc.exe)</li>
+                      <li><span class="strong">TargetFilename</span>: 作成されたファイル (C:\System Volume Information\RemoteVss\{[GUID]}-{[GUID]}.PMS)</li>
+                      <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\System Volume Information\RemoteVss\{[GUID]}-{[GUID]}.PMS)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\VSSVC.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile、AppendDataを含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\System Volume Information\RemoteVss\{[GUID]}-{[GUID]}.PMS)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\VSSVC.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile、AppendData)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン名)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (C:\Windows\System32\VSSVC.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">17</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">5</td>
+                    <td class="border">Process terminated (rule: ProcessTerminate)</td>
+                    <td class="border">Process terminated.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス終了日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\vssadmin.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4689</td>
+                    <td class="border">プロセス終了</td>
+                    <td class="border">プロセスが終了しました。<ul>
+                      <li><span class="strong">ログの日時</span>: プロセス終了日時 (ローカル時刻)</li>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (C:\Windows\System32\vssadmin.exe)</li>
+                      <li><span class="strong">プロセス情報 > 終了状態</span>: プロセスの戻り値 (0x0)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">18</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">11</td>
+                    <td class="border">File created (rule: FileCreate)</td>
+                    <td class="border">File created.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス</li>
+                      <li><span class="strong">TargetFilename</span>: 作成されたファイル ([パス]\ntds.dit)</li>
+                      <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 ([任意のパス]\ntds.dit)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (SYNCHRONIZE, WRITE_DAC, WriteDataまたはAddFile, AppendData, WriteAttributes を含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 ([任意のパス]\ntds.dit)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (SYNCHRONIZE, WRITE_DAC, WriteDataまたはAddFile, AppendData, WriteAttributes を含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">19</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">11</td>
+                    <td class="border">File created (rule: FileCreate)</td>
+                    <td class="border">File created.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス</li>
+                      <li><span class="strong">TargetFilename</span>: 作成されたファイル ([パス]\SYSTEM)</li>
+                      <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 ([パス]\SYSTEM)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (SYNCHRONIZE, WRITE_DAC, WriteDataまたはAddFile, AppendData, WriteAttributes を含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 ([パス]\SYSTEM)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (SYNCHRONIZE, WRITE_DAC, WriteDataまたはAddFile, AppendData, WriteAttributes を含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="7">20</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">11</td>
+                    <td class="border">File created (rule: FileCreate)</td>
+                    <td class="border">File created.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス</li>
+                      <li><span class="strong">TargetFilename</span>: 作成されたファイル ([パス]\SAM)</li>
+                      <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 ([パス]\SAM)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (SYNCHRONIZE, WRITE_DAC, WriteDataまたはAddFile, AppendData, WriteAttributes を含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 ([パス]\SAM)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (SYNCHRONIZE, WRITE_DAC, WriteDataまたはAddFile, AppendData, WriteAttributes を含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">システム</td>
+                    <td class="border">7036</td>
+                    <td class="border">Service Control Manager</td>
+                    <td class="border">[サービス名] サービスは [状態] に移行しました。<ul>
+                      <li><span class="strong">サービス名</span>: 対象のサービス名 (Device Setup Manager)</li>
+                      <li><span class="strong">状態</span>: 移行後の状態 (停止)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">システム</td>
+                    <td class="border">7036</td>
+                    <td class="border">Service Control Manager</td>
+                    <td class="border">[サービス名] サービスは [状態] に移行しました。<ul>
+                      <li><span class="strong">サービス名</span>: 対象のサービス名 (Volume Shadow Copy)</li>
+                      <li><span class="strong">状態</span>: 移行後の状態 (停止)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">システム</td>
+                    <td class="border">7036</td>
+                    <td class="border">Service Control Manager</td>
+                    <td class="border">[サービス名] サービスは [状態] に移行しました。<ul>
+                      <li><span class="strong">サービス名</span>: 対象のサービス名 (Microsoft Software Shadow Copy Provider)</li>
+                      <li><span class="strong">状態</span>: 移行後の状態 (停止)</li>
+                      </ul></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#ADDetails-MFT" class="collapse" id="a-ADDetails-MFT" onclick="showhide('ADDetails-MFT');">-</a> <a name="ADDetails-MFT">MFT</a></h3>
+            <div class="section" id="div-ADDetails-MFT">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">パス</th>
+                    <th class="border_header">ヘッダフラグ</th>
+                    <th class="border_header">有効</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="1">1</td>
+                    <td class="border">[指定されたパス]\ntds.dit</td>
+                    <td class="border">FILE</td>
+                    <td class="border">ALLOCATED</td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">2</td>
+                    <td class="border">[指定されたパス]\SYSTEM</td>
+                    <td class="border">FILE</td>
+                    <td class="border">ALLOCATED</td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">3</td>
+                    <td class="border">[指定されたパス]\SAM</td>
+                    <td class="border">FILE</td>
+                    <td class="border">ALLOCATED</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#ADDetails-Registry" class="collapse" id="a-ADDetails-Registry" onclick="showhide('ADDetails-Registry');">-</a> <a name="ADDetails-Registry">レジストリエントリ</a></h3>
+            <div class="section" id="div-ADDetails-Registry">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">パス</th>
+                    <th class="border_header">種類</th>
+                    <th class="border_header">値</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="8">1</td>
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Class\{533c5b84-ec70-11d2-9505-00c04f79deaf}\0000\DriverDesc</td>
+                    <td class="border">String</td>
+                    <td class="border">Generic volume shadow copy</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Class\{533c5b84-ec70-11d2-9505-00c04f79deaf}\0000\ProviderName</td>
+                    <td class="border">String</td>
+                    <td class="border">Microsoft</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Class\{533c5b84-ec70-11d2-9505-00c04f79deaf}\0000\DriverDateData</td>
+                    <td class="border">String</td>
+                    <td class="border">[ドライバー更新日時のバイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Class\{533c5b84-ec70-11d2-9505-00c04f79deaf}\0000\DriverDate</td>
+                    <td class="border">String</td>
+                    <td class="border">[ドライバーの更新日時]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Class\{533c5b84-ec70-11d2-9505-00c04f79deaf}\0000\DriverVersion</td>
+                    <td class="border">String</td>
+                    <td class="border">[バージョン番号]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Class\{533c5b84-ec70-11d2-9505-00c04f79deaf}\0000\InfPath</td>
+                    <td class="border">String</td>
+                    <td class="border">volsnap.inf</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Class\{533c5b84-ec70-11d2-9505-00c04f79deaf}\0000\InfSection</td>
+                    <td class="border">String</td>
+                    <td class="border">volume_snapshot_install.NTamd64</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Class\{533c5b84-ec70-11d2-9505-00c04f79deaf}\0000\MatchingDeviceId</td>
+                    <td class="border">String</td>
+                    <td class="border">STORAGE\VolumeSnapshot</td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">2</td>
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}\##?#STORAGE#VolumeSnapshot#HarddiskVolumeSnapshot[番号]#{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}\DeviceInstance</td>
+                    <td class="border">String</td>
+                    <td class="border">STORAGE\VolumeSnapshot\HarddiskVolumeSnapshot[番号]</td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">3</td>
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceContainers\{00000000-0000-0000-FFFF-FFFFFFFFFFFF}\BaseContainers\{00000000-0000-0000-FFFF-FFFFFFFFFFFF}\STORAGE\VolumeSnapshot\HarddiskVolumeSnapshot[番号]</td>
+                    <td class="border">Binary</td>
+                    <td class="border">(値の設定無し)</td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="8">4</td>
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Enum\STORAGE\VolumeSnapshot\HarddiskVolumeSnapshot[番号]\Capabilities</td>
+                    <td class="border">DWORD</td>
+                    <td class="border">0x000000F0</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Enum\STORAGE\VolumeSnapshot\HarddiskVolumeSnapshot[番号]\ConfigFlags</td>
+                    <td class="border">DWORD</td>
+                    <td class="border">0x00000000</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Enum\STORAGE\VolumeSnapshot\HarddiskVolumeSnapshot[番号]\ContainerID</td>
+                    <td class="border">String</td>
+                    <td class="border">{00000000-0000-0000-ffff-ffffffffffff}</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Enum\STORAGE\VolumeSnapshot\HarddiskVolumeSnapshot[番号]\HardwareID</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Enum\STORAGE\VolumeSnapshot\HarddiskVolumeSnapshot[番号]\ClassGUID</td>
+                    <td class="border">String</td>
+                    <td class="border">{533c5b84-ec70-11d2-9505-00c04f79deaf}</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Enum\STORAGE\VolumeSnapshot\HarddiskVolumeSnapshot[番号]\DeviceDesc</td>
+                    <td class="border">String</td>
+                    <td class="border">@volsnap.inf,%storage\volumesnapshot.devicedesc%;Generic volume shadow copy</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Enum\STORAGE\VolumeSnapshot\HarddiskVolumeSnapshot[番号]\Driver</td>
+                    <td class="border">String</td>
+                    <td class="border">{533c5b84-ec70-11d2-9505-00c04f79deaf}\0000</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Enum\STORAGE\VolumeSnapshot\HarddiskVolumeSnapshot[番号]\Mfg</td>
+                    <td class="border">String</td>
+                    <td class="border">@volsnap.inf,%msft%;Microsoft</td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="47">5</td>
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\ASR Writer</td>
+                    <td class="border">Key</td>
+                    <td class="border">(値の設定無し)</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\COM+ REGDB Writer</td>
+                    <td class="border">Key</td>
+                    <td class="border">(値の設定無し)</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\FSProvider_{89300202-3cec-4981-9171-19f59559e0f2}</td>
+                    <td class="border">Key</td>
+                    <td class="border">(値の設定無し)</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Lovelace\OPEN_VOLUME_HANDLE (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Lovelace\OPEN_VOLUME_HANDLE (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Lovelace\IOCTL_FLUSH_AND_HOLD (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Lovelace\IOCTL_FLUSH_AND_HOLD (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Lovelace\IOCTL_RELEASE (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Lovelace\IOCTL_RELEASE (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Lovelace(C:_)\OPEN_VOLUME_HANDLE (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Lovelace(C:_)\OPEN_VOLUME_HANDLE (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Lovelace(C:_)\IOCTL_FLUSH_AND_HOLD (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Lovelace(C:_)\IOCTL_FLUSH_AND_HOLD (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Lovelace(C:_)\IOCTL_RELEASE (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Lovelace(C:_)\IOCTL_RELEASE (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Registry Writer</td>
+                    <td class="border">Key</td>
+                    <td class="border">(値の設定無し)</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\Shadow Copy Optimization Writer</td>
+                    <td class="border">Key</td>
+                    <td class="border">(値の設定無し)</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_BEGINPREPARE (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_BEGINPREPARE (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_ENDPREPARE (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_ENDPREPARE (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_PRECOMMIT (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_PRECOMMIT (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_COMMIT (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_COMMIT (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_POSTCOMMIT (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_POSTCOMMIT (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_PREFINALCOMMIT (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_PREFINALCOMMIT (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_POSTFINALCOMMIT (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5}\PROVIDER_POSTFINALCOMMIT (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}DeleteProcess (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}DeleteProcess (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}PrepareForSnapshot (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}PreExposure (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}PreExposure (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}PrepareForSnapshot (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}EndCommit (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}EndCommit (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}SetIgnorable (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}SetIgnorable (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}AdjustBitmap (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}ComputeIgnorableProduct (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}ComputeIgnorableProduct (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VolSnap\Volume{80d75175-a173-11e6-80b0-806e6f6e6963}AdjustBitmap (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VssvcPublisher\FREEZE (Enter)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VSS\Diag\VssvcPublisher\FREEZE (Leave)</td>
+                    <td class="border">Binary</td>
+                    <td class="border">[バイナリ値]</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#ADDetails-USNJournal" class="collapse" id="a-ADDetails-USNJournal" onclick="showhide('ADDetails-USNJournal');">-</a> <a name="ADDetails-USNJournal">USNジャーナル</a></h3>
+            <div class="section" id="div-ADDetails-USNJournal">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">ファイル名</th>
+                    <th class="border_header">処理</th>
+                    <th class="border_header">属性</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="7">1</td>
+                    <td class="border">ntds.dit</td>
+                    <td class="border">FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">ntds.dit</td>
+                    <td class="border">CLOSE+FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">ntds.dit</td>
+                    <td class="border">SECURITY_CHANGE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">ntds.dit</td>
+                    <td class="border">DATA_EXTEND+SECURITY_CHANGE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">ntds.dit</td>
+                    <td class="border">DATA_EXTEND+DATA_OVERWRITE+SECURITY_CHANGE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">ntds.dit</td>
+                    <td class="border">BASIC_INFO_CHANGE+DATA_EXTEND+DATA_OVERWRITE+SECURITY_CHANGE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">ntds.dit</td>
+                    <td class="border">BASIC_INFO_CHANGE+CLOSE+DATA_EXTEND+DATA_OVERWRITE+SECURITY_CHANGE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="5">2</td>
+                    <td class="border">SYSTEM</td>
+                    <td class="border">FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">SYSTEM</td>
+                    <td class="border">DATA_EXTEND+FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">SYSTEM</td>
+                    <td class="border">CLOSE+DATA_EXTEND+FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">SYSTEM</td>
+                    <td class="border">BASIC_INFO_CHANGE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">SYSTEM</td>
+                    <td class="border">CLOSE+BASIC_INFO_CHANGE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="5">3</td>
+                    <td class="border">SAM</td>
+                    <td class="border">FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">SAM</td>
+                    <td class="border">DATA_EXTEND+FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">SAM</td>
+                    <td class="border">CLOSE+DATA_EXTEND+FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">SAM</td>
+                    <td class="border">BASIC_INFO_CHANGE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">SAM</td>
+                    <td class="border">CLOSE+BASIC_INFO_CHANGE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+        </div>
+        <hr class="section_divider">
+      <h2 class="section"><a href="#Notes" class="collapse" id="a-Notes" onclick="showhide('Notes');">-</a> <a name="Notes">備考</a></h2>
+        <div class="section" id="div-Notes">
+          <ul>
+            <li>本検証でntds.ditファイルなどをコピーする際は、"\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy[番号]\windows\ntds\ntds.dit"及び"\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy[番号]\windows\system32\config\SYSTEM・SAM"を直接操作している。エクスプローラー上から参照するような場合は、別途"dosdev.exe"などのツールを使用し、ドライブレターをアサインする必要がある。</li>
+            <li>本検証では抽出されたファイルがホスト上に残っている場合の記載となっている。削除される場合はMFTに記録が残らず、イベントログ・USNジャーナルにはDELETEが記録される。</li>
+          </ul>
+        </div>
+  </body>
+</html>

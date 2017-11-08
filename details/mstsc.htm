@@ -1,0 +1,2905 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>RDP (Remote Desktop Protocol)</title>
+    <link rel="stylesheet" type="text/css" href="common/style.css" />
+    <script language="JavaScript" type="text/javascript" src="common/script.js"></script>
+  </head>
+  <body>
+    <h1 class="title">RDP (Remote Desktop Protocol)</h1>
+      <h2 class="toc"><a href="#toc" class="collapse" id="a-toc" onclick="showhide('toc');">-</a> <a name="toc">目次</a></h2>
+        <div class="toc" id="div-toc">
+          <ul>
+            <li><a href="#Summary">ツール概要</a></li>
+            <li><a href="#ExecCondition">ツール動作概要</a></li>
+            <li><a href="#Findings">ログから得られる情報</a></li>
+            <li><a href="#SuccessCondition">実行成功時に確認できる痕跡</a></li>
+            <li><a href="#KeyEvents">実行時に記録される主要な情報</a></li>
+            <li><a href="#SourceDetails">詳細：接続元</a></li>
+            <li><a href="#DestinationDetails">詳細：接続先</a></li>
+            <li><a href="#Notes">備考</a></li>
+          </ul>
+          <p class="toc_command"><a href="#" onclick="collapseall('s');">全てのセクションを開く</a> | <a href="#" onclick="collapseall('h');">全てのセクションを閉じる</a></p>
+          <hr class="section_divider" />
+        </div>
+      <h2 class="section"><a href="#Summary" class="collapse" id="a-Summary" onclick="showhide('Summary');">-</a> <a name="Summary">ツール概要</a></h2>
+        <div class="section" id="div-Summary">
+          <dl class="table">
+            <dt class="table">カテゴリ</dt>
+              <dd class="table">リモートログイン</dd>
+            <dt class="table">説明</dt>
+              <dd class="table">リモートデスクトップサービスが稼働しているサーバーに接続する。</dd>
+            <dt class="table">攻撃時における想定利用例</dt>
+              <dd class="table">接続したホスト上でファイルを閲覧したり、他のホストに接続するための情報を収集したり、他のホストに接続する踏み台として利用する。</dd>
+          </dl>
+        </div>
+      <h2 class="section"><a href="#ExecCondition" class="collapse" id="a-ExecCondition" onclick="showhide('ExecCondition');">-</a> <a name="ExecCondition">ツール動作概要</a></h2>
+        <div class="section" id="div-ExecCondition">
+          <table class="border">
+            <thead>
+              <tr class="border">
+                <th class="border_header">項目</th>
+                <th class="border_header">接続元</th>
+                <th class="border_header">接続先</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border">
+                <td class="border_header">OS</td>
+                <td class="border" colspan="2">Windows</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">権限</td>
+                <td class="border" colspan="2">標準ユーザー</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">サービス</td>
+                <td class="border">-</td>
+                <td class="border">Remote Desktop Services 他</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">ドメインへの所属</td>
+                <td class="border" colspan="2">不要</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">通信プロトコル</td>
+                <td class="border" colspan="2">3389/tcp</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      <h2 class="section"><a href="#Findings" class="collapse" id="a-Findings" onclick="showhide('Findings');">-</a> <a name="Findings">ログから得られる情報</a></h2>
+        <div class="section" id="div-Findings">
+          <dl class="table">
+            <dt class="table">標準設定</dt>
+              <dd class="table"><ul>
+                <li>接続元<ul>
+                  <li>実行履歴 (Prefetch)</li>
+                  <li>RDPセッションの接続開始・終了日時、接続元IPアドレス、ログインされたユーザー名及びアカウントドメイン、接続の成否 (Microsoft-Windows-TerminalServices-RDPClient/Operational ログ)</li>
+                  </ul></li>
+                <li>接続先<ul>
+                  <li>RDPセッションの接続開始・終了日時、接続元IPアドレス、ログインされたユーザー名及びアカウントドメイン、接続の成否 (Microsoft-Windows-TerminalServices-LocalSessionManager/Operational, Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational ログ)</li>
+                  </ul></li>
+                </ul></dd>
+            <dt class="table">追加設定</dt>
+              <dd class="table"><ul>
+                <li>接続元<ul>
+                  <li>実行履歴 (監査ポリシー, Sysmon)</li>
+                  <li>3389/tcpを使用した通信 (監査ポリシー, Sysmon)</li>
+                  </ul></li>
+                <li>接続先<ul>
+                  <li>3389/tcpを使用した通信 (監査ポリシー, Sysmon)</li>
+                  </ul></li>
+                </ul></dd>
+          </dl>
+        </div>
+      <h2 class="section"><a href="#SuccessCondition" class="collapse" id="a-SuccessCondition" onclick="showhide('SuccessCondition');">-</a> <a name="SuccessCondition">実行成功時に確認できる痕跡</a></h2>
+        <div class="section" id="div-SuccessCondition">
+          <ul>
+            <li>接続先: イベントログ「セキュリティ」にイベントID: 4624が記録されている</li>
+            <li>接続先: イベントログ「Microsoft-Windows-TerminalServices-LocalSessionManager\Operational」 にイベントID：21、24が記録されている</li>
+          </ul>
+        </div>
+      <h2 class="section"><a href="#KeyEvents" class="collapse" id="a-KeyEvents" onclick="showhide('KeyEvents');">-</a> <a name="KeyEvents">実行時に記録される主要な情報</a></h2>
+        <div class="section" id="div-KeyEvents">
+          <h3 class="subsection"><a href="#KeyEvents-Source" class="collapse" id="a-KeyEvents-Source" onclick="showhide('KeyEvents-Source');">-</a> <a name="KeyEvents-Source">接続元</a></h3>
+            <div class="section" id="div-KeyEvents-Source">
+              <h4>イベントログ</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ログ</th>
+                      <th class="border_header">イベントID</th>
+                      <th class="border_header">タスクのカテゴリ</th>
+                      <th class="border_header">イベント内容</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">1</td>
+                      <td class="border">Process Create (rule: ProcessCreate)</td>
+                      <td class="border">Process Create.<ul>
+                        <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\mstsc.exe)</li>
+                        <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン</li>
+                        <li><span class="strong">User</span>: 実行ユーザー</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">4663</td>
+                      <td class="border">ファイル システム</td>
+                      <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                        <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                        <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Users\[ユーザー名]\AppData\Local\Microsoft\Terminal Server Client 配下)</li>
+                        <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\mstsc.exe)</li>
+                        <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteAttributesを含む)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">3</td>
+                      <td class="border">Microsoft-Windows-TerminalServices-RDPClient/Operational</td>
+                      <td class="border">1024</td>
+                      <td class="border">接続シーケンス</td>
+                      <td class="border">RDP ClientActiveX がサーバー ([接続先ホスト名]) に接続しようとしています</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">4</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">3</td>
+                      <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                      <td class="border">Network connection detected.<ul>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\mstsc.exe)</li>
+                        <li><span class="strong">User</span>: 実行ユーザー</li>
+                        <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                        <li><span class="strong">SourceIp/SourceHostname/SourcePort</span>: 送信元IPアドレス/ホスト名/ポート番号</li>
+                        <li><span class="strong">DestinationIp/DestinationHostname/DestinationPort</span>: 宛先IPアドレス/ホスト名/ポート番号 (接続先 ポート3389)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">5</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">4663</td>
+                      <td class="border">ファイル システム</td>
+                      <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                        <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                        <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\[ユーザー名]\Documents\Default.rdp)</li>
+                        <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\mstsc.exe)</li>
+                        <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendData)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">6</td>
+                      <td class="border">Microsoft-Windows-TerminalServices-RDPClient/Operational</td>
+                      <td class="border">1026</td>
+                      <td class="border">接続シーケンス</td>
+                      <td class="border">RDP ClientActiveX が切断しました (理由 = [理由])<ul>
+                        <li><span class="strong">理由</span>:  (1)</li>
+                        </ul></td>
+                    </tr>
+                  </tbody>
+                </table>
+              <h4>MFT</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">パス</th>
+                      <th class="border_header">ヘッダフラグ</th>
+                      <th class="border_header">有効</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">[ドライブ名]:\Users\[ユーザー名]\AppData\Local\Microsoft\Terminal Server Client\Cache\bcache[数字].bmc</td>
+                      <td class="border">FILE</td>
+                      <td class="border">ALLOCATED</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">[ドライブ名]:\Users\[ユーザー名]\Documents\Default.rdp</td>
+                      <td class="border">FILE</td>
+                      <td class="border">ALLOCATED</td>
+                    </tr>
+                  </tbody>
+                </table>
+              <h4>Prefetch</h4>
+                <ul>
+                  <li>C:\Windows\Prefetch\MSTSC.EXE-[文字列].pf</li>
+                </ul>
+              <h4>レジストリエントリ</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">パス</th>
+                      <th class="border_header">値</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">HKEY_USERS\[ユーザーSID]\SOFTWARE\Microsoft\Terminal Server Client\Default\MRU0</td>
+                      <td class="border">[接続先]</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">HKEY_USERS\[ユーザーSID]\SOFTWARE\Microsoft\Terminal Server Client\Servers\[ターゲットホスト]\UsernameHint</td>
+                      <td class="border">[ユーザー名]</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">3</td>
+                      <td class="border">HKEY_USERS\[ユーザーSID]\SOFTWARE\Microsoft\Windows\CurrentVersion\Search\JumplistData\Microsoft.Windows.RemoteDesktop</td>
+                      <td class="border">(String)</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">4</td>
+                      <td class="border">HKEY_USERS\[ユーザーSID]\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count\Zvpebfbsg.Jvaqbjf.ErzbgrQrfxgbc</td>
+                      <td class="border">(String)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              <h4>UserAssist</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">Registry</th>
+                      <th class="border_header">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count\Zvpebfbsg.Jvaqbjf.ErzbgrQrfxgbc</td>
+                      <td class="border">初回実行日時、累計実行回数</td>
+                    </tr>
+                  </tbody>
+                </table>
+              <h4>USNジャーナル</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ファイル名</th>
+                      <th class="border_header">処理</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">Terminal Server Client</td>
+                      <td class="border">CLOSE+FILE_CREATE</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">bcache[数字].bmc</td>
+                      <td class="border">CLOSE+DATA_EXTEND+DATA_OVERWRITE+FILE_CREATE</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">3</td>
+                      <td class="border">Default.rdp</td>
+                      <td class="border">CLOSE+DATA_EXTEND+DATA_TRUNCATION</td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+          <h3 class="subsection"><a href="#KeyEvents-Destination" class="collapse" id="a-KeyEvents-Destination" onclick="showhide('KeyEvents-Destination');">-</a> <a name="KeyEvents-Destination">接続先</a></h3>
+            <div class="section" id="div-KeyEvents-Destination">
+              <h4>イベントログ</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ログ</th>
+                      <th class="border_header">イベントID</th>
+                      <th class="border_header">タスクのカテゴリ</th>
+                      <th class="border_header">イベント内容</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">3</td>
+                      <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                      <td class="border">Network connection detected.<ul>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\svchost.exe)</li>
+                        <li><span class="strong">User</span>: 実行ユーザー</li>
+                        <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                        <li><span class="strong">SourceIp/SourceHostname/SourcePort</span>: 送信元IPアドレス/ホスト名/ポート番号 (接続先 ポート3389)</li>
+                        <li><span class="strong">DestinationIp/DestinationHostname/DestinationPort</span>: 宛先IPアドレス/ホスト名/ポート番号</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational</td>
+                      <td class="border">261</td>
+                      <td class="border">TerminalServices-RemoteConnectionManager</td>
+                      <td class="border">リスナー RDP-Tcp で接続を受信しました</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">3</td>
+                      <td class="border">Microsoft-Windows-TerminalServices-LocalSessionManager/Operational</td>
+                      <td class="border">25</td>
+                      <td class="border">TerminalServices-LocalSessionManager</td>
+                      <td class="border">リモート デスクトップ サービス: セッションの再接続に成功しましたリモートデスクトップにより、セッションに再接続された。</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">4</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">4624</td>
+                      <td class="border">ログオン</td>
+                      <td class="border">アカウントが正常にログオンしました。<ul>
+                        <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン (SYSTEM/[接続先ホスト]$/ドメイン)</li>
+                        <li><span class="strong">ログオンの種類</span>: ログオンの経路・方式など (10=ターミナルサービス・リモートデスクトップ)</li>
+                        <li><span class="strong">新しいログオン > セキュリティID/アカウント名/アカウント ドメイン</span>: ログオンされたユーザーSID/アカウント名/ドメイン</li>
+                        <li><span class="strong">新しいログオン > ログオンID/ログオンGUID</span>: ログオンされたユーザーのセッションID</li>
+                        <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (C:\Windows\System32\winlogon.exe)</li>
+                        <li><span class="strong">ネットワーク情報 > ワークステーション名</span>: ログオンを要求したホスト名 (接続先ホスト)</li>
+                        <li><span class="strong">ネットワーク情報 > ソース ネットワーク アドレス</span>: ログオンを要求したIPアドレス (接続元ホスト)</li>
+                        <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 接続元ポート番号 (ハイポート)</li>
+                        <li><span class="strong">詳細な認証情報 > ログオン プロセス</span>: ログオンに使用されたプロセス (User32)</li>
+                        <li><span class="strong">詳細な認証情報 > 認証パッケージ</span>: 使用された認証パッケージ (Negotiate)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">5</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">4648</td>
+                      <td class="border">ログオン</td>
+                      <td class="border">明示的な資格情報を使用してログオンが試行された。<ul>
+                        <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID</li>
+                        <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名</li>
+                        <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン</li>
+                        <li><span class="strong">サブジェクト > ログオンID/ログオンGUID</span>: 認証を実行したユーザーのセッションID</li>
+                        <li><span class="strong">資格情報が使用されたアカウント > アカウント名</span>: 指定されたアカウント名</li>
+                        <li><span class="strong">資格情報が使用されたアカウント > アカウント ドメイン</span>: 指定されたアカウントの所属ドメイン</li>
+                        <li><span class="strong">ターゲット サーバー > ターゲット サーバー名</span>: ログオン先ホスト名 (接続先ホスト)</li>
+                        <li><span class="strong">ターゲット サーバー > 追加情報</span>: ログオン先ホストの追加情報 (TERMSRV/[接続先ホスト])</li>
+                        <li><span class="strong">プロセス情報 > プロセス名</span>: ログオンを試行したプロセス名 (C:\Windows\System32\lsass.exe)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">6</td>
+                      <td class="border">Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational</td>
+                      <td class="border">1149</td>
+                      <td class="border">TerminalServices-RemoteConnectionManager</td>
+                      <td class="border">リモート デスクトップ サービス: ユーザー認証に成功しました<ul>
+                        <li><span class="strong">ユーザー</span>: セッションを使用していたユーザー</li>
+                        <li><span class="strong">ドメイン</span>: ユーザーのドメイン</li>
+                        <li><span class="strong">ソース ネットワーク アドレス</span>: セッションの接続元アドレス</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">7</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">4779</td>
+                      <td class="border">その他のログオン/ログオフ イベント</td>
+                      <td class="border">セッションは Window Station から切断されました。<ul>
+                        <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名</li>
+                        <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン</li>
+                        <li><span class="strong">サブジェクト > ログオンID</span>: 登録を試行したユーザーのセッションID</li>
+                        <li><span class="strong">セッション > セッション名</span>: セッションの識別名 (RDP-Tcp#[番号])</li>
+                        <li><span class="strong">追加情報 > クライアント名</span>: 実行元ホスト名 (接続元ホスト名)</li>
+                        <li><span class="strong">追加情報 > クライアント アドレス</span>: 実行元アドレス (接続元IPアドレス)</li>
+                        </ul></td>
+                    </tr>
+                  </tbody>
+                </table>
+              <h4>Prefetch</h4>
+                <ul>
+                  <li>C:\Windows\Prefetch\TSTHEME.EXE-[文字列].pf</li>
+                  <li>C:\Windows\Prefetch\RDPCLIP.EXE-[文字列].pf</li>
+                </ul>
+            </div>
+        </div>
+        <hr class="section_divider">
+      <h2 class="section"><a href="#SourceDetails" class="collapse" id="a-SourceDetails" onclick="showhide('SourceDetails');">-</a> <a name="SourceDetails">詳細：接続元</a></h2>
+        <div class="section" id="div-SourceDetails">
+          <h3 class="subsection"><a href="#SourceDetails-EventLogs" class="collapse" id="a-SourceDetails-EventLogs" onclick="showhide('SourceDetails-EventLogs');">-</a> <a name="SourceDetails-EventLogs">イベントログ</a></h3>
+            <div class="section" id="div-SourceDetails-EventLogs">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">イベントログ</th>
+                    <th class="border_header">イベントID</th>
+                    <th class="border_header">タスクのカテゴリ</th>
+                    <th class="border_header">イベント内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="2">1</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (C:\Windows\System32\mstsc.exe)</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 必須ラベル</span>: 権限昇格の要否 (Mandatory Label\Medium Mandatory Level)</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: 新プロセスを作成した親プロセスのパス</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\mstsc.exe)</li>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン</li>
+                      <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">IntegrityLevel</span>: 特権レベル</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">2</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">12</td>
+                    <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+                    <td class="border">Registry object added or deleted.<ul>
+                      <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\mstsc.exe)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Network\Location Awareness</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">3</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">11</td>
+                    <td class="border">File created (rule: FileCreate)</td>
+                    <td class="border">File created.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\mstsc.exe)</li>
+                      <li><span class="strong">TargetFilename</span>: 作成されたファイル (C:\Users\[ユーザー名]\AppData\Local\Microsoft\Terminal Server Client\Cache)</li>
+                      <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Users\[ユーザー名]\AppData\Local\Microsoft\Terminal Server Client\Cache)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\mstsc.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (SYNCHRONIZE, WriteAttributesを含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Users\[ユーザー名]\AppData\Local\Microsoft\Terminal Server Client\Cache)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\mstsc.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteAttributesを含む)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">4</td>
+                    <td class="border">Microsoft-Windows-TerminalServices-RDPClient/Operational</td>
+                    <td class="border">1024</td>
+                    <td class="border">接続シーケンス</td>
+                    <td class="border">RDP ClientActiveX がサーバー ([接続先ホスト名]) に接続しようとしています</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">Microsoft-Windows-TerminalServices-RDPClient/Operational</td>
+                  <td class="border">1028</td>
+                  <td class="border">接続シーケンス</td>
+                  <td class="border">サーバーで SSL = supported がサポートされています</td>
+              </tr>
+              <tr class="border">
+                <td class="border" rowspan="1">5</td>
+                <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                <td class="border">12</td>
+                <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+                <td class="border">Registry object added or deleted.<ul>
+                  <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                  <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\mstsc.exe)</li>
+                  <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                  <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\MACHINE\SYSTEM\ControlSet001\Services\Tcpip\Parameters)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <td class="border" rowspan="1">6</td>
+                <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                <td class="border">13</td>
+                <td class="border">Registry value set (rule: RegistryEvent)</td>
+                <td class="border">Registry value set.<ul>
+                  <li><span class="strong">EventType</span>: 処理の種類 (SetValue)</li>
+                  <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\Explorer.EXE)</li>
+                  <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                  <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count\Zvpebfbsg.Jvaqbjf.ErzbgrQrfxgbc)</li>
+                  <li><span class="strong">Details</span>: レジストリに書き込まれた設定値 (Binary Data)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <td class="border" rowspan="3">7</td>
+                <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                <td class="border">3</td>
+                <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                <td class="border">Network connection detected.<ul>
+                  <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                  <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\mstsc.exe)</li>
+                  <li><span class="strong">User</span>: 実行ユーザー</li>
+                  <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                  <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続元IPアドレス)</li>
+                  <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続元ホスト名)</li>
+                  <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                  <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (接続先IPアドレス)</li>
+                  <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (接続先ホスト名)</li>
+                  <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (3389)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <!-- rowspan -->
+                <td class="border">セキュリティ</td>
+                <td class="border">5158</td>
+                <td class="border">フィルタリング プラットフォームの接続</td>
+                <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                  <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                  <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\mstsc.exe)</li>
+                  <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                  <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <!-- rowspan -->
+                <td class="border">セキュリティ</td>
+                <td class="border">5156</td>
+                <td class="border">フィルタリング プラットフォームの接続</td>
+                <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                  <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                  <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\mstsc.exe)</li>
+                  <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                  <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                  <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                  <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (接続先ホスト)</li>
+                  <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (3389)</li>
+                  <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <td class="border" rowspan="3">8</td>
+                <td class="border">セキュリティ</td>
+                <td class="border">4656</td>
+                <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                  <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                  <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                  <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                  <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\MSTSC.EXE-[文字列].pf)</li>
+                  <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                  <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                  <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                  <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <!-- rowspan -->
+                <td class="border">セキュリティ</td>
+                <td class="border">4663</td>
+                <td class="border">ファイル システム</td>
+                <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                  <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                  <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                  <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                  <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\MSTSC.EXE-[文字列].pf)</li>
+                  <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                  <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                  <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                  <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendDataを含む)</li>
+                  <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <!-- rowspan -->
+                <td class="border">セキュリティ</td>
+                <td class="border">4658</td>
+                <td class="border">ファイル システム</td>
+                <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                  <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                  <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                  <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                  <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <td class="border" rowspan="1">9</td>
+                <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                <td class="border">12</td>
+                <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+                <td class="border">Registry object added or deleted.<ul>
+                  <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                  <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\mstsc.exe)</li>
+                  <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                  <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\MACHINE\SYSTEM\ControlSet001\Control\SecurityProviders\SCHANNEL)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <td class="border" rowspan="9">10</td>
+                <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                <td class="border">3</td>
+                <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                <td class="border">Network connection detected.<ul>
+                  <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                  <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                  <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                  <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                  <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続元IPアドレス)</li>
+                  <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続元ホスト名)</li>
+                  <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                  <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+                  <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+                  <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (88)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <!-- rowspan -->
+                <td class="border">セキュリティ</td>
+                <td class="border">5158</td>
+                <td class="border">フィルタリング プラットフォームの接続</td>
+                <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                  <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                  <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                  <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                  <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <!-- rowspan -->
+                <td class="border">セキュリティ</td>
+                <td class="border">5156</td>
+                <td class="border">フィルタリング プラットフォームの接続</td>
+                <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                  <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                  <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                  <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                  <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                  <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                  <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (ドメインコントローラー)</li>
+                  <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (88)</li>
+                  <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <!-- rowspan -->
+                <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                <td class="border">3</td>
+                <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                <td class="border">Network connection detected.<ul>
+                  <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                  <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                  <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                  <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                  <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続元IPアドレス)</li>
+                  <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続元ホスト名)</li>
+                  <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                  <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+                  <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+                  <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (88)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <!-- rowspan -->
+                <td class="border">セキュリティ</td>
+                <td class="border">5158</td>
+                <td class="border">フィルタリング プラットフォームの接続</td>
+                <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                  <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                  <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                  <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                  <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <!-- rowspan -->
+                <td class="border">セキュリティ</td>
+                <td class="border">5156</td>
+                <td class="border">フィルタリング プラットフォームの接続</td>
+                <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                  <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                  <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                  <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                  <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                  <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                  <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (ドメインコントローラー)</li>
+                  <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (88)</li>
+                  <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <!-- rowspan -->
+                <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                <td class="border">3</td>
+                <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                <td class="border">Network connection detected.<ul>
+                  <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                  <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                  <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                  <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                  <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続元IPアドレス)</li>
+                  <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続元ホスト名)</li>
+                  <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                  <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+                  <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+                  <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (88)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <!-- rowspan -->
+                <td class="border">セキュリティ</td>
+                <td class="border">5158</td>
+                <td class="border">フィルタリング プラットフォームの接続</td>
+                <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                  <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                  <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                  <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                  <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <!-- rowspan -->
+                <td class="border">セキュリティ</td>
+                <td class="border">5156</td>
+                <td class="border">フィルタリング プラットフォームの接続</td>
+                <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                  <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                  <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                  <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                  <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                  <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                  <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (ドメインコントローラー)</li>
+                  <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (88)</li>
+                  <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                  </ul></td>
+              </tr>
+              <tr class="border">
+                <td class="border" rowspan="2">11</td>
+                <td class="border">Microsoft-Windows-TerminalServices-RDPClient/Operational</td>
+                <td class="border">1029</td>
+                <td class="border">接続シーケンス</td>
+                <td class="border">Base64(SHA256(UserName)) is = [ユーザー名のSHA256ハッシュ値をBASE64エンコードしたもの]</td>
+            </tr>
+            <tr class="border">
+              <!-- rowspan -->
+              <td class="border">Microsoft-Windows-TerminalServices-RDPClient/Operational</td>
+              <td class="border">1025</td>
+              <td class="border">接続シーケンス</td>
+              <td class="border">RDP ClientActiveX がサーバーに接続しました</td>
+          </tr>
+          <tr class="border">
+            <td class="border" rowspan="1">12</td>
+            <td class="border">セキュリティ</td>
+            <td class="border">4648</td>
+            <td class="border">ログオン</td>
+            <td class="border">明示的な資格情報を使用してログオンが試行された。<ul>
+              <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID</li>
+              <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名</li>
+              <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン</li>
+              <li><span class="strong">サブジェクト > ログオンID/ログオンGUID</span>: 認証を実行したユーザーのセッションID</li>
+              <li><span class="strong">資格情報が使用されたアカウント > アカウント名</span>: 指定されたアカウント名</li>
+              <li><span class="strong">資格情報が使用されたアカウント > アカウント ドメイン</span>: 指定されたアカウントの所属ドメイン</li>
+              <li><span class="strong">ターゲット サーバー > ターゲット サーバー名</span>: ログオン先ホスト名 (接続先ホスト)</li>
+              <li><span class="strong">ターゲット サーバー > 追加情報</span>: ログオン先ホストの追加情報 (TERMSRV/[接続先ホスト])</li>
+              <li><span class="strong">プロセス情報 > プロセスID</span>: ログオンを試行したプロセスID</li>
+              <li><span class="strong">プロセス情報 > プロセス名</span>: ログオンを試行したプロセス名 (C:\Windows\System32\lsass.exe)</li>
+              <li><span class="strong">ネットワーク情報 > ネットワークアドレス</span>: ログオン元ホスト</li>
+              <li><span class="strong">ネットワーク情報 > ポート</span>: 接続元ポート (-)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <td class="border" rowspan="3">13</td>
+            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+            <td class="border">3</td>
+            <td class="border">Network connection detected (rule: NetworkConnect)</td>
+            <td class="border">Network connection detected.<ul>
+              <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+              <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+              <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+              <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+              <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続元IPアドレス)</li>
+              <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続元ホスト名)</li>
+              <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+              <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+              <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+              <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (88)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">セキュリティ</td>
+            <td class="border">5158</td>
+            <td class="border">フィルタリング プラットフォームの接続</td>
+            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+              <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+              <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+              <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+              <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">セキュリティ</td>
+            <td class="border">5156</td>
+            <td class="border">フィルタリング プラットフォームの接続</td>
+            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+              <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+              <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+              <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+              <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+              <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+              <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (ドメインコントローラー)</li>
+              <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (88)</li>
+              <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <td class="border" rowspan="1">14</td>
+            <td class="border">セキュリティ</td>
+            <td class="border">4648</td>
+            <td class="border">ログオン</td>
+            <td class="border">明示的な資格情報を使用してログオンが試行された。<ul>
+              <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID</li>
+              <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名</li>
+              <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン</li>
+              <li><span class="strong">サブジェクト > ログオンID/ログオンGUID</span>: 認証を実行したユーザーのセッションID</li>
+              <li><span class="strong">資格情報が使用されたアカウント > アカウント名</span>: 指定されたアカウント名</li>
+              <li><span class="strong">資格情報が使用されたアカウント > アカウント ドメイン</span>: 指定されたアカウントの所属ドメイン</li>
+              <li><span class="strong">ターゲット サーバー > ターゲット サーバー名</span>: ログオン先ホスト名 (接続先ホスト)</li>
+              <li><span class="strong">ターゲット サーバー > 追加情報</span>: ログオン先ホストの追加情報 (TERMSRV/[接続先ホスト])</li>
+              <li><span class="strong">プロセス情報 > プロセスID</span>: ログオンを試行したプロセスID</li>
+              <li><span class="strong">プロセス情報 > プロセス名</span>: ログオンを試行したプロセス名 (C:\Windows\System32\lsass.exe)</li>
+              <li><span class="strong">ネットワーク情報 > ネットワークアドレス</span>: ログオン元ホスト</li>
+              <li><span class="strong">ネットワーク情報 > ポート</span>: 接続元ポート (-)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <td class="border" rowspan="3">15</td>
+            <td class="border">セキュリティ</td>
+            <td class="border">4656</td>
+            <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+            <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+              <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+              <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+              <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+              <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Users[ユーザー名]\AppData\Local\Microsoft\Terminal Server Client\Cache\bcache[数字].bmc)</li>
+              <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+              <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+              <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\mstsc.exe)</li>
+              <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendDataを含む)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">セキュリティ</td>
+            <td class="border">4663</td>
+            <td class="border">ファイル システム</td>
+            <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+              <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+              <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+              <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+              <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名</li>
+              <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+              <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+              <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\mstsc.exe)</li>
+              <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendData)</li>
+              <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">セキュリティ</td>
+            <td class="border">4658</td>
+            <td class="border">ファイル システム</td>
+            <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+              <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+              <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+              <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+              <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <td class="border" rowspan="4">16</td>
+            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+            <td class="border">11</td>
+            <td class="border">File created (rule: FileCreate)</td>
+            <td class="border">File created.<ul>
+              <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+              <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\Explorer.EXE)</li>
+              <li><span class="strong">TargetFilename</span>: 作成されたファイル (C:\Users\[ユーザー名]\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations\[ランダム文字列].automaticDestinations-ms)</li>
+              <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">セキュリティ</td>
+            <td class="border">4656</td>
+            <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+            <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+              <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+              <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+              <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+              <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Users\[ユーザー名]\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations\[ランダム文字列].automaticDestinations-ms)</li>
+              <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+              <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+              <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\explorer.exe)</li>
+              <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile を含む)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">セキュリティ</td>
+            <td class="border">4663</td>
+            <td class="border">ファイル システム</td>
+            <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+              <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+              <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+              <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+              <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名</li>
+              <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+              <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+              <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\explorer.exe)</li>
+              <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile)</li>
+              <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">セキュリティ</td>
+            <td class="border">4658</td>
+            <td class="border">ファイル システム</td>
+            <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+              <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+              <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+              <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+              <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <td class="border" rowspan="2">17</td>
+            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+            <td class="border">12</td>
+            <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+            <td class="border">Registry object added or deleted.<ul>
+              <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+              <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\mstsc.exe)</li>
+              <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+              <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Terminal Server Client\Servers\[ターゲットホスト])</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+            <td class="border">13</td>
+            <td class="border">Registry value set (rule: RegistryEvent)</td>
+            <td class="border">Registry value set.<ul>
+              <li><span class="strong">EventType</span>: 処理の種類 (SetValue)</li>
+              <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\mstsc.exe)</li>
+              <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+              <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Terminal Server Client\Servers\[ターゲットホスト]\UsernameHint)</li>
+              <li><span class="strong">Details</span>: レジストリに書き込まれた設定値 (String:[ユーザー名])</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <td class="border" rowspan="5">18</td>
+            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+            <td class="border">12</td>
+            <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+            <td class="border">Registry object added or deleted.<ul>
+              <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+              <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\Explorer.EXE)</li>
+              <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+              <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Windows\CurrentVersion\Search)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+            <td class="border">13</td>
+            <td class="border">Registry value set (rule: RegistryEvent)</td>
+            <td class="border">Registry value set.<ul>
+              <li><span class="strong">EventType</span>: 処理の種類 (SetValue)</li>
+              <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\Explorer.EXE)</li>
+              <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+              <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Windows\CurrentVersion\Search\JumpListChangedAppIds)</li>
+              <li><span class="strong">Details</span>: レジストリに書き込まれた設定値 (Binary Data)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+            <td class="border">12</td>
+            <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+            <td class="border">Registry object added or deleted.<ul>
+              <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+              <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\Explorer.EXE)</li>
+              <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+              <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Windows\CurrentVersion\Search\JumplistData)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+            <td class="border">13</td>
+            <td class="border">Registry value set (rule: RegistryEvent)</td>
+            <td class="border">Registry value set.<ul>
+              <li><span class="strong">EventType</span>: 処理の種類 (SetValue)</li>
+              <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\Explorer.EXE)</li>
+              <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+              <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Windows\CurrentVersion\Search\JumpListData\Microsoft.Windows.RemoteDesktop)</li>
+              <li><span class="strong">Details</span>: レジストリに書き込まれた設定値 (QWORD)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+            <td class="border">12</td>
+            <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+            <td class="border">Registry object added or deleted.<ul>
+              <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+              <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\mstsc.exe)</li>
+              <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+              <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Terminal Server Client\Default\AddIns\RDPDR)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <td class="border" rowspan="3">19</td>
+            <td class="border">セキュリティ</td>
+            <td class="border">4656</td>
+            <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+            <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+              <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+              <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+              <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+              <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\[ユーザー名]\Documents\Default.rdp)</li>
+              <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+              <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+              <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\mstsc.exe)</li>
+              <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendDataを含む)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">セキュリティ</td>
+            <td class="border">4663</td>
+            <td class="border">ファイル システム</td>
+            <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+              <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+              <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+              <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+              <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\[ユーザー名]\Documents\Default.rdp)</li>
+              <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+              <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+              <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\mstsc.exe)</li>
+              <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendData)</li>
+              <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">セキュリティ</td>
+            <td class="border">4658</td>
+            <td class="border">ファイル システム</td>
+            <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+              <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+              <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+              <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+              <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <td class="border" rowspan="1">20</td>
+            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+            <td class="border">13</td>
+            <td class="border">Registry value set (rule: RegistryEvent)</td>
+            <td class="border">Registry value set.<ul>
+              <li><span class="strong">EventType</span>: 処理の種類 (SetValue)</li>
+              <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\mstsc.exe)</li>
+              <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+              <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Terminal Server Client\Default\MRU0)</li>
+              <li><span class="strong">Details</span>: レジストリに書き込まれた設定値 (接続先)</li>
+              </ul>
+              <span class="strong">備考</span>: "MRU0"-"MRU9"があり、過去に接続したホストが記録されている。MRU0が最後に接続した履歴である。</td>
+          </tr>
+          <tr class="border">
+            <td class="border" rowspan="2">21</td>
+            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+            <td class="border">12</td>
+            <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+            <td class="border">Registry object added or deleted.<ul>
+              <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+              <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\mstsc.exe)</li>
+              <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+              <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Terminal Server Client\Default)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <!-- rowspan -->
+            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+            <td class="border">13</td>
+            <td class="border">Registry value set (rule: RegistryEvent)</td>
+            <td class="border">Registry value set.<ul>
+              <li><span class="strong">EventType</span>: 処理の種類 (SetValue)</li>
+              <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\Explorer.EXE)</li>
+              <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+              <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count\Zvpebfbsg.Jvaqbjf.ErzbgrQrfxgbc)</li>
+              <li><span class="strong">Details</span>: レジストリに書き込まれた設定値 (Binary Data)</li>
+              </ul></td>
+          </tr>
+          <tr class="border">
+            <td class="border" rowspan="2">22</td>
+            <td class="border">Microsoft-Windows-TerminalServices-RDPClient/Operational</td>
+            <td class="border">1105</td>
+            <td class="border">接続シーケンス</td>
+            <td class="border">マルチトランスポート接続が切断されました</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">Microsoft-Windows-TerminalServices-RDPClient/Operational</td>
+          <td class="border">1026</td>
+          <td class="border">接続シーケンス</td>
+          <td class="border">RDP ClientActiveX が切断しました (理由 = [理由])<ul>
+            <li><span class="strong">理由</span>:  1</li>
+            </ul></td>
+        </tr>
+        <tr class="border">
+          <td class="border" rowspan="2">23</td>
+          <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+          <td class="border">5</td>
+          <td class="border">Process terminated (rule: ProcessTerminate)</td>
+          <td class="border">Process terminated.<ul>
+            <li><span class="strong">UtcTime</span>: プロセス終了日時 (UTC)</li>
+            <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+            <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\mstsc.exe)</li>
+            </ul></td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">セキュリティ</td>
+          <td class="border">4689</td>
+          <td class="border">プロセス終了</td>
+          <td class="border">プロセスが終了しました。<ul>
+            <li><span class="strong">ログの日時</span>: プロセス終了日時 (ローカル時刻)</li>
+            <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+            <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+            <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+            <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (C:\Windows\System32\mstsc.exe)</li>
+            <li><span class="strong">プロセス情報 > 終了状態</span>: プロセスの戻り値 (0x0)</li>
+            </ul></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+<h3 class="subsection"><a href="#SourceDetails-MFT" class="collapse" id="a-SourceDetails-MFT" onclick="showhide('SourceDetails-MFT');">-</a> <a name="SourceDetails-MFT">MFT</a></h3>
+  <div class="section" id="div-SourceDetails-MFT">
+    <table class="border">
+      <thead>
+        <tr class="border">
+          <th class="border_header">#</th>
+          <th class="border_header">パス</th>
+          <th class="border_header">ヘッダフラグ</th>
+          <th class="border_header">有効</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border">
+          <td class="border" rowspan="3">1</td>
+          <td class="border">[ドライブ名]:\Users\[ユーザー名]\AppData\Local\Microsoft\Terminal Server Client</td>
+          <td class="border">FOLDER</td>
+          <td class="border">ALLOCATED</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">[ドライブ名]:\Users\[ユーザー名]\AppData\Local\Microsoft\Terminal Server Client\Cache</td>
+          <td class="border">FOLDER</td>
+          <td class="border">ALLOCATED</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">[ドライブ名]:\Users\[ユーザー名]\AppData\Local\Microsoft\Terminal Server Client\Cache\bcache[数字].bmc</td>
+          <td class="border">FILE</td>
+          <td class="border">ALLOCATED</td>
+        </tr>
+        <tr class="border">
+          <td class="border" rowspan="1">2</td>
+          <td class="border">[ドライブ名]:\Users\[ユーザー名]\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations\[ランダム文字列].automaticDestinations-ms</td>
+          <td class="border">FILE</td>
+          <td class="border">ALLOCATED</td>
+        </tr>
+        <tr class="border">
+          <td class="border" rowspan="1">3</td>
+          <td class="border">[ドライブ名]:\Users\[ユーザー名]\Documents\Default.rdp</td>
+          <td class="border">FILE</td>
+          <td class="border">ALLOCATED</td>
+        </tr>
+        <tr class="border">
+          <td class="border" rowspan="1">4</td>
+          <td class="border">[ドライブ名]:\Windows\Prefetch\MSTSC.EXE-[文字列].pf</td>
+          <td class="border">FILE</td>
+          <td class="border">ALLOCATED</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+<h3 class="subsection"><a href="#SourceDetails-Prefetch" class="collapse" id="a-SourceDetails-Prefetch" onclick="showhide('SourceDetails-Prefetch');">-</a> <a name="SourceDetails-Prefetch">Prefetch</a></h3>
+  <div class="section" id="div-SourceDetails-Prefetch">
+    <table class="border">
+      <thead>
+        <tr class="border">
+          <th class="border_header">#</th>
+          <th class="border_header">Prefetchファイル</th>
+          <th class="border_header">プロセス名</th>
+          <th class="border_header">プロセスパス</th>
+          <th class="border_header">ログから得られる情報</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border">
+          <td class="border" rowspan="1">1</td>
+          <td class="border">C:\Windows\Prefetch\MSTSC.EXE-[文字列].pf</td>
+          <td class="border">MSTSC.EXE</td>
+          <td class="border">C:\WINDOWS\SYSTEM32\MSTSC.EXE</td>
+          <td class="border">Last Run Time (最終実行日時)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+<h3 class="subsection"><a href="#SourceDetails-Registry" class="collapse" id="a-SourceDetails-Registry" onclick="showhide('SourceDetails-Registry');">-</a> <a name="SourceDetails-Registry">レジストリエントリ</a></h3>
+  <div class="section" id="div-SourceDetails-Registry">
+    <table class="border">
+      <thead>
+        <tr class="border">
+          <th class="border_header">#</th>
+          <th class="border_header">パス</th>
+          <th class="border_header">種類</th>
+          <th class="border_header">値</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border">
+          <td class="border" rowspan="3">1</td>
+          <td class="border">HKEY_USERS\[ユーザーSID]\SOFTWARE\Microsoft\Terminal Server Client\Default\MRU0</td>
+          <td class="border">String</td>
+          <td class="border">[ターゲットホスト]</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">HKEY_USERS\[ユーザーSID]\SOFTWARE\Microsoft\Terminal Server Client\Default\AddIns</td>
+          <td class="border">Key</td>
+          <td class="border">(値の設定無し)</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">HKEY_USERS\[ユーザーSID]\SOFTWARE\Microsoft\Terminal Server Client\Default\AddIns\RDPDR</td>
+          <td class="border">Key</td>
+          <td class="border">(値の設定無し)</td>
+        </tr>
+        <tr class="border">
+          <td class="border" rowspan="1">3</td>
+          <td class="border">HKEY_USERS\[ユーザーSID]\SOFTWARE\Microsoft\Terminal Server Client\Servers\[ターゲットホスト]\UsernameHint</td>
+          <td class="border">String</td>
+          <td class="border">[ユーザー名]</td>
+        </tr>
+        <tr class="border">
+          <td class="border" rowspan="1">4</td>
+          <td class="border">HKEY_USERS\[ユーザーSID]\SOFTWARE\Microsoft\Windows\CurrentVersion\Search\JumplistData\Microsoft.Windows.RemoteDesktop</td>
+          <td class="border">Binary</td>
+          <td class="border">[バイナリ値]</td>
+        </tr>
+        <tr class="border">
+          <td class="border" rowspan="1">5</td>
+          <td class="border">HKEY_USERS\[ユーザーSID]\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count\Zvpebfbsg.Jvaqbjf.ErzbgrQrfxgbc</td>
+          <td class="border">Binary</td>
+          <td class="border">[バイナリ値]</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+<h3 class="subsection"><a href="#SourceDetails-UserAssist" class="collapse" id="a-SourceDetails-UserAssist" onclick="showhide('SourceDetails-UserAssist');">-</a> <a name="SourceDetails-UserAssist">UserAssist</a></h3>
+  <div class="section" id="div-SourceDetails-UserAssist">
+    <table class="border">
+      <thead>
+        <tr class="border">
+          <th class="border_header">#</th>
+          <th class="border_header">レジストリエントリ</th>
+          <th class="border_header">ログから得られる情報</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border">
+          <td class="border" rowspan="1">1</td>
+          <td class="border">\REGISTRY\USER\[ユーザーSID]\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\UserAssist\{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}\Count\Zvpebfbsg.Jvaqbjf.ErzbgrQrfxgbc</td>
+          <td class="border">初回実行日時、累計実行回数</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+<h3 class="subsection"><a href="#SourceDetails-USNJournal" class="collapse" id="a-SourceDetails-USNJournal" onclick="showhide('SourceDetails-USNJournal');">-</a> <a name="SourceDetails-USNJournal">USNジャーナル</a></h3>
+  <div class="section" id="div-SourceDetails-USNJournal">
+    <table class="border">
+      <thead>
+        <tr class="border">
+          <th class="border_header">#</th>
+          <th class="border_header">ファイル名</th>
+          <th class="border_header">処理</th>
+          <th class="border_header">属性</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="border">
+          <td class="border" rowspan="2">1</td>
+          <td class="border">Terminal Server Client</td>
+          <td class="border">FILE_CREATE</td>
+          <td class="border">directory</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">Terminal Server Client</td>
+          <td class="border">CLOSE+FILE_CREATE</td>
+          <td class="border">directory</td>
+        </tr>
+        <tr class="border">
+          <td class="border" rowspan="4">2</td>
+          <td class="border">bcache[数字].bmc</td>
+          <td class="border">FILE_CREATE</td>
+          <td class="border">archive+not_indexed</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">bcache[数字].bmc</td>
+          <td class="border">DATA_EXTEND+FILE_CREATE</td>
+          <td class="border">archive+not_indexed</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">bcache[数字].bmc</td>
+          <td class="border">DATA_EXTEND+DATA_OVERWRITE+FILE_CREATE</td>
+          <td class="border">archive+not_indexed</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">bcache[数字].bmc</td>
+          <td class="border">CLOSE+DATA_EXTEND+DATA_OVERWRITE+FILE_CREATE</td>
+          <td class="border">archive+not_indexed</td>
+        </tr>
+        <tr class="border">
+          <td class="border" rowspan="4">3</td>
+          <td class="border">[ランダム文字列].automaticDestinations-ms</td>
+          <td class="border">FILE_CREATE</td>
+          <td class="border">archive</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">[ランダム文字列].automaticDestinations-ms</td>
+          <td class="border">DATA_EXTEND+FILE_CREATE</td>
+          <td class="border">archive</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">[ランダム文字列].automaticDestinations-ms</td>
+          <td class="border">DATA_EXTEND+DATA_OVERWRITE+FILE_CREATE</td>
+          <td class="border">archive</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">[ランダム文字列].automaticDestinations-ms</td>
+          <td class="border">CLOSE+DATA_EXTEND+DATA_OVERWRITE+FILE_CREATE</td>
+          <td class="border">archive</td>
+        </tr>
+        <tr class="border">
+          <td class="border" rowspan="3">4</td>
+          <td class="border">Default.rdp</td>
+          <td class="border">DATA_TRUNCATION</td>
+          <td class="border">hidden+archive</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">Default.rdp</td>
+          <td class="border">DATA_EXTEND+DATA_TRUNCATION</td>
+          <td class="border">hidden+archive</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">Default.rdp</td>
+          <td class="border">CLOSE+DATA_EXTEND+DATA_TRUNCATION</td>
+          <td class="border">hidden+archive</td>
+        </tr>
+        <tr class="border">
+          <td class="border" rowspan="3">5</td>
+          <td class="border">MSTSC.EXE-[文字列].pf</td>
+          <td class="border">DATA_TRUNCATION</td>
+          <td class="border">archive+not_indexed</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">MSTSC.EXE-[文字列].pf</td>
+          <td class="border">DATA_EXTEND+DATA_TRUNCATION</td>
+          <td class="border">archive+not_indexed</td>
+        </tr>
+        <tr class="border">
+          <!-- rowspan -->
+          <td class="border">MSTSC.EXE-[文字列].pf</td>
+          <td class="border">CLOSE+DATA_EXTEND+DATA_TRUNCATION</td>
+          <td class="border">archive+not_indexed</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+      <h2 class="section"><a href="#DestinationDetails" class="collapse" id="a-DestinationDetails" onclick="showhide('DestinationDetails');">-</a> <a name="DestinationDetails">詳細：接続先</a></h2>
+        <div class="section" id="div-DestinationDetails">
+          <h3 class="subsection"><a href="#DestinationDetails-EventLogs" class="collapse" id="a-DestinationDetails-EventLogs" onclick="showhide('DestinationDetails-EventLogs');">-</a> <a name="DestinationDetails-EventLogs">イベントログ</a></h3>
+            <div class="section" id="div-DestinationDetails-EventLogs">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">イベントログ</th>
+                    <th class="border_header">イベントID</th>
+                    <th class="border_header">タスクのカテゴリ</th>
+                    <th class="border_header">イベント内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="2">1</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続先IPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続先ホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (3389)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (接続元IPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (接続元ホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (ハイポート)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (System)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (着信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続先ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (3389)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス/宛先ポート</span>: 宛先IPアドレス/ポート番号 (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">2</td>
+                    <td class="border">Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational</td>
+                    <td class="border">261</td>
+                    <td class="border">TerminalServices-RemoteConnectionManager</td>
+                    <td class="border">リスナー RDP-Tcp で接続を受信しました</td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="12">3</td>
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">3</td>
+                  <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                  <td class="border">Network connection detected.<ul>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                    <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                    <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                    <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続先IPアドレス)</li>
+                    <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続先ホスト名)</li>
+                    <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                    <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+                    <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+                    <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (88)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">5158</td>
+                  <td class="border">フィルタリング プラットフォームの接続</td>
+                  <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                    <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID (4)</li>
+                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (System)</li>
+                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">5156</td>
+                  <td class="border">フィルタリング プラットフォームの接続</td>
+                  <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                    <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                    <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続先ホスト)</li>
+                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (ドメインコントローラー)</li>
+                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (88)</li>
+                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">3</td>
+                  <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                  <td class="border">Network connection detected.<ul>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                    <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                    <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                    <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続先IPアドレス)</li>
+                    <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続先ホスト名)</li>
+                    <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                    <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+                    <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+                    <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (88)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">5158</td>
+                  <td class="border">フィルタリング プラットフォームの接続</td>
+                  <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                    <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID (4)</li>
+                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (System)</li>
+                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">5156</td>
+                  <td class="border">フィルタリング プラットフォームの接続</td>
+                  <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                    <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                    <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続先ホスト)</li>
+                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (ドメインコントローラー)</li>
+                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (445)</li>
+                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">3</td>
+                  <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                  <td class="border">Network connection detected.<ul>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID (4)</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (System)</li>
+                    <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                    <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                    <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続先IPアドレス)</li>
+                    <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続先ホスト名)</li>
+                    <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                    <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+                    <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+                    <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (445)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">5158</td>
+                  <td class="border">フィルタリング プラットフォームの接続</td>
+                  <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                    <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID (4)</li>
+                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (System)</li>
+                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">5156</td>
+                  <td class="border">フィルタリング プラットフォームの接続</td>
+                  <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                    <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID (4)</li>
+                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (System)</li>
+                    <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (ターゲットホスト)</li>
+                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (ドメインコントローラー)</li>
+                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (445)</li>
+                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">3</td>
+                  <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                  <td class="border">Network connection detected.<ul>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                    <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                    <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                    <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続先IPアドレス)</li>
+                    <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続先ホスト名)</li>
+                    <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                    <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+                    <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+                    <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (88)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">5158</td>
+                  <td class="border">フィルタリング プラットフォームの接続</td>
+                  <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                    <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID (4)</li>
+                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (System)</li>
+                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">5156</td>
+                  <td class="border">フィルタリング プラットフォームの接続</td>
+                  <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                    <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                    <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続先ホスト)</li>
+                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (ドメインコントローラー)</li>
+                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (88)</li>
+                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="2">4</td>
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4624</td>
+                  <td class="border">ログオン</td>
+                  <td class="border">アカウントが正常にログオンしました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン (SYSTEM/[接続先ホスト]$/ドメイン)</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: 認証を実行したユーザーのセッションID</li>
+                    <li><span class="strong">ログオンの種類</span>: ログオンの経路・方式など</li>
+                    <li><span class="strong">新しいログオン > セキュリティID/アカウント名/アカウント ドメイン</span>: ログオンされたユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">新しいログオン > ログオンID/ログオンGUID</span>: ログオンされたユーザーのセッションID</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (C:\Windows\System32\winlogon.exe)</li>
+                    <li><span class="strong">ネットワーク情報 > ワークステーション名</span>: ログオンを要求したホスト名 (接続先ホスト)</li>
+                    <li><span class="strong">ネットワーク情報 > ソース ネットワーク アドレス</span>: ログオンを要求したIPアドレス (接続元ホスト)</li>
+                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 接続元ポート番号 (ハイポート)</li>
+                    <li><span class="strong">詳細な認証情報 > ログオン プロセス</span>: ログオンに使用されたプロセス (User32)</li>
+                    <li><span class="strong">詳細な認証情報 > 認証パッケージ</span>: 使用された認証パッケージ (Negotiate)</li>
+                    <li><span class="strong">詳細な認証情報 > パッケージ名 (NTLMのみ)</span>: NTLMのバージョン (-)</li>
+                    <li><span class="strong">詳細な認証情報 > キーの長さ</span>: 認証に使用したキーの長さ (0)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4648</td>
+                  <td class="border">ログオン</td>
+                  <td class="border">明示的な資格情報を使用してログオンが試行された。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                    <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 (接続先ホスト)</li>
+                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン)</li>
+                    <li><span class="strong">サブジェクト > ログオンID/ログオンGUID</span>: 認証を実行したユーザーのセッションID</li>
+                    <li><span class="strong">資格情報が使用されたアカウント > アカウント名</span>: 指定されたアカウント名</li>
+                    <li><span class="strong">資格情報が使用されたアカウント > アカウント ドメイン</span>: 指定されたアカウントの所属ドメイン</li>
+                    <li><span class="strong">ターゲット サーバー > ターゲット サーバー名</span>: ログオン先ホスト名 (localhost)</li>
+                    <li><span class="strong">ターゲット サーバー > 追加情報</span>: ログオン先ホストの追加情報 (localhost)</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: ログオンを試行したプロセスID</li>
+                    <li><span class="strong">プロセス情報 > プロセス名</span>: ログオンを試行したプロセス名 (C:\Windows\System32\winlogon.exe)</li>
+                    <li><span class="strong">ネットワーク情報 > ネットワークアドレス</span>: ログオン元ホスト (接続元ホスト)</li>
+                    <li><span class="strong">ネットワーク情報 > ポート</span>: 接続元ポート (ハイポート)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="1">5</td>
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4779</td>
+                  <td class="border">その他のログオン/ログオフ イベント</td>
+                  <td class="border">セッションは Window Station から切断されました。<ul>
+                    <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名</li>
+                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: 登録を試行したユーザーのセッションID</li>
+                    <li><span class="strong">セッション > セッション名</span>: セッションの識別名 (Console)</li>
+                    <li><span class="strong">追加情報 > クライアント名</span>: 実行元ホスト名 (Unknown)</li>
+                    <li><span class="strong">追加情報 > クライアント アドレス</span>: 実行元アドレス (ローカル)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="1">6</td>
+                  <td class="border">Microsoft-Windows-TerminalServices-LocalSessionManager/Operational</td>
+                  <td class="border">24</td>
+                  <td class="border">TerminalServices-LocalSessionManager</td>
+                  <td class="border">リモート デスクトップ サービス: セッションは切断されました<ul>
+                    <li><span class="strong">ユーザー</span>: セッションを使用していたユーザー</li>
+                    <li><span class="strong">セッションID</span>: セッションのID</li>
+                    <li><span class="strong">ソース ネットワーク アドレス</span>: セッションの接続元アドレス (ローカル)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="2">7</td>
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">1</td>
+                  <td class="border">Process Create (rule: ProcessCreate)</td>
+                  <td class="border">Process Create.<ul>
+                    <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\TSTheme.exe)</li>
+                    <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (C:\Windows\system32\TSTheme.exe -Embedding)</li>
+                    <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ (C:\Windows\system32\)</li>
+                    <li><span class="strong">User</span>: 実行ユーザー</li>
+                    <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                    <li><span class="strong">IntegrityLevel</span>: 特権レベル (Medium)</li>
+                    <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                    <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                    <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル (C:\Windows\System32\svchost.exe)</li>
+                    <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン (C:\Windows\system32\svchost.exe -k DcomLaunch)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4688</td>
+                  <td class="border">プロセス作成</td>
+                  <td class="border">新しいプロセスが作成されました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                    <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (C:\Windows\System32\TSTheme.exe)</li>
+                    <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                    <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                    <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="8">8</td>
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">12</td>
+                  <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+                  <td class="border">Registry object added or deleted.<ul>
+                    <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\TSTheme.exe)</li>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Explorer\Remote\1)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">13</td>
+                  <td class="border">Registry value set (rule: RegistryEvent)</td>
+                  <td class="border">Registry value set.<ul>
+                    <li><span class="strong">EventType</span>: 処理の種類 (SetValue)</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\TSTheme.exe)</li>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Explorer\Remote\1\TaskbarAnimations)</li>
+                    <li><span class="strong">Details</span>: レジストリに書き込まれた設定値 (DWORD)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">12</td>
+                  <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+                  <td class="border">Registry object added or deleted.<ul>
+                    <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\TSTheme.exe)</li>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\USER\[ユーザーSID]\Remote\1\Control Panel\Desktop)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">13</td>
+                  <td class="border">Registry value set (rule: RegistryEvent)</td>
+                  <td class="border">Registry value set.<ul>
+                    <li><span class="strong">EventType</span>: 処理の種類 (SetValue)</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\TSTheme.exe)</li>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\USER\[ユーザーSID]\Remote\1\Control Panel\Desktop\DragFullWindows)</li>
+                    <li><span class="strong">Details</span>: レジストリに書き込まれた設定値 (0)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">13</td>
+                  <td class="border">Registry value set (rule: RegistryEvent)</td>
+                  <td class="border">Registry value set.<ul>
+                    <li><span class="strong">EventType</span>: 処理の種類 (SetValue)</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\TSTheme.exe)</li>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\USER\[ユーザーSID]\Remote\1\Control Panel\Desktop\SmoothScroll)</li>
+                    <li><span class="strong">Details</span>: レジストリに書き込まれた設定値 (0)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">13</td>
+                  <td class="border">Registry value set (rule: RegistryEvent)</td>
+                  <td class="border">Registry value set.<ul>
+                    <li><span class="strong">EventType</span>: 処理の種類 (SetValue)</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\TSTheme.exe)</li>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\USER\[ユーザーSID]\Remote\1\Control Panel\Desktop\FontSmoothing)</li>
+                    <li><span class="strong">Details</span>: レジストリに書き込まれた設定値 (0)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">13</td>
+                  <td class="border">Registry value set (rule: RegistryEvent)</td>
+                  <td class="border">Registry value set.<ul>
+                    <li><span class="strong">EventType</span>: 処理の種類 (SetValue)</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\TSTheme.exe)</li>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\USER\[ユーザーSID]\Remote\1\Control Panel\Desktop\FontSmoothingType)</li>
+                    <li><span class="strong">Details</span>: レジストリに書き込まれた設定値 (0)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">13</td>
+                  <td class="border">Registry value set (rule: RegistryEvent)</td>
+                  <td class="border">Registry value set.<ul>
+                    <li><span class="strong">EventType</span>: 処理の種類 (SetValue)</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\TSTheme.exe)</li>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">TargetObject</span>: 書き込み先のレジストリ値 (\REGISTRY\USER\[ユーザーSID]\Remote\1\Control Panel\Desktop\UserPreferencesMask)</li>
+                    <li><span class="strong">Details</span>: レジストリに書き込まれた設定値 (0)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="3">9</td>
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4656</td>
+                  <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                  <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                    <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\AppCompat\Programs\RecentFileCache.bcf)</li>
+                    <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                    <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendDataを含む)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4663</td>
+                  <td class="border">ファイル システム</td>
+                  <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                    <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\AppCompat\Programs\RecentFileCache.bcf)</li>
+                    <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                    <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendData)</li>
+                    <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4658</td>
+                  <td class="border">ファイル システム</td>
+                  <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="1">10</td>
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4778</td>
+                  <td class="border">その他のログオン/ログオフ イベント</td>
+                  <td class="border">セッションは Window Station に再接続しました。<ul>
+                    <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名</li>
+                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: 登録を試行したユーザーのセッションID</li>
+                    <li><span class="strong">セッション > セッション名</span>: セッションの識別名 (RDP-Tcp#[番号])</li>
+                    <li><span class="strong">追加情報 > クライアント名</span>: 実行元ホスト名 (接続元ホスト名)</li>
+                    <li><span class="strong">追加情報 > クライアント アドレス</span>: 実行元アドレス (接続元IPアドレス)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="1">11</td>
+                  <td class="border">Microsoft-Windows-TerminalServices-LocalSessionManager/Operational</td>
+                  <td class="border">25</td>
+                  <td class="border">TerminalServices-LocalSessionManager</td>
+                  <td class="border">リモート デスクトップ サービス: セッションの再接続に成功しました<ul>
+                    <li><span class="strong">ユーザー</span>: セッションを使用していたユーザー</li>
+                    <li><span class="strong">セッションID</span>: セッションのID</li>
+                    <li><span class="strong">ソース ネットワーク アドレス</span>: セッションの接続元アドレス (接続元ホスト)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="2">12</td>
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">1</td>
+                  <td class="border">Process Create (rule: ProcessCreate)</td>
+                  <td class="border">Process Create.<ul>
+                    <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\rdpclip.exe)</li>
+                    <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (rdpclip)</li>
+                    <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ (C:\Windows\system32)</li>
+                    <li><span class="strong">User</span>: 実行ユーザー</li>
+                    <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                    <li><span class="strong">IntegrityLevel</span>: 特権レベル (Medium)</li>
+                    <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                    <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                    <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル (C:\Windows\System32\svchost.exe)</li>
+                    <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン (C:\Windows\system32\svchost.exe -k NetworkService)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4688</td>
+                  <td class="border">プロセス作成</td>
+                  <td class="border">新しいプロセスが作成されました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                    <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (C:\Windows\System32\rdpclip.exe)</li>
+                    <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                    <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                    <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="3">13</td>
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4656</td>
+                  <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                  <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                    <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\AppCompat\Programs\RecentFileCache.bcf)</li>
+                    <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                    <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendDataを含む)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4663</td>
+                  <td class="border">ファイル システム</td>
+                  <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                    <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\AppCompat\Programs\RecentFileCache.bcf)</li>
+                    <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                    <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendData)</li>
+                    <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4658</td>
+                  <td class="border">ファイル システム</td>
+                  <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="1">14</td>
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">12</td>
+                  <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+                  <td class="border">Registry object added or deleted.<ul>
+                    <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\system32\svchost.exe)</li>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="1">15</td>
+                  <td class="border">Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational</td>
+                  <td class="border">1149</td>
+                  <td class="border">TerminalServices-RemoteConnectionManager</td>
+                  <td class="border">リモート デスクトップ サービス: ユーザー認証に成功しました<ul>
+                    <li><span class="strong">ユーザー</span>: セッションを使用していたユーザー</li>
+                    <li><span class="strong">ドメイン</span>: ユーザーのドメイン</li>
+                    <li><span class="strong">ソース ネットワーク アドレス</span>: セッションの接続元アドレス</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="2">16</td>
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">5</td>
+                  <td class="border">Process terminated (rule: ProcessTerminate)</td>
+                  <td class="border">Process terminated.<ul>
+                    <li><span class="strong">UtcTime</span>: プロセス終了日時 (UTC)</li>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\TSTheme.exe)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4689</td>
+                  <td class="border">プロセス終了</td>
+                  <td class="border">プロセスが終了しました。<ul>
+                    <li><span class="strong">ログの日時</span>: プロセス終了日時 (ローカル時刻)</li>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (C:\Windows\System32\TSTheme.exe)</li>
+                    <li><span class="strong">プロセス情報 > 終了状態</span>: プロセスの戻り値 (0x0)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="4">17</td>
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">11</td>
+                  <td class="border">File created (rule: FileCreate)</td>
+                  <td class="border">File created.<ul>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\svchost.exe)</li>
+                    <li><span class="strong">TargetFilename</span>: 作成されたファイル (C:\Windows\Prefetch\TSTHEME.EXE-[文字列].pf)</li>
+                    <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4656</td>
+                  <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                  <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                    <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\TSTHEME.EXE-[文字列].pf)</li>
+                    <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                    <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendDataを含む)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4663</td>
+                  <td class="border">ファイル システム</td>
+                  <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                    <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\TSTHEME.EXE-[文字列].pf)</li>
+                    <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                    <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendData)</li>
+                    <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4658</td>
+                  <td class="border">ファイル システム</td>
+                  <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="4">18</td>
+                  <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                  <td class="border">11</td>
+                  <td class="border">File created (rule: FileCreate)</td>
+                  <td class="border">File created.<ul>
+                    <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                    <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\svchost.exe)</li>
+                    <li><span class="strong">TargetFilename</span>: 作成されたファイル (C:\Windows\Prefetch\RDPCLIP.EXE-[文字列].pf)</li>
+                    <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4656</td>
+                  <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                  <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                    <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\RDPCLIP.EXE-[文字列].pf)</li>
+                    <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                    <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendDataを含む)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4663</td>
+                  <td class="border">ファイル システム</td>
+                  <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                    <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\RDPCLIP.EXE-[文字列].pf)</li>
+                    <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                    <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendData)</li>
+                    <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4658</td>
+                  <td class="border">ファイル システム</td>
+                  <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                    <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                    <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                    <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="2">19</td>
+                  <td class="border">セキュリティ</td>
+                  <td class="border">4779</td>
+                  <td class="border">その他のログオン/ログオフ イベント</td>
+                  <td class="border">セッションは Window Station から切断されました。<ul>
+                    <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名</li>
+                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン</li>
+                    <li><span class="strong">サブジェクト > ログオンID</span>: 登録を試行したユーザーのセッションID</li>
+                    <li><span class="strong">セッション > セッション名</span>: セッションの識別名 (RDP-Tcp#[番号])</li>
+                    <li><span class="strong">追加情報 > クライアント名</span>: 実行元ホスト名 (接続元ホスト名)</li>
+                    <li><span class="strong">追加情報 > クライアント アドレス</span>: 実行元アドレス (接続元IPアドレス)</li>
+                    </ul></td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">Microsoft-Windows-TerminalServices-LocalSessionManager/Operational</td>
+                  <td class="border">24</td>
+                  <td class="border">TerminalServices-LocalSessionManager</td>
+                  <td class="border">リモート デスクトップ サービス: セッションは切断されました<ul>
+                    <li><span class="strong">ユーザー</span>: セッションを使用していたユーザー</li>
+                    <li><span class="strong">セッションID</span>: セッションのID</li>
+                    <li><span class="strong">ソース ネットワーク アドレス</span>: セッションの接続元アドレス (接続元ホスト)</li>
+                    </ul></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        <h3 class="subsection"><a href="#DestinationDetails-Prefetch" class="collapse" id="a-DestinationDetails-Prefetch" onclick="showhide('DestinationDetails-Prefetch');">-</a> <a name="DestinationDetails-Prefetch">Prefetch</a></h3>
+          <div class="section" id="div-DestinationDetails-Prefetch">
+            <table class="border">
+              <thead>
+                <tr class="border">
+                  <th class="border_header">#</th>
+                  <th class="border_header">Prefetchファイル</th>
+                  <th class="border_header">プロセス名</th>
+                  <th class="border_header">プロセスパス</th>
+                  <th class="border_header">ログから得られる情報</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border">
+                  <td class="border" rowspan="1">1</td>
+                  <td class="border">C:\Windows\Prefetch\TSTHEME.EXE-[文字列].pf</td>
+                  <td class="border">TSTHEME.EXE</td>
+                  <td class="border">C:\WINDOWS\SYSTEM32\TSTHEME.EXE</td>
+                  <td class="border">Last Run Time (最終実行日時)</td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="1">2</td>
+                  <td class="border">C:\Windows\Prefetch\RDPCLIP.EXE-[文字列].pf</td>
+                  <td class="border">RDPCLIP.EXE</td>
+                  <td class="border">C:\WINDOWS\SYSTEM32\RDPCLIP.EXE</td>
+                  <td class="border">Last Run Time (最終実行日時)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        <h3 class="subsection"><a href="#DestinationDetails-Registry" class="collapse" id="a-DestinationDetails-Registry" onclick="showhide('DestinationDetails-Registry');">-</a> <a name="DestinationDetails-Registry">レジストリエントリ</a></h3>
+          <div class="section" id="div-DestinationDetails-Registry">
+            <table class="border">
+              <thead>
+                <tr class="border">
+                  <th class="border_header">#</th>
+                  <th class="border_header">パス</th>
+                  <th class="border_header">種類</th>
+                  <th class="border_header">値</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border">
+                  <td class="border" rowspan="2">1</td>
+                  <td class="border">HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Print\PackageInstallation\Windows x64\DriverPackages\tsprint.inf_amd64_neutral_c48d421ad2c1e3e3\DriverStorePath</td>
+                  <td class="border">String</td>
+                  <td class="border">C:\Windows\System32\DriverStore\FileRepository\tsprint.inf_amd64_neutral_c48d421ad2c1e3e3\tsprint.inf</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Print\PackageInstallation\Windows x64\DriverPackages\tsprint.inf_amd64_neutral_c48d421ad2c1e3e3\CabPath</td>
+                  <td class="border">String</td>
+                  <td class="border">C:\Windows\system32\spool\DRIVERS\x64\PCC\tsprint.inf_amd64_neutral_c48d421ad2c1e3e3.cab</td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="3">2</td>
+                  <td class="border">HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Print\PackageInstallation\Windows x64\DriverPackages\tsprint.inf_amd64_neutral_c48d421ad2c1e3e3</td>
+                  <td class="border">Key</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Print\PackageInstallation\Windows x64\DriverPackages\tsprint.inf_amd64_neutral_c48d421ad2c1e3e3\DriverStorePath</td>
+                  <td class="border">String</td>
+                  <td class="border">C:\Windows\System32\DriverStore\FileRepository\tsprint.inf_amd64_neutral_c48d421ad2c1e3e3\tsprint.inf</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Print\PackageInstallation\Windows x64\DriverPackages\tsprint.inf_amd64_neutral_c48d421ad2c1e3e3\CabPath</td>
+                  <td class="border">String</td>
+                  <td class="border">C:\Windows\system32\spool\DRIVERS\x64\PCC\tsprint.inf_amd64_neutral_c48d421ad2c1e3e3.cab</td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="26">3</td>
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\DeviceInstance</td>
+                  <td class="border">String</td>
+                  <td class="border">Root\RDPBUS\0000</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS001\SymbolicLink</td>
+                  <td class="border">String</td>
+                  <td class="border">\\?\Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\TS001</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS001\Device Parameters\Port Number</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000001</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS001\Device Parameters\Base Name</td>
+                  <td class="border">String</td>
+                  <td class="border">TS</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS001\Device Parameters\Port Description</td>
+                  <td class="border">String</td>
+                  <td class="border">Inactive TS Port</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS001\Device Parameters\MaxBufferSize</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000000</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS001\Device Parameters\Client Device Name</td>
+                  <td class="border">String</td>
+                  <td class="border">\;PRN3:1\tsclient\PRN3</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS001\Device Parameters\recyclable</td>
+                  <td class="border">Binary</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS001\Control\Linked</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000000</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS002\SymbolicLink</td>
+                  <td class="border">String</td>
+                  <td class="border">\\?\Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\TS002</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS002\Device Parameters\Port Number</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000002</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS002\Device Parameters\Base Name</td>
+                  <td class="border">String</td>
+                  <td class="border">TS</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS002\Device Parameters\Port Description</td>
+                  <td class="border">String</td>
+                  <td class="border">Inactive TS Port</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS002\Device Parameters\MaxBufferSize</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000000</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS002\Device Parameters\Client Device Name</td>
+                  <td class="border">String</td>
+                  <td class="border">\;PRN4:1\tsclient\PRN4</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS002\Device Parameters\recyclable</td>
+                  <td class="border">Binary</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS002\Control\Linked</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000000</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS003\SymbolicLink</td>
+                  <td class="border">String</td>
+                  <td class="border">\\?\Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\TS003</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS003\Device Parameters\Port Number</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000003</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS003\Device Parameters\Base Name</td>
+                  <td class="border">String</td>
+                  <td class="border">TS</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS003\Device Parameters\Port Description</td>
+                  <td class="border">String</td>
+                  <td class="border">Inactive TS Port</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS003\Device Parameters\MaxBufferSize</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000000</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS003\Device Parameters\Client Device Name</td>
+                  <td class="border">String</td>
+                  <td class="border">\;PRN2:1\tsclient\PRN2</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS003\Device Parameters\recyclable</td>
+                  <td class="border">Binary</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\#TS003\Control\Linked</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000000</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceClasses\{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\##?#Root#RDPBUS#0000#{28d78fad-5a12-11d1-ae5b-0000f803a8c2}\Control\ReferenceCount</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000000</td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="25">4</td>
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Dependent Files</td>
+                  <td class="border">String</td>
+                  <td class="border">tsprint-PipelineConfig.xml</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Configuration File</td>
+                  <td class="border">String</td>
+                  <td class="border">tsprint.dll</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Data File</td>
+                  <td class="border">String</td>
+                  <td class="border">tsprint-datafile.dat</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Driver</td>
+                  <td class="border">String</td>
+                  <td class="border">mxdwdrv.dll</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Help File</td>
+                  <td class="border">String</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Monitor</td>
+                  <td class="border">String</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Datatype</td>
+                  <td class="border">String</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Previous Names</td>
+                  <td class="border">String</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Version</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000003</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\TempDir</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000000</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Attributes</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000002</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Manufacturer</td>
+                  <td class="border">String</td>
+                  <td class="border">Microsoft</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\OEM URL</td>
+                  <td class="border">String</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\HardwareID</td>
+                  <td class="border">String</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Provider</td>
+                  <td class="border">String</td>
+                  <td class="border">Microsoft リモート デスクトップ サービス</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\Print Processor</td>
+                  <td class="border">String</td>
+                  <td class="border">winprint</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\VendorSetup</td>
+                  <td class="border">String</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\ColorProfiles</td>
+                  <td class="border">String</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\InfPath</td>
+                  <td class="border">String</td>
+                  <td class="border">C:\Windows\System32\DriverStore\FileRepository\tsprint.inf_amd64_neutral_c48d421ad2c1e3e3\tsprint.inf</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\PrinterDriverAttributes</td>
+                  <td class="border">DWORD</td>
+                  <td class="border">0x00000001</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\CoreDependencies</td>
+                  <td class="border">String</td>
+                  <td class="border">([GUID])</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\DriverDate</td>
+                  <td class="border">String</td>
+                  <td class="border">[ドライバーの更新日時]</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\DriverVersion</td>
+                  <td class="border">String</td>
+                  <td class="border">[バージョン番号]</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\MinInboxDriverVerDate</td>
+                  <td class="border">String</td>
+                  <td class="border">01/01/1601</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\Print\Environments\Windows x64\Drivers\Version-3\Remote Desktop Easy Print\MinInboxDriverVerVersion</td>
+                  <td class="border">String</td>
+                  <td class="border">0.0.0.0</td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="2">5</td>
+                  <td class="border">HKEY_USERS\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Explorer\Remote</td>
+                  <td class="border">Key</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_USERS\[ユーザーSID]\Remote</td>
+                  <td class="border">Key</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="4">6</td>
+                  <td class="border">HKEY_USERS\[ユーザーSID]\Software\Classes\Local Settings\MuiCache\1\826182D0\@%systemroot%\system32\rdpendp.dll,-1001</td>
+                  <td class="border">String</td>
+                  <td class="border">リモート オーディオ</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_USERS\[ユーザーSID]\Software\Classes\Local Settings\MuiCache\1\826182D0\@%systemroot%\system32\rdpendp.dll,-1002</td>
+                  <td class="border">String</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_USERS\[ユーザーSID]_Classes\Local Settings\MuiCache\1\826182D0\@%systemroot%\system32\rdpendp.dll,-1001</td>
+                  <td class="border">String</td>
+                  <td class="border">リモート オーディオ</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">HKEY_USERS\[ユーザーSID]_Classes\Local Settings\MuiCache\1\826182D0\@%systemroot%\system32\rdpendp.dll,-1002</td>
+                  <td class="border">String</td>
+                  <td class="border">(値の設定無し)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        <h3 class="subsection"><a href="#DestinationDetails-USNJournal" class="collapse" id="a-DestinationDetails-USNJournal" onclick="showhide('DestinationDetails-USNJournal');">-</a> <a name="DestinationDetails-USNJournal">USNジャーナル</a></h3>
+          <div class="section" id="div-DestinationDetails-USNJournal">
+            <table class="border">
+              <thead>
+                <tr class="border">
+                  <th class="border_header">#</th>
+                  <th class="border_header">ファイル名</th>
+                  <th class="border_header">処理</th>
+                  <th class="border_header">属性</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border">
+                  <td class="border" rowspan="3">1</td>
+                  <td class="border">RecentFileCache.bcf</td>
+                  <td class="border">DATA_EXTEND</td>
+                  <td class="border">system+archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">RecentFileCache.bcf</td>
+                  <td class="border">DATA_EXTEND+DATA_OVERWRITE</td>
+                  <td class="border">system+archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">RecentFileCache.bcf</td>
+                  <td class="border">CLOSE+DATA_EXTEND+DATA_OVERWRITE</td>
+                  <td class="border">system+archive</td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="8">2</td>
+                  <td class="border">tsprint.dll</td>
+                  <td class="border">FILE_CREATE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint.dll</td>
+                  <td class="border">DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint.dll</td>
+                  <td class="border">BASIC_INFO_CHANGE+DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint.dll</td>
+                  <td class="border">BASIC_INFO_CHANGE+CLOSE+DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint.dll</td>
+                  <td class="border">RENAME_OLD_NAME</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint.dll</td>
+                  <td class="border">RENAME_NEW_NAME</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint.dll</td>
+                  <td class="border">CLOSE+RENAME_NEW_NAME</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint.dll</td>
+                  <td class="border">CLOSE+FILE_DELETE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="8">3</td>
+                  <td class="border">tsprint-datafile.dat</td>
+                  <td class="border">FILE_CREATE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-datafile.dat</td>
+                  <td class="border">DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-datafile.dat</td>
+                  <td class="border">BASIC_INFO_CHANGE+DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-datafile.dat</td>
+                  <td class="border">BASIC_INFO_CHANGE+CLOSE+DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-datafile.dat</td>
+                  <td class="border">RENAME_OLD_NAME</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-datafile.dat</td>
+                  <td class="border">RENAME_NEW_NAME</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-datafile.dat</td>
+                  <td class="border">CLOSE+RENAME_NEW_NAME</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-datafile.dat</td>
+                  <td class="border">CLOSE+FILE_DELETE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="8">4</td>
+                  <td class="border">tsprint-PipelineConfig.xml</td>
+                  <td class="border">FILE_CREATE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-PipelineConfig.xml</td>
+                  <td class="border">DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-PipelineConfig.xml</td>
+                  <td class="border">BASIC_INFO_CHANGE+DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-PipelineConfig.xml</td>
+                  <td class="border">BASIC_INFO_CHANGE+CLOSE+DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-PipelineConfig.xml</td>
+                  <td class="border">RENAME_OLD_NAME</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-PipelineConfig.xml</td>
+                  <td class="border">RENAME_NEW_NAME</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-PipelineConfig.xml</td>
+                  <td class="border">CLOSE+RENAME_NEW_NAME</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">tsprint-PipelineConfig.xml</td>
+                  <td class="border">CLOSE+FILE_DELETE</td>
+                  <td class="border">archive</td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="3">5</td>
+                  <td class="border">TSTHEME.EXE-[文字列].pf</td>
+                  <td class="border">FILE_CREATE</td>
+                  <td class="border">archive+not_indexed</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">TSTHEME.EXE-[文字列].pf</td>
+                  <td class="border">DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive+not_indexed</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">TSTHEME.EXE-[文字列].pf</td>
+                  <td class="border">CLOSE+DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive+not_indexed</td>
+                </tr>
+                <tr class="border">
+                  <td class="border" rowspan="3">6</td>
+                  <td class="border">RDPCLIP.EXE-[文字列].pf</td>
+                  <td class="border">FILE_CREATE</td>
+                  <td class="border">archive+not_indexed</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">RDPCLIP.EXE-[文字列].pf</td>
+                  <td class="border">DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive+not_indexed</td>
+                </tr>
+                <tr class="border">
+                  <!-- rowspan -->
+                  <td class="border">RDPCLIP.EXE-[文字列].pf</td>
+                  <td class="border">CLOSE+DATA_EXTEND+FILE_CREATE</td>
+                  <td class="border">archive+not_indexed</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+      </div>
+        <hr class="section_divider">
+      <h2 class="section"><a href="#Notes" class="collapse" id="a-Notes" onclick="showhide('Notes');">-</a> <a name="Notes">備考</a></h2>
+        <div class="section" id="div-Notes">
+          <ul>
+            <li>接続先に初めて接続する場合、プリンタドライバのインストールが発生する。</li>
+            <li>通信パケットは 3389/tcp が観測可能であるが、内容が暗号化されている。なお、使用するポート番号は、接続先のレジストリエントリの設定で変更することが可能。</li>
+          </ul>
+        </div>
+  </body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>分析ツール一覧</title>
+
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+  <h1>分析ツール一覧</h1>
+  <table class="table">
+    <thead class="thead-inverse">
+      <tr>
+        <th>カテゴリ</th>
+        <th>ツール</th>
+        <th>説明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th rowspan="8">コマンド実行</th>
+        <td><a class="nav-link" href="details/PsExec.htm" target="mainframe">PsExec</a></td>
+        <td>リモートホスト上でコマンドを実行する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/wmic.htm" target="mainframe">wmic</a></td>
+        <td>Windowsのシステム管理に使用する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/schtasks.htm" target="mainframe">schtasks</a></td>
+        <td>指定した時刻にタスクを実行する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/wmiexec-vbs.htm" target="mainframe">wmiexec.vbs</a></td>
+        <td>Windowsのシステム管理に使用する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/BeginX.htm" target="mainframe">BeginX</a></td>
+        <td>クライアントからサーバに対してコマンドを実行をする</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/WinRM.htm" target="mainframe">WinRM</a></td>
+        <td>リモートの端末から情報を収集する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/WinRS.htm" target="mainframe">WinRS</a></td>
+        <td>リモートホスト上でコマンドを実行する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/BITS.htm" target="mainframe">BITS</a></td>
+        <td>バックグラウンドでファイルを送受信する</td>
+      </tr>
+      <tr>
+        <th rowspan="16">パスワード、ハッシュの入手</th>
+        <td><a class="nav-link" href="details/PWDump7.htm" target="mainframe">PWDump7</a></td>
+        <td>ホスト内のパスワードハッシュ一覧を表示する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/PWDumpX.htm" target="mainframe">PWDumpX</a></td>
+        <td>リモートホストからパスワードハッシュを取得する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/QuarksPWDump.htm" target="mainframe">Quarks PwDump</a></td>
+        <td>ドメインアカウントおよびローカルアカウントのパスワードハッシュや、キャッシュされたパスワードを取得する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/Mimikatz_lsadump-sam.htm" target="mainframe">Mimikatz<br>(パスワードハッシュ入手 lsadump::sam)</a></td>
+        <td>OS内に保存された認証情報を搾取する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/Mimikatz_sekurlsa-logonpasswords.htm" target="mainframe">Mimikatz<br>(パスワードハッシュ入手 sekurlsa::logonpasswords)</a></td>
+        <td>OS内に保存された認証情報を搾取する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/Mimikatz_sekurlsa-tickets.htm" target="mainframe">Mimikatz<br>(チケット入手 sekurlsa::tickets)</a></td>
+        <td>ログオンしているセッションのチケットを取得する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/WCE.htm" target="mainframe">WCE</a></td>
+        <td>ホストのメモリ内に存在する、パスワードハッシュを取得する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/gsecdump.htm" target="mainframe">gsecdump</a></td>
+        <td>SAM/ADやログオンセッションから、パスワードハッシュを抽出する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/lslsass.htm" target="mainframe">lslsass</a></td>
+        <td>lsassプロセスから、有効なログオンセッションのパスワードハッシュを取得する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/AceHash.htm" target="mainframe">AceHash</a></td>
+        <td>パスワードハッシュ値を取得し、ホストにログオンする</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/Find-GPOPasswords.htm" target="mainframe">Find-GPOPasswords.ps1</a></td>
+        <td>グループポリシーのファイルに記載されているパスワードを取得する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/PowerSploit_GetGPPPassword.htm" target="mainframe">Get-GPPPassword<br>(PowerSploit)</a></td>
+        <td>グループポリシーに記載されている平文のパスワードとその他のアカウント情報を取得する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/PowerSploit_Invoke-Mimikatz.htm" target="mainframe">Invoke-Mimikatz<br>(PowerSploit)</a></td>
+        <td>メモリ上にMimikatzを読み込み、起動させる</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/PowerSploit_Out-Minidump.htm" target="mainframe">Out-Minidump<br>(PowerSploit)</a></td>
+        <td>メモリ上のプロセスをダンプする</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/PowerMemory.htm" target="mainframe">PowerMemory<br>(RWMC Tool)</a></td>
+        <td>ファイルやメモリ内に存在する認証情報を取得する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/WebBrowserPassView.htm" target="mainframe">WebBrowserPassView</a></td>
+        <td>Webブラウザに保存されているユーザー名・パスワードを抽出する</td>
+      </tr>
+      <tr>
+        <th rowspan="2">通信の不正中継</th>
+        <td><a class="nav-link" href="details/Htran.htm" target="mainframe">Htran</a></td>
+        <td>通信をトンネリングさせる</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/FakeWpad.htm" target="mainframe">Fake wpad</a></td>
+        <td>wpadサーバとして動作し、クライアントからの通信内容を取得・変更する</td>
+      </tr>
+      <tr>
+        <th>リモートログイン</th>
+        <td><a class="nav-link" href="details/mstsc.htm" target="mainframe">RDP</a></td>
+        <td>リモートデスクトップサービスが稼働しているサーバーに接続する</td>
+      </tr>
+      <tr>
+        <th rowspan="2">Pass-the-hash<br>Pass-the-ticket</th>
+        <td><a class="nav-link" href="details/RemoteLogin-WCE.htm" target="mainframe">WCE (リモートログイン)</a></td>
+        <td>取得したパスワードハッシュを利用し、リモートホストでコマンドを実行する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/RemoteLogin-Mimikatz.htm" target="mainframe">Mimikatz (リモートログイン)</a></td>
+        <td>取得したパスワードハッシュを利用し、リモートホストでコマンドを実行する</td>
+      </tr>
+      <tr>
+        <th rowspan="3">権限昇格</th>
+        <td><a class="nav-link" href="details/MS14-058.htm" target="mainframe">MS14-058 Exploit</a></td>
+        <td>指定した実行ファイルを、SYSTEM権限で実行する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/MS15-078.htm" target="mainframe">MS15-078 Exploit</a></td>
+        <td>指定した実行ファイルを、SYSTEM権限で実行する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/SDB-UAC-Bypass.htm" target="mainframe">SDB UAC Bypass</a></td>
+        <td>アプリケーション互換データベース (SDB) を用いて、UACにより制御されるアプリケーションを管理者権限で実行する</td>
+      </tr>
+      <tr>
+        <th rowspan="3">ドメイン管理者権限<br>アカウントの奪取</th>
+        <td><a class="nav-link" href="details/MS14-068.htm" target="mainframe">MS14-068 Exploit</a></td>
+        <td>ドメインユーザーの権限を、ドメイン管理者権限に変更する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/Mimikatz_GoldenTicket.htm" target="mainframe">Golden Ticket<br>(Mimikatz)</a></td>
+        <td>不正にKerberosの認証チケットを作成し、リモートホストに接続する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/Mimikatz_SilverTicket.htm" target="mainframe">Silver Ticket<br>(Mimikatz)</a></td>
+        <td>不正にKerberosの認証チケットを作成し、リモートホストに接続する</td>
+      </tr>
+      <tr>
+        <th rowspan="8">情報収集</th>
+        <td><a class="nav-link" href="details/ntdsutil.htm" target="mainframe">ntdsutil</a></td>
+        <td>Active Directory データベースの保守に使用する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/vssadmin.htm" target="mainframe">vssadmin</a></td>
+        <td>Volume Shadow Copyを作成し、NTDS.DITやレジストリなどのシステムファイルを抽出する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/csvde.htm" target="mainframe">csvde</a></td>
+        <td>Active Directory上のアカウント情報をCSV形式で出力する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/ldifde.htm" target="mainframe">ldifde</a></td>
+        <td>Active Directory上のアカウント情報をLDIF形式で出力する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/dsquery.htm" target="mainframe">dsquery</a></td>
+        <td>Active Directoryから、ユーザーやグループなどの情報を取得する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/dcdiag.htm" target="mainframe">dcdiag</a></td>
+        <td>ドメインコントローラーの状態を分析・調査する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/nltest.htm" target="mainframe">nltest</a></td>
+        <td>使用しているドメインコントローラーとそのIPアドレスを取得する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/nmap.htm" target="mainframe">nmap</a></td>
+        <td>ネットワーク調査に使用する</td>
+      </tr>
+      <tr>
+        <th>ローカルユーザー・グループの追加・削除</th>
+        <td><a class="nav-link" href="details/net-user.htm" target="mainframe">net user</a></td>
+        <td>ホストまたはドメイン上に、ユーザーアカウントを追加する</td>
+      </tr>
+      <tr>
+        <th>ファイル共有</th>
+        <td><a class="nav-link" href="details/net-use.htm" target="mainframe">net use</a></td>
+        <td>ネットワーク上で公開されている共有ポイントに接続する</td>
+      </tr>
+      <tr>
+        <th rowspan="4">痕跡の削除</th>
+        <td><a class="nav-link" href="details/sdelete.htm" target="mainframe">sdelete</a></td>
+        <td>ファイルを複数回上書きしてから削除する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/timestomp.htm" target="mainframe">timestomp</a></td>
+        <td>ファイルのタイムスタンプを変更する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/klist-purge.htm" target="mainframe">klist purge</a></td>
+        <td>保存されたKerberosチケットを削除する</td>
+      </tr>
+      <tr>
+        <td><a class="nav-link" href="details/wevtutil.htm" target="mainframe">wevtutil</a></td>
+        <td>Windowsのイベントログを削除する</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+
+</html>

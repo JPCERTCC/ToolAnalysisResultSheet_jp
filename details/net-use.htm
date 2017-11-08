@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>netコマンド (net use)</title>
+    <link rel="stylesheet" type="text/css" href="common/style.css" />
+    <script language="JavaScript" type="text/javascript" src="common/script.js"></script>
+  </head>
+  <body>
+    <h1 class="title">netコマンド (net use)</h1>
+      <h2 class="toc"><a href="#toc" class="collapse" id="a-toc" onclick="showhide('toc');">-</a> <a name="toc">目次</a></h2>
+        <div class="toc" id="div-toc">
+          <ul>
+            <li><a href="#Summary">ツール概要</a></li>
+            <li><a href="#ExecCondition">ツール動作概要</a></li>
+            <li><a href="#Findings">ログから得られる情報</a></li>
+            <li><a href="#SuccessCondition">実行成功時に確認できる痕跡</a></li>
+            <li><a href="#KeyEvents">実行時に記録される主要な情報</a></li>
+            <li><a href="#SourceDetails">詳細：接続元</a></li>
+            <li><a href="#DestinationDetails">詳細：接続先</a></li>
+            <li><a href="#ADDetails">詳細：ドメインコントローラー</a></li>
+          </ul>
+          <p class="toc_command"><a href="#" onclick="collapseall('s');">全てのセクションを開く</a> | <a href="#" onclick="collapseall('h');">全てのセクションを閉じる</a></p>
+          <hr class="section_divider" />
+        </div>
+      <h2 class="section"><a href="#Summary" class="collapse" id="a-Summary" onclick="showhide('Summary');">-</a> <a name="Summary">ツール概要</a></h2>
+        <div class="section" id="div-Summary">
+          <dl class="table">
+            <dt class="table">カテゴリ</dt>
+              <dd class="table">ファイル共有・転送</dd>
+            <dt class="table">説明</dt>
+              <dd class="table">ネットワーク上で公開されている共有ポイントに接続する。</dd>
+            <dt class="table">攻撃時における想定利用例</dt>
+              <dd class="table">共有ポイントを経由して攻撃に使用するツールを送り込んだり、ファイルサーバーから情報を取得したりする。</dd>
+          </dl>
+        </div>
+      <h2 class="section"><a href="#ExecCondition" class="collapse" id="a-ExecCondition" onclick="showhide('ExecCondition');">-</a> <a name="ExecCondition">ツール動作概要</a></h2>
+        <div class="section" id="div-ExecCondition">
+          <table class="border">
+            <thead>
+              <tr class="border">
+                <th class="border_header">項目</th>
+                <th class="border_header">接続元</th>
+                <th class="border_header">接続先</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border">
+                <td class="border_header">OS</td>
+                <td class="border" colspan="2">Windows</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">権限</td>
+                <td class="border" colspan="2">標準ユーザー</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">通信プロトコル</td>
+                <td class="border" colspan="2">445/tcp</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">ドメインへの所属</td>
+                <td class="border" colspan="2">不要</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">サービス</td>
+                <td class="border">Workstation</td>
+                <td class="border">Server</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      <h2 class="section"><a href="#Findings" class="collapse" id="a-Findings" onclick="showhide('Findings');">-</a> <a name="Findings">ログから得られる情報</a></h2>
+        <div class="section" id="div-Findings">
+          <dl class="table">
+            <dt class="table">標準設定</dt>
+              <dd class="table"><ul>
+                <li>接続元<ul>
+                  <li>実行履歴 (Prefetch)</li>
+                  </ul></li>
+                </ul></dd>
+            <dt class="table">追加設定</dt>
+              <dd class="table"><ul>
+                <li>接続元<ul>
+                  <li>実行履歴 (監査ポリシー, Sysmon)</li>
+                  <li>445/tcpを使用した通信(監査ポリシー, Sysmon)</li>
+                  </ul></li>
+                <li>接続先<ul>
+                  <li>445/tcpを使用した通信 (監査ポリシー, Sysmon)</li>
+                  <li>ファイルへのアクセス履歴や共有パスに対するアクセスが記録される。また、ファイルシステムへの監査が有効な場合は、対象ファイルへのアクセス履歴が記録される (監査ポリシー)</li>
+                  </ul></li>
+                </ul></dd>
+          </dl>
+        </div>
+      <h2 class="section"><a href="#SuccessCondition" class="collapse" id="a-SuccessCondition" onclick="showhide('SuccessCondition');">-</a> <a name="SuccessCondition">実行成功時に確認できる痕跡</a></h2>
+        <div class="section" id="div-SuccessCondition">
+          <ul>
+            <li>接続元: イベントログ「セキュリティ」にnet.exeのイベントID 4689 (プロセスが終了しました)が記録され、実行結果（戻り値）が"0x0"となっている</li>
+            <li>接続先: イベントログ「セキュリティ」のイベントID: 5145でファイルが読み取られたことが記録されている</li>
+          </ul>
+        </div>
+      <h2 class="section"><a href="#KeyEvents" class="collapse" id="a-KeyEvents" onclick="showhide('KeyEvents');">-</a> <a name="KeyEvents">実行時に記録される主要な情報</a></h2>
+        <div class="section" id="div-KeyEvents">
+          <h3 class="subsection"><a href="#KeyEvents-Source" class="collapse" id="a-KeyEvents-Source" onclick="showhide('KeyEvents-Source');">-</a> <a name="KeyEvents-Source">接続元</a></h3>
+            <div class="section" id="div-KeyEvents-Source">
+              <h4>イベントログ</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ログ</th>
+                      <th class="border_header">イベントID</th>
+                      <th class="border_header">タスクのカテゴリ</th>
+                      <th class="border_header">イベント内容</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">1</td>
+                      <td class="border">Process Create (rule: ProcessCreate)</td>
+                      <td class="border">Process Create.<ul>
+                        <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\net.exe)</li>
+                        <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (net use \\[接続先]\[共有パス])</li>
+                        <li><span class="strong">User</span>: 実行ユーザー</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">3</td>
+                      <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                      <td class="border">Network connection detected.<ul>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID (4)</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (System)</li>
+                        <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                        <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                        <li><span class="strong">SourceIp/SourceHostname/SourcePort</span>: 送信元IPアドレス/ホスト名/ポート番号 (接続元)</li>
+                        <li><span class="strong">DestinationIp/DestinationHostname/DestinationPort</span>: 宛先IPアドレス/ホスト名/ポート番号 (接続先 ポート445)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">3</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">3</td>
+                      <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                      <td class="border">Network connection detected.<ul>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                        <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                        <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                        <li><span class="strong">SourceIp/SourceHostname/SourcePort</span>: 送信元IPアドレス/ホスト名/ポート番号 (接続元)</li>
+                        <li><span class="strong">DestinationIp/DestinationHostname/DestinationPort</span>: 宛先IPアドレス/ホスト名/ポート番号 (ドメインコントローラー ポート88)</li>
+                        </ul></td>
+                    </tr>
+                  </tbody>
+                </table>
+              <h4>MFT</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">パス</th>
+                      <th class="border_header">ヘッダフラグ</th>
+                      <th class="border_header">有効</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">[ネットワーク経由でコピーするように指定したファイル]</td>
+                      <td class="border">FILE</td>
+                      <td class="border">ALLOCATED</td>
+                    </tr>
+                  </tbody>
+                </table>
+              <h4>USNジャーナル</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ファイル名</th>
+                      <th class="border_header">処理</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">[ネットワーク経由でコピーするように指定したファイル]</td>
+                      <td class="border">BASIC_INFO_CHANGE+CLOSE</td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+          <h3 class="subsection"><a href="#KeyEvents-Destination" class="collapse" id="a-KeyEvents-Destination" onclick="showhide('KeyEvents-Destination');">-</a> <a name="KeyEvents-Destination">接続先</a></h3>
+            <div class="section" id="div-KeyEvents-Destination">
+              <h4>イベントログ</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ログ</th>
+                      <th class="border_header">イベントID</th>
+                      <th class="border_header">タスクのカテゴリ</th>
+                      <th class="border_header">イベント内容</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">3</td>
+                      <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                      <td class="border">Network connection detected.<ul>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID (4)</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (System)</li>
+                        <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                        <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                        <li><span class="strong">SourceIp/SourceHostname/SourcePort</span>: 送信元IPアドレス/ホスト名/ポート番号 (接続先 ポート445)</li>
+                        <li><span class="strong">DestinationIp/DestinationHostname/DestinationPort</span>: 宛先IPアドレス/ホスト名/ポート番号 (接続元)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">5140</td>
+                      <td class="border">ファイルの共有</td>
+                      <td class="border">ネットワーク共有オブジェクトにアクセスしました。<ul>
+                        <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                        <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                        <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                        <li><span class="strong">共有情報 > 共有名</span>: 使用された共有名 (\\*\IPC$)</li>
+                        <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (ReadDataまたはListDirectory)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">3</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">3</td>
+                      <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                      <td class="border">Network connection detected.<ul>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                        <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                        <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                        <li><span class="strong">SourceIp/SourceHostname/SourcePort</span>: 送信元IPアドレス/ホスト名/ポート番号 (接続先)</li>
+                        <li><span class="strong">DestinationIp/DestinationHostname/DestinationPort</span>: 宛先IPアドレス/ホスト名/ポート番号 (ドメインコントローラー ポート88)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">4</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">5140</td>
+                      <td class="border">ファイルの共有</td>
+                      <td class="border">ネットワーク共有オブジェクトにアクセスしました。以降の動作は、実施された内容により異なる。<ul>
+                        <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                        <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                        <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                        <li><span class="strong">共有情報 > 共有名</span>: 使用された共有名 (\\*\[接続元で指定された共有名])</li>
+                        <li><span class="strong">共有情報 > 共有パス</span>: 共有のパス (\??\[ターゲット側ディスク上のパス])</li>
+                        <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (ReadDataまたはListDirectory)</li>
+                        </ul></td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+          <h3 class="subsection"><a href="#KeyEvents-AD" class="collapse" id="a-KeyEvents-AD" onclick="showhide('KeyEvents-AD');">-</a> <a name="KeyEvents-AD">ドメインコントローラー</a></h3>
+            <div class="section" id="div-KeyEvents-AD">
+              <h4>イベントログ</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ログ</th>
+                      <th class="border_header">イベントID</th>
+                      <th class="border_header">タスクのカテゴリ</th>
+                      <th class="border_header">イベント内容</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">3</td>
+                      <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                      <td class="border">Network connection detected.<ul>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                        <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                        <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                        <li><span class="strong">SourceIp/SourceHostname/SourcePort</span>: 送信元IPアドレス/ホスト名/ポート番号 (ドメインコントローラー ポート88)</li>
+                        <li><span class="strong">DestinationIp/DestinationHostname/DestinationPort</span>: 宛先IPアドレス/ホスト名/ポート番号 (接続元)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">3</td>
+                      <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                      <td class="border">Network connection detected.<ul>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                        <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                        <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                        <li><span class="strong">SourceIp/SourceHostname/SourcePort</span>: 送信元IPアドレス/ホスト名/ポート番号 (ドメインコントローラー ポート88)</li>
+                        <li><span class="strong">DestinationIp/DestinationHostname/DestinationPort</span>: 宛先IPアドレス/ホスト名/ポート番号 (接続先)</li>
+                        </ul></td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+        </div>
+        <hr class="section_divider">
+      <h2 class="section"><a href="#SourceDetails" class="collapse" id="a-SourceDetails" onclick="showhide('SourceDetails');">-</a> <a name="SourceDetails">詳細：接続元</a></h2>
+        <div class="section" id="div-SourceDetails">
+          <h3 class="subsection"><a href="#SourceDetails-EventLogs" class="collapse" id="a-SourceDetails-EventLogs" onclick="showhide('SourceDetails-EventLogs');">-</a> <a name="SourceDetails-EventLogs">イベントログ</a></h3>
+            <div class="section" id="div-SourceDetails-EventLogs">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">イベントログ</th>
+                    <th class="border_header">イベントID</th>
+                    <th class="border_header">タスクのカテゴリ</th>
+                    <th class="border_header">イベント内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="2">1</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\net.exe)</li>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (net use \\[接続先]\[共有パス])</li>
+                      <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">IntegrityLevel</span>: 特権レベル</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (C:\Windows\System32\net.exe)</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 必須ラベル</span>: 権限昇格の要否 (Mandatory Label\High Mandatory Level)</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: 新プロセスを作成した親プロセスのパス</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">2</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID (4)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (System)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続元IPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続元ホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (接続先IPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (接続先ホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (445)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5158</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID (4)</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (System)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID (4)</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (System)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (接続先ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (445)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">3</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">11</td>
+                    <td class="border">File created (rule: FileCreate)</td>
+                    <td class="border">File created.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">TargetFilename</span>: 作成されたファイル (C:\Windows\Prefetch\NET.EXE-[文字列].pf)</li>
+                      <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\NET.EXE-[文字列].pf)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile,AppendDataを含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\NET.EXE-[文字列].pf)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile、AppendData)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">4</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続元IPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続元ホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (88)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5158</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (接続先ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (88)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">5</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続元IPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続元ホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (88)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5158</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (ドメインコントローラー)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (88)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">6</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続元IPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続元ホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (88)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5158</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (ドメインコントローラー)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (88)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">7</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (ネットワーク経由でコピーするように指定したファイル)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (SYNCHRONIZE, WriteAttributes)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (ネットワーク経由でコピーするように指定したファイル)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteAttributes)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名</li>
+                      </ul></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#SourceDetails-MFT" class="collapse" id="a-SourceDetails-MFT" onclick="showhide('SourceDetails-MFT');">-</a> <a name="SourceDetails-MFT">MFT</a></h3>
+            <div class="section" id="div-SourceDetails-MFT">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">パス</th>
+                    <th class="border_header">ヘッダフラグ</th>
+                    <th class="border_header">有効</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="1">1</td>
+                    <td class="border">[ドライブ名]:\Windows\Prefetch\NET.EXE-[文字列].pf</td>
+                    <td class="border">FILE</td>
+                    <td class="border">ALLOCATED</td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">2</td>
+                    <td class="border">[ネットワーク経由でコピーするように指定したファイル]</td>
+                    <td class="border">FILE</td>
+                    <td class="border">ALLOCATED</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#SourceDetails-Prefetch" class="collapse" id="a-SourceDetails-Prefetch" onclick="showhide('SourceDetails-Prefetch');">-</a> <a name="SourceDetails-Prefetch">Prefetch</a></h3>
+            <div class="section" id="div-SourceDetails-Prefetch">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">Prefetchファイル</th>
+                    <th class="border_header">プロセス名</th>
+                    <th class="border_header">プロセスパス</th>
+                    <th class="border_header">ログから得られる情報</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="1">1</td>
+                    <td class="border">NET.EXE-[文字列].pf</td>
+                    <td class="border">NET.EXE</td>
+                    <td class="border">C:\Windows\System32\net.exe</td>
+                    <td class="border">Last Run Time (最終実行日時)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#SourceDetails-USNJournal" class="collapse" id="a-SourceDetails-USNJournal" onclick="showhide('SourceDetails-USNJournal');">-</a> <a name="SourceDetails-USNJournal">USNジャーナル</a></h3>
+            <div class="section" id="div-SourceDetails-USNJournal">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">ファイル名</th>
+                    <th class="border_header">処理</th>
+                    <th class="border_header">属性</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="7">1</td>
+                    <td class="border">NET.EXE-[文字列].pf</td>
+                    <td class="border">FILE_CREATE</td>
+                    <td class="border">archive+not_indexed</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">NET.EXE-[文字列].pf</td>
+                    <td class="border">DATA_EXTEND+FILE_CREATE</td>
+                    <td class="border">archive+not_indexed</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">NET.EXE-[文字列].pf</td>
+                    <td class="border">CLOSE+DATA_EXTEND+FILE_CREATE</td>
+                    <td class="border">archive+not_indexed</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">[ネットワーク経由でコピーするように指定したファイル]</td>
+                    <td class="border">FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">[ネットワーク経由でコピーするように指定したファイル]</td>
+                    <td class="border">CLOSE+FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">[ネットワーク経由でコピーするように指定したファイル]</td>
+                    <td class="border">BASIC_INFO_CHANGE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">[ネットワーク経由でコピーするように指定したファイル]</td>
+                    <td class="border">BASIC_INFO_CHANGE+CLOSE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+        </div>
+      <h2 class="section"><a href="#DestinationDetails" class="collapse" id="a-DestinationDetails" onclick="showhide('DestinationDetails');">-</a> <a name="DestinationDetails">詳細：接続先</a></h2>
+        <div class="section" id="div-DestinationDetails">
+          <h3 class="subsection"><a href="#DestinationDetails-EventLogs" class="collapse" id="a-DestinationDetails-EventLogs" onclick="showhide('DestinationDetails-EventLogs');">-</a> <a name="DestinationDetails-EventLogs">イベントログ</a></h3>
+            <div class="section" id="div-DestinationDetails-EventLogs">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">イベントログ</th>
+                    <th class="border_header">イベントID</th>
+                    <th class="border_header">タスクのカテゴリ</th>
+                    <th class="border_header">イベント内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="2">1</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID (4)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (System)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続先IPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続先ホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (445)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (接続元IPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (接続元ホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (ハイポート)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID (4)</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (System)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (着信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続先ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (445)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">2</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5140</td>
+                    <td class="border">ファイルの共有</td>
+                    <td class="border">ネットワーク共有オブジェクトにアクセスしました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">共有情報 > 共有名</span>: 使用された共有名 (\\*\IPC$)</li>
+                      <li><span class="strong">共有情報 > 共有パス</span>: 共有のパス</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (ReadDataまたはListDirectory)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">3</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続先IPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続先ホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (88)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5158</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続先ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (ドメインコントローラーホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (88)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">4</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続先IPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続先ホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (ドメインコントローラーIPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (ドメインコントローラーホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (88)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5158</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続先ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (ドメインコントローラーホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (88)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">5</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5140</td>
+                    <td class="border">ファイルの共有</td>
+                    <td class="border">ネットワーク共有オブジェクトにアクセスしました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">共有情報 > 共有名</span>: 使用された共有名 (\\*\[接続元で指定された共有名])</li>
+                      <li><span class="strong">共有情報 > 共有パス</span>: 共有のパス (\??\[ターゲット側ディスク上のパス])</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (ReadDataまたはListDirectory)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5140</td>
+                    <td class="border">ファイルの共有</td>
+                    <td class="border">ネットワーク共有オブジェクトにアクセスしました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">共有情報 > 共有名</span>: 使用された共有名 (\\*\IPC$)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (ReadDataまたはListDirectory)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5145</td>
+                    <td class="border">詳細なファイル共有</td>
+                    <td class="border">クライアントに必要なアクセスを付与できるかどうかについて、ネットワーク共有オブジェクトがチェックされました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">共有情報 > 共有名</span>: 共有名 (\\*\[接続元で指定された共有名])</li>
+                      <li><span class="strong">共有情報 > 共有パス</span>: 共有のパス (\??\[ターゲット側ディスク上のパス])</li>
+                      <li><span class="strong">共有情報 > 相対ターゲット名</span>: 共有パスからの相対ターゲット名 ([ファイルが存在するフォルダへの相対パス])</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (SYNCHRONIZE、ReadDataまたはListDirectory、ReadAttributesを含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5145</td>
+                    <td class="border">詳細なファイル共有</td>
+                    <td class="border">クライアントに必要なアクセスを付与できるかどうかについて、ネットワーク共有オブジェクトがチェックされました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">ネットワーク情報 > オブジェクトの種類</span>: 作成されたオブジェクトの種類 (File)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">共有情報 > 共有名</span>: 共有名 (\\*\[実行側で指定された共有名])</li>
+                      <li><span class="strong">共有情報 > 共有パス</span>: 共有のパス (\??\[ターゲット側ディスク上のパス])</li>
+                      <li><span class="strong">共有情報 > 相対ターゲット名</span>: 共有パスからの相対ターゲット名 ([相対ファイル名])</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (READ_CONTROL, SYNCHRONIZE, ReadDataまたはListDirectory, ReadEA, ReadAttributes)</li>
+                      </ul></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+        </div>
+      <h2 class="section"><a href="#ADDetails" class="collapse" id="a-ADDetails" onclick="showhide('ADDetails');">-</a> <a name="ADDetails">詳細：ドメインコントローラー</a></h2>
+        <div class="section" id="div-ADDetails">
+          <h3 class="subsection"><a href="#ADDetails-EventLogs" class="collapse" id="a-ADDetails-EventLogs" onclick="showhide('ADDetails-EventLogs');">-</a> <a name="ADDetails-EventLogs">イベントログ</a></h3>
+            <div class="section" id="div-ADDetails-EventLogs">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">イベントログ</th>
+                    <th class="border_header">イベントID</th>
+                    <th class="border_header">タスクのカテゴリ</th>
+                    <th class="border_header">イベント内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="2">1</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (ドメインコントローラーIPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (ドメインコントローラーホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (88)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (接続元IPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (接続元ホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (ハイポート)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (着信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (ドメインコントローラー)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (88)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">2</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (ドメインコントローラーIPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (ドメインコントローラーホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (88)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (接続元IPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (接続元ホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (ハイポート)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (着信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (ドメインコントローラー)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (88)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4768</td>
+                    <td class="border">Kerberos 認証サービス</td>
+                    <td class="border">Kerberos 認証チケット (TGT) が要求されました。<ul>
+                      <li><span class="strong">アカウント情報 > アカウント名</span>: チケットを要求されたアカウント名</li>
+                      <li><span class="strong">アカウント情報 > 提供された領域名</span>: アカウントのドメイン</li>
+                      <li><span class="strong">アカウント情報 > ユーザーID</span>: アカウントのSID</li>
+                      <li><span class="strong">ネットワーク情報 > クライアント アドレス</span>: チケットの要求元IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > クライアント ポート</span>: チケット要求の送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">追加情報 > チケット オプション</span>: チケットの設定内容 (0x40810010)</li>
+                      <li><span class="strong">追加情報 > 結果コード</span>: チケットの処理結果 (0x0)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">3</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (ドメインコントローラーIPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (ドメインコントローラーホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (88)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (接続元IPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (接続元ホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (ハイポート)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (着信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (ドメインコントローラー)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (88)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4769</td>
+                    <td class="border">Kerberos サービス チケットの操作</td>
+                    <td class="border">Kerberos サービス チケットが要求されました。<ul>
+                      <li><span class="strong">アカウント情報 > アカウント名</span>: チケットを要求されたアカウント名</li>
+                      <li><span class="strong">アカウント情報 > アカウント ドメイン</span>: アカウントのドメイン</li>
+                      <li><span class="strong">アカウント情報 > ログオンGUID</span>: ログオンのセッションID</li>
+                      <li><span class="strong">サービス情報 > サービス名</span>: チケットのサービス名</li>
+                      <li><span class="strong">サービス情報 > サービスID</span>: サービスのSID</li>
+                      <li><span class="strong">ネットワーク情報 > クライアント アドレス</span>: チケットの要求元IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > クライアント ポート</span>: チケット要求の送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">追加情報 > チケット オプション</span>: チケットの設定内容 (0x40810010)</li>
+                      <li><span class="strong">追加情報 > エラー コード</span>: チケットの処理結果 (0x0)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">4</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (ドメインコントローラーIPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (ドメインコントローラーホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (88)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (接続先IPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (接続先ホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (ハイポート)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (着信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (ドメインコントローラー)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (88)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (接続先ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4769</td>
+                    <td class="border">Kerberos サービス チケットの操作</td>
+                    <td class="border">Kerberos サービス チケットが要求されました。<ul>
+                      <li><span class="strong">アカウント情報 > アカウント名</span>: チケットを要求されたアカウント名</li>
+                      <li><span class="strong">アカウント情報 > アカウント ドメイン</span>: アカウントのドメイン</li>
+                      <li><span class="strong">アカウント情報 > ログオンGUID</span>: ログオンのセッションID</li>
+                      <li><span class="strong">サービス情報 > サービス名</span>: チケットのサービス名</li>
+                      <li><span class="strong">サービス情報 > サービスID</span>: サービスのSID</li>
+                      <li><span class="strong">ネットワーク情報 > クライアント アドレス</span>: チケットの要求元IPアドレス (接続先ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > クライアント ポート</span>: チケット要求の送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">追加情報 > チケット オプション</span>: チケットの設定内容 (0x40810010)</li>
+                      <li><span class="strong">追加情報 > エラー コード</span>: チケットの処理結果 (0x0)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">5</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\lsass.exe)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー (NT AUTHORITY\SYSTEM)</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (ドメインコントローラーIPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (ドメインコントローラーホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (88)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (接続先IPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (接続先ホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (ハイポート)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (着信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (ドメインコントローラー)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (88)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (接続先ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+        </div>
+  </body>
+</html>

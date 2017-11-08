@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>csvde</title>
+    <link rel="stylesheet" type="text/css" href="common/style.css" />
+    <script language="JavaScript" type="text/javascript" src="common/script.js"></script>
+  </head>
+  <body>
+    <h1 class="title">csvde</h1>
+      <h2 class="toc"><a href="#toc" class="collapse" id="a-toc" onclick="showhide('toc');">-</a> <a name="toc">目次</a></h2>
+        <div class="toc" id="div-toc">
+          <ul>
+            <li><a href="#Summary">ツール概要</a></li>
+            <li><a href="#ExecCondition">ツール動作概要</a></li>
+            <li><a href="#Findings">ログから得られる情報</a></li>
+            <li><a href="#SuccessCondition">実行成功時に確認できる痕跡</a></li>
+            <li><a href="#KeyEvents">実行時に記録される主要な情報</a></li>
+            <li><a href="#ADDetails">詳細：ドメインコントローラー</a></li>
+            <li><a href="#Notes">備考</a></li>
+          </ul>
+          <p class="toc_command"><a href="#" onclick="collapseall('s');">全てのセクションを開く</a> | <a href="#" onclick="collapseall('h');">全てのセクションを閉じる</a></p>
+          <hr class="section_divider" />
+        </div>
+      <h2 class="section"><a href="#Summary" class="collapse" id="a-Summary" onclick="showhide('Summary');">-</a> <a name="Summary">ツール概要</a></h2>
+        <div class="section" id="div-Summary">
+          <dl class="table">
+            <dt class="table">カテゴリ</dt>
+              <dd class="table">情報収集</dd>
+            <dt class="table">説明</dt>
+              <dd class="table">Active Directory上のアカウント情報をCSV形式で出力する。</dd>
+            <dt class="table">攻撃時における想定利用例</dt>
+              <dd class="table">Active Directoryからアカウント情報を収集し、攻撃対象として利用可能なユーザーやホストを選択する。</dd>
+          </dl>
+        </div>
+      <h2 class="section"><a href="#ExecCondition" class="collapse" id="a-ExecCondition" onclick="showhide('ExecCondition');">-</a> <a name="ExecCondition">ツール動作概要</a></h2>
+        <div class="section" id="div-ExecCondition">
+          <table class="border">
+            <thead>
+              <tr class="border">
+                <th class="border_header">項目</th>
+                <th class="border_header">内容</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border">
+                <td class="border_header">サービス</td>
+                <td class="border">Active Directory Domain Services</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">権限</td>
+                <td class="border">標準ユーザー</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">ドメインへの所属</td>
+                <td class="border">不要</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">OS</td>
+                <td class="border">Windows Server</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">通信プロトコル</td>
+                <td class="border">389/tcp</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      <h2 class="section"><a href="#Findings" class="collapse" id="a-Findings" onclick="showhide('Findings');">-</a> <a name="Findings">ログから得られる情報</a></h2>
+        <div class="section" id="div-Findings">
+          <dl class="table">
+            <dt class="table">標準設定</dt>
+              <dd class="table"><ul>
+                <li>ホスト<ul>
+                  <li>実行履歴 (Prefetch)</li>
+                  </ul></li>
+                </ul></dd>
+            <dt class="table">追加設定</dt>
+              <dd class="table"><ul>
+                <li>ホスト<ul>
+                  <li>アカウント情報を保存したCSVファイルが作成される (監査ポリシー, Sysmon, USNジャーナル)</li>
+                  <li>CSVファイル作成時に、一時ファイルとして"C:\Users\[ユーザー名]\AppData\Local\Temp\csv[ランダムな16進値].tmp"が作成される (監査ポリシー, Sysmon, USNジャーナル)</li>
+                  </ul></li>
+                </ul></dd>
+          </dl>
+        </div>
+      <h2 class="section"><a href="#SuccessCondition" class="collapse" id="a-SuccessCondition" onclick="showhide('SuccessCondition');">-</a> <a name="SuccessCondition">実行成功時に確認できる痕跡</a></h2>
+        <div class="section" id="div-SuccessCondition">
+          <ul>
+            <li>csvde.exeが実行されており、"-f"オプションで指定されたファイルが作成されている</li>
+            <li>"C:\Users\[ユーザー名]\AppData\Local\Temp\csv[ランダムな16進値].tmp"が作成、削除されている</li>
+          </ul>
+        </div>
+      <h2 class="section"><a href="#KeyEvents" class="collapse" id="a-KeyEvents" onclick="showhide('KeyEvents');">-</a> <a name="KeyEvents">実行時に記録される主要な情報</a></h2>
+        <div class="section" id="div-KeyEvents">
+          <h3 class="subsection"><a href="#KeyEvents-AD" class="collapse" id="a-KeyEvents-AD" onclick="showhide('KeyEvents-AD');">-</a> <a name="KeyEvents-AD">ドメインコントローラー</a></h3>
+            <div class="section" id="div-KeyEvents-AD">
+              <h4>イベントログ</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ログ</th>
+                      <th class="border_header">イベントID</th>
+                      <th class="border_header">タスクのカテゴリ</th>
+                      <th class="border_header">イベント内容</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">1</td>
+                      <td class="border">Process Create (rule: ProcessCreate)</td>
+                      <td class="border">Process Create.<ul>
+                        <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (検体のパス)</li>
+                        <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (検体のパス。"-f"オプションで出力ファイル名が分かる。また、フィルターを使用した場合はフィルター条件も分かる)</li>
+                        <li><span class="strong">User</span>: 実行ユーザー</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">4663</td>
+                      <td class="border">ファイル システム</td>
+                      <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                        <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                        <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Users\[ユーザー名]\AppData\Local\Temp\csv[ランダムな16進値].tmp)</li>
+                        <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                        <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (検体のパス)</li>
+                        <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile、AppendData)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">3</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">4663</td>
+                      <td class="border">ファイル システム</td>
+                      <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                        <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                        <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (検体実行時に"-f"オプションで指定されたCSVファイル)</li>
+                        <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                        <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (検体のパス)</li>
+                        <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile、AppendData)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">4</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">4663</td>
+                      <td class="border">ファイル システム</td>
+                      <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                        <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                        <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (本プロセス内で作成されたファイル C:\Users\[ユーザー名]\AppData\Local\Temp\csv[ランダムな16進値].tmp)</li>
+                        <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                        <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (検体のパス)</li>
+                        <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (DELETE)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">5</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">4660</td>
+                      <td class="border">ファイル システム</td>
+                      <td class="border">オブジェクトが削除されました。<ul>
+                        <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                        <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4663と同じ)</li>
+                        <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                        <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (検体のパス)</li>
+                        </ul></td>
+                    </tr>
+                  </tbody>
+                </table>
+              <h4>USNジャーナル</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ファイル名</th>
+                      <th class="border_header">処理</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">csv[ランダムな16進値].tmp</td>
+                      <td class="border">FILE_CREATE</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">[検体実行時に"-f"オプションで指定されたCSVファイル]</td>
+                      <td class="border">FILE_CREATE</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">3</td>
+                      <td class="border">csv[ランダムな16進値].tmp</td>
+                      <td class="border">CLOSE+FILE_DELETE</td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+        </div>
+        <hr class="section_divider">
+      <h2 class="section"><a href="#ADDetails" class="collapse" id="a-ADDetails" onclick="showhide('ADDetails');">-</a> <a name="ADDetails">詳細：ドメインコントローラー</a></h2>
+        <div class="section" id="div-ADDetails">
+          <h3 class="subsection"><a href="#ADDetails-EventLogs" class="collapse" id="a-ADDetails-EventLogs" onclick="showhide('ADDetails-EventLogs');">-</a> <a name="ADDetails-EventLogs">イベントログ</a></h3>
+            <div class="section" id="div-ADDetails-EventLogs">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">イベントログ</th>
+                    <th class="border_header">イベントID</th>
+                    <th class="border_header">タスクのカテゴリ</th>
+                    <th class="border_header">イベント内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="2">1</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (検体のパス。"-f"オプションで出力ファイル名が分かる。また、フィルターを使用した場合はフィルター条件も分かる)</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (検体のパス)</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (検体のパス)</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: 新プロセスを作成した親プロセスのパス</li>
+                      <li><span class="strong">プロセス情報 > 必須ラベル</span>: 権限昇格の要否</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">2</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5158</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (検体のパス)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (検体のパス)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (389)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">3</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (\device\harddiskvolume2\windows\system32\lsass.exe)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (着信)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (389)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">10</td>
+                    <td class="border">Process accessed (rule: ProcessAccess)</td>
+                    <td class="border">Process accessed.<ul>
+                      <li><span class="strong">SourceImage</span>: アクセス元プロセスのパス (C:\Windows\system32\lsass.exe)</li>
+                      <li><span class="strong">SourceProcessGUID/SourceProcessId/SourceThreadId</span>: アクセス元プロセスのプロセス/スレッドID</li>
+                      <li><span class="strong">TargetImage</span>: アクセス先プロセスのパス (検体のパス)</li>
+                      <li><span class="strong">TargetProcessGUID/TargetProcessId</span>: アクセス先プロセスのプロセスID</li>
+                      <li><span class="strong">GrantedAccess</span>: 許可されたアクセスの内容 (0x1478)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">4</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Users\[ユーザー名]\AppData\Local\Temp\csv[ランダムな16進値].tmp)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (検体のパス)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile、AppendDataを含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Users\[ユーザー名]\AppData\Local\Temp\csv[ランダムな16進値].tmp)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (直前のイベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (検体のパス)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile、AppendData)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (直前のイベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (検体のパス)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">11</td>
+                    <td class="border">File created (rule: FileCreate)</td>
+                    <td class="border">File created.<ul>
+                      <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (検体のパス)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">TargetFilename</span>: 作成されたファイル (C:\Users\[ユーザー名]\AppData\Local\Temp\csv[ランダムな16進値].tmp)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">5</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (検体実行時に"-f"オプションで指定されたCSVファイル)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile、AppendDataを含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (検体実行時に"-f"オプションで指定されたCSVファイル)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (直前のイベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (検体のパス)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile、AppendData)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (直前のイベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (検体のパス)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">11</td>
+                    <td class="border">File created (rule: FileCreate)</td>
+                    <td class="border">File created.<ul>
+                      <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (検体のパス)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">TargetFilename</span>: 作成されたファイル (検体実行時に"-f"オプションで指定されたCSVファイル)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">6</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (本プロセス内で作成されたファイル C:\Users\[ユーザー名]\AppData\Local\Temp\csv[ランダムな16進値].tmp)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (検体のパス)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (DELETE)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (本プロセス内で作成されたファイル C:\Users\[ユーザー名]\AppData\Local\Temp\csv[ランダムな16進値].tmp)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (直前のイベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (検体のパス)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (DELETE)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4660</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトが削除されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (直前のイベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (検体のパス)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (直前のイベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (検体のパス)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">7</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4689</td>
+                    <td class="border">プロセス終了</td>
+                    <td class="border">プロセスが終了しました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (検体のパス)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">5</td>
+                    <td class="border">Process terminated (rule: ProcessTerminate)</td>
+                    <td class="border">Process terminated.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス終了日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (検体のパス)</li>
+                      </ul></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#ADDetails-MFT" class="collapse" id="a-ADDetails-MFT" onclick="showhide('ADDetails-MFT');">-</a> <a name="ADDetails-MFT">MFT</a></h3>
+            <div class="section" id="div-ADDetails-MFT">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">パス</th>
+                    <th class="border_header">ヘッダフラグ</th>
+                    <th class="border_header">有効</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="1">1</td>
+                    <td class="border">[検体実行時に"-f"オプションで指定されたCSVファイル]</td>
+                    <td class="border">FILE</td>
+                    <td class="border">ALLOCATED</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#ADDetails-USNJournal" class="collapse" id="a-ADDetails-USNJournal" onclick="showhide('ADDetails-USNJournal');">-</a> <a name="ADDetails-USNJournal">USNジャーナル</a></h3>
+            <div class="section" id="div-ADDetails-USNJournal">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">ファイル名</th>
+                    <th class="border_header">処理</th>
+                    <th class="border_header">属性</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="5">1</td>
+                    <td class="border">csv[ランダムな16進値].tmp</td>
+                    <td class="border">FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">csv[ランダムな16進値].tmp</td>
+                    <td class="border">CLOSE+FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">csv[ランダムな16進値].tmp</td>
+                    <td class="border">DATA_TRUNCATION</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">csv[ランダムな16進値].tmp</td>
+                    <td class="border">DATA_EXTEND+DATA_TRUNCATION</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">csv[ランダムな16進値].tmp</td>
+                    <td class="border">CLOSE+DATA_EXTEND+DATA_TRUNCATION</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">2</td>
+                    <td class="border">[検体実行時に"-f"オプションで指定されたCSVファイル]</td>
+                    <td class="border">FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">[検体実行時に"-f"オプションで指定されたCSVファイル]</td>
+                    <td class="border">DATA_EXTEND+FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">[検体実行時に"-f"オプションで指定されたCSVファイル]</td>
+                    <td class="border">CLOSE+DATA_EXTEND+FILE_CREATE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">3</td>
+                    <td class="border">csv[ランダムな16進値].tmp</td>
+                    <td class="border">CLOSE+FILE_DELETE</td>
+                    <td class="border">archive</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+        </div>
+        <hr class="section_divider">
+      <h2 class="section"><a href="#Notes" class="collapse" id="a-Notes" onclick="showhide('Notes');">-</a> <a name="Notes">備考</a></h2>
+        <div class="section" id="div-Notes">
+          <ul>
+            <li>ドメインに参加していない端末からでも、実行時に正しい認証情報を入力することで情報の取得が可能</li>
+            <li>MFTは、出力ファイルが削除された場合は記録が残らない</li>
+          </ul>
+        </div>
+  </body>
+</html>

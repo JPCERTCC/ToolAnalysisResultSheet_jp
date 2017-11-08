@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>BeginX</title>
+    <link rel="stylesheet" type="text/css" href="common/style.css" />
+    <script language="JavaScript" type="text/javascript" src="common/script.js"></script>
+  </head>
+  <body>
+    <h1 class="title">BeginX</h1>
+      <h2 class="toc"><a href="#toc" class="collapse" id="a-toc" onclick="showhide('toc');">-</a> <a name="toc">目次</a></h2>
+        <div class="toc" id="div-toc">
+          <ul>
+            <li><a href="#Summary">ツール概要</a></li>
+            <li><a href="#ExecCondition">ツール動作概要</a></li>
+            <li><a href="#Findings">ログから得られる情報</a></li>
+            <li><a href="#SuccessCondition">実行成功時に確認できる痕跡</a></li>
+            <li><a href="#KeyEvents">実行時に記録される主要な情報</a></li>
+            <li><a href="#SourceDetails">詳細：接続元</a></li>
+            <li><a href="#DestinationDetails">詳細：接続先</a></li>
+            <li><a href="#Packets">パケットキャプチャ</a></li>
+          </ul>
+          <p class="toc_command"><a href="#" onclick="collapseall('s');">全てのセクションを開く</a> | <a href="#" onclick="collapseall('h');">全てのセクションを閉じる</a></p>
+          <hr class="section_divider" />
+        </div>
+      <h2 class="section"><a href="#Summary" class="collapse" id="a-Summary" onclick="showhide('Summary');">-</a> <a name="Summary">ツール概要</a></h2>
+        <div class="section" id="div-Summary">
+          <dl class="table">
+            <dt class="table">カテゴリ</dt>
+              <dd class="table">コマンド実行</dd>
+            <dt class="table">説明</dt>
+              <dd class="table">クライアントからサーバに対してコマンドを実行をする。</dd>
+            <dt class="table">攻撃時における想定利用例</dt>
+              <dd class="table">リモートホストの設定を変更したり、情報を取得したりする。</dd>
+          </dl>
+        </div>
+      <h2 class="section"><a href="#ExecCondition" class="collapse" id="a-ExecCondition" onclick="showhide('ExecCondition');">-</a> <a name="ExecCondition">ツール動作概要</a></h2>
+        <div class="section" id="div-ExecCondition">
+          <table class="border">
+            <thead>
+              <tr class="border">
+                <th class="border_header">項目</th>
+                <th class="border_header">接続元</th>
+                <th class="border_header">接続先</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border">
+                <td class="border_header">通信プロトコル</td>
+                <td class="border" colspan="2">tcpまたはudpでポート番号は検体毎に異なる</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">ドメインへの所属</td>
+                <td class="border" colspan="2">不要</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">OS</td>
+                <td class="border" colspan="2">Windows</td>
+              </tr>
+              <tr class="border">
+                <td class="border_header">権限</td>
+                <td class="border" colspan="2">標準ユーザー</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      <h2 class="section"><a href="#Findings" class="collapse" id="a-Findings" onclick="showhide('Findings');">-</a> <a name="Findings">ログから得られる情報</a></h2>
+        <div class="section" id="div-Findings">
+          <dl class="table">
+            <dt class="table">標準設定</dt>
+              <dd class="table"><ul>
+                <li>接続元<ul>
+                  <li>実行履歴 (Prefetch)</li>
+                  </ul></li>
+                <li>接続先<ul>
+                  <li>Windowsファイアウォールの設定変更 (監査ポリシー)</li>
+                  <li>実行履歴 (Prefetch)</li>
+                  </ul></li>
+                </ul></dd>
+            <dt class="table">追加設定</dt>
+              <dd class="table"><ul>
+                <li>接続元<ul>
+                  <li>実行履歴 (監査ポリシー, Sysmon)</li>
+                  <li>所定のポートを経由して通信したことの記録 (監査ポリシー, Sysmon)</li>
+                  </ul></li>
+                <li>接続先<ul>
+                  <li>実行履歴 (監査ポリシー, Sysmon)</li>
+                  <li>所定のポートを経由して通信したことの記録 (監査ポリシー, Sysmon)</li>
+                  </ul></li>
+                </ul></dd>
+          </dl>
+        </div>
+      <h2 class="section"><a href="#SuccessCondition" class="collapse" id="a-SuccessCondition" onclick="showhide('SuccessCondition');">-</a> <a name="SuccessCondition">実行成功時に確認できる痕跡</a></h2>
+        <div class="section" id="div-SuccessCondition">
+          <ul>
+            <li>接続元： 接続先で意図せず許可されているポートと通信をしたことが記録されている</li>
+            <li>接続先： 意図しない通信がWindows Firewallで許可されており、該当のポートでリッスンしている検体が存在する</li>
+          </ul>
+        </div>
+      <h2 class="section"><a href="#KeyEvents" class="collapse" id="a-KeyEvents" onclick="showhide('KeyEvents');">-</a> <a name="KeyEvents">実行時に記録される主要な情報</a></h2>
+        <div class="section" id="div-KeyEvents">
+          <h3 class="subsection"><a href="#KeyEvents-Source" class="collapse" id="a-KeyEvents-Source" onclick="showhide('KeyEvents-Source');">-</a> <a name="KeyEvents-Source">接続元</a></h3>
+            <div class="section" id="div-KeyEvents-Source">
+              <h4>イベントログ</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ログ</th>
+                      <th class="border_header">イベントID</th>
+                      <th class="border_header">タスクのカテゴリ</th>
+                      <th class="border_header">イベント内容</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">1</td>
+                      <td class="border">Process Create (rule: ProcessCreate)</td>
+                      <td class="border">Process Create.<ul>
+                        <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (クライアント検体のパス)</li>
+                        <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン ([クライアント検体のパス] [接続先ホスト]:[ポート番号] [実行コマンド])</li>
+                        <li><span class="strong">User</span>: 実行ユーザー</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">5156</td>
+                      <td class="border">フィルタリング プラットフォームの接続</td>
+                      <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                        <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                        <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (クライアント検体のパス)</li>
+                        <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                        <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                        <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                        <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (接続先ホスト)</li>
+                        <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (接続先ポート番号)</li>
+                        <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                        </ul></td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+          <h3 class="subsection"><a href="#KeyEvents-Destination" class="collapse" id="a-KeyEvents-Destination" onclick="showhide('KeyEvents-Destination');">-</a> <a name="KeyEvents-Destination">接続先</a></h3>
+            <div class="section" id="div-KeyEvents-Destination">
+              <h4>イベントログ</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">ログ</th>
+                      <th class="border_header">イベントID</th>
+                      <th class="border_header">タスクのカテゴリ</th>
+                      <th class="border_header">イベント内容</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">1</td>
+                      <td class="border">Process Create (rule: ProcessCreate)</td>
+                      <td class="border">Process Create.<ul>
+                        <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (サーバー検体のパス)</li>
+                        <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (サーバー検体のパス)</li>
+                        <li><span class="strong">User</span>: 実行ユーザー</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                      <td class="border">1</td>
+                      <td class="border">Process Create (rule: ProcessCreate)</td>
+                      <td class="border">Process Create.<ul>
+                        <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                        <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                        <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\SysWOW64\netsh.exe)</li>
+                        <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (netsh advfirewall firewall delete rule name=Trend protocol=TCP dir=in localport=[ポート番号])</li>
+                        <li><span class="strong">User</span>: 実行ユーザー</li>
+                        <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル (サーバー検体のパス)</li>
+                        <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン(サーバー検体のパス)</li>
+                        </ul></td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">3</td>
+                      <td class="border">セキュリティ</td>
+                      <td class="border">5156</td>
+                      <td class="border">フィルタリング プラットフォームの接続</td>
+                      <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                        <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                        <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (サーバー検体のパス)</li>
+                        <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (着信)</li>
+                        <li><span class="strong">ネットワーク情報 > 送信元アドレス/ソース ポート</span>: 送信元IPアドレス/ポート番号 ([接続先IPアドレス]/[接続先ポート番号])</li>
+                        <li><span class="strong">ネットワーク情報 > 宛先アドレス/宛先ポート</span>: 宛先IPアドレス/ポート番号 ([接続元IPアドレス]/[ハイポート])</li>
+                        <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                        </ul></td>
+                    </tr>
+                  </tbody>
+                </table>
+              <h4>レジストリエントリ</h4>
+                <table class="border">
+                  <thead>
+                    <tr class="border">
+                      <th class="border_header">#</th>
+                      <th class="border_header">パス</th>
+                      <th class="border_header">値</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border">
+                      <td class="border">1</td>
+                      <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\TCP Query User{[GUID]}[検体のパス]</td>
+                      <td class="border">v2.10|Action=Allow|Active=TRUE|Dir=In|Protocol=6|Profile=Private|App=[検体のパス]|Name=tpcsrv.exe|Desc=tpcsrv.exe|Defer=User|</td>
+                    </tr>
+                    <tr class="border">
+                      <td class="border">2</td>
+                      <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\UDP Query User{[GUID]}[検体のパス]</td>
+                      <td class="border">v2.10|Action=Allow|Active=TRUE|Dir=In|Protocol=17|Profile=Private|App=[検体のパス]|Name=tpcsrv.exe|Desc=tpcsrv.exe|Defer=User|</td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+        </div>
+        <hr class="section_divider">
+      <h2 class="section"><a href="#SourceDetails" class="collapse" id="a-SourceDetails" onclick="showhide('SourceDetails');">-</a> <a name="SourceDetails">詳細：接続元</a></h2>
+        <div class="section" id="div-SourceDetails">
+          <h3 class="subsection"><a href="#SourceDetails-EventLogs" class="collapse" id="a-SourceDetails-EventLogs" onclick="showhide('SourceDetails-EventLogs');">-</a> <a name="SourceDetails-EventLogs">イベントログ</a></h3>
+            <div class="section" id="div-SourceDetails-EventLogs">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">イベントログ</th>
+                    <th class="border_header">イベントID</th>
+                    <th class="border_header">タスクのカテゴリ</th>
+                    <th class="border_header">イベント内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="2">1</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (クライアント検体のパス)</li>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン ([クライアント検体のパス] [接続先ホスト]:[ポート番号] [実行コマンド])</li>
+                      <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">IntegrityLevel</span>: 特権レベル</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (クライアント検体のパス)</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 必須ラベル</span>: 権限昇格の要否</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: 新プロセスを作成した親プロセスのパス</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">2</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Users\[アカウント名]\AppData\Local\VirtualStore)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (クライアント検体のパス)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WRITE_DAC, WRITE_OWNERを含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Users\[アカウント名]\AppData\Local\VirtualStore)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (直前のイベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (クライアント検体のパス)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス</span>: 要求された権限 (WRITE_DAC, WRITE_OWNER)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (クライアント検体のパス)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="3">3</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続元IPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続元ホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (接続先IPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (接続先ホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (接続先ポート番号)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5158</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (クライアント検体のパス)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (クライアント検体のパス)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (送信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス (接続元ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ハイポート)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: 宛先IPアドレス (接続先ホスト)</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 宛先ポート番号 (接続先ポート番号)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">4</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">5</td>
+                    <td class="border">Process terminated (rule: ProcessTerminate)</td>
+                    <td class="border">Process terminated.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス終了日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (クライアント検体のパス)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4689</td>
+                    <td class="border">プロセス終了</td>
+                    <td class="border">プロセスが終了しました。<ul>
+                      <li><span class="strong">ログの日時</span>: プロセス終了日時 (ローカル時刻)</li>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (クライアント検体のパス)</li>
+                      <li><span class="strong">プロセス情報 > 終了状態</span>: プロセスの戻り値</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">5</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">11</td>
+                    <td class="border">File created (rule: FileCreate)</td>
+                    <td class="border">File created.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">TargetFilename</span>: 作成されたファイル (C:\Windows\Prefetch\[クライアント検体の実行ファイル名]-[文字列].pf)</li>
+                      <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\[クライアント検体の実行ファイル名]-[文字列].pf)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteData, AppendDataを含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\[クライアント検体の実行ファイル名]-[文字列].pf)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteData, AppendData)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                      </ul></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#SourceDetails-MFT" class="collapse" id="a-SourceDetails-MFT" onclick="showhide('SourceDetails-MFT');">-</a> <a name="SourceDetails-MFT">MFT</a></h3>
+            <div class="section" id="div-SourceDetails-MFT">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">パス</th>
+                    <th class="border_header">ヘッダフラグ</th>
+                    <th class="border_header">有効</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="1">1</td>
+                    <td class="border">[ドライブ名]:\Windows\Prefetch\[クライアント検体の実行ファイル名]-[文字列].pf</td>
+                    <td class="border">FILE</td>
+                    <td class="border">ALLOCATED</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#SourceDetails-Prefetch" class="collapse" id="a-SourceDetails-Prefetch" onclick="showhide('SourceDetails-Prefetch');">-</a> <a name="SourceDetails-Prefetch">Prefetch</a></h3>
+            <div class="section" id="div-SourceDetails-Prefetch">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">Prefetchファイル</th>
+                    <th class="border_header">プロセス名</th>
+                    <th class="border_header">プロセスパス</th>
+                    <th class="border_header">ログから得られる情報</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="1">1</td>
+                    <td class="border">:\Windows\Prefetch\[クライアント検体の実行ファイル名]-[文字列].pf</td>
+                    <td class="border">[クライアント検体の実行ファイル名]</td>
+                    <td class="border">[クライアント検体のパス]</td>
+                    <td class="border">Last Run Time (最終実行日時)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#SourceDetails-USNJournal" class="collapse" id="a-SourceDetails-USNJournal" onclick="showhide('SourceDetails-USNJournal');">-</a> <a name="SourceDetails-USNJournal">USNジャーナル</a></h3>
+            <div class="section" id="div-SourceDetails-USNJournal">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">ファイル名</th>
+                    <th class="border_header">処理</th>
+                    <th class="border_header">属性</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="3">1</td>
+                    <td class="border">[クライアント検体の実行ファイル名]-[文字列].pf</td>
+                    <td class="border">FILE_CREATE</td>
+                    <td class="border">archive+not_indexed</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">[クライアント検体の実行ファイル名]-[文字列].pf</td>
+                    <td class="border">DATA_EXTEND+FILE_CREATE</td>
+                    <td class="border">archive+not_indexed</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">[クライアント検体の実行ファイル名]-[文字列].pf</td>
+                    <td class="border">CLOSE+DATA_EXTEND+FILE_CREATE</td>
+                    <td class="border">archive+not_indexed</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+        </div>
+      <h2 class="section"><a href="#DestinationDetails" class="collapse" id="a-DestinationDetails" onclick="showhide('DestinationDetails');">-</a> <a name="DestinationDetails">詳細：接続先</a></h2>
+        <div class="section" id="div-DestinationDetails">
+          <h3 class="subsection"><a href="#DestinationDetails-EventLogs" class="collapse" id="a-DestinationDetails-EventLogs" onclick="showhide('DestinationDetails-EventLogs');">-</a> <a name="DestinationDetails-EventLogs">イベントログ</a></h3>
+            <div class="section" id="div-DestinationDetails-EventLogs">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">イベントログ</th>
+                    <th class="border_header">イベントID</th>
+                    <th class="border_header">タスクのカテゴリ</th>
+                    <th class="border_header">イベント内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="2">1</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (サーバー検体のパス)</li>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (サーバー検体のパス)</li>
+                      <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">IntegrityLevel</span>: 特権レベル</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (サーバー検体のパス)</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 必須ラベル</span>: 権限昇格の要否</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: 新プロセスを作成した親プロセスのパス</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">2</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\SysWOW64\netsh.exe)</li>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (netsh advfirewall firewall delete rule name=Trend protocol=TCP dir=in localport=[接続先ポート番号])</li>
+                      <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">IntegrityLevel</span>: 特権レベル (Medium)</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル (サーバー検体のパス)</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン(サーバー検体のパス)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (C:\Windows\SysWOW64\netsh.exe)</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 必須ラベル</span>: 権限昇格の要否</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: 新プロセスを作成した親プロセスのパス</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">3</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">10</td>
+                    <td class="border">Process accessed (rule: ProcessAccess)</td>
+                    <td class="border">Process accessed.<ul>
+                      <li><span class="strong">SourceProcessGUID/SourceProcessId/SourceThreadId</span>: アクセス元プロセスのプロセス/スレッドID</li>
+                      <li><span class="strong">SourceImage</span>: アクセス元プロセスのパス (サーバー検体のパス)</li>
+                      <li><span class="strong">TargetProcessGUID/TargetProcessId</span>: アクセス先プロセスのプロセスID</li>
+                      <li><span class="strong">TargetImage</span>: アクセス先プロセスのパス (C:\Windows\SysWOW64\netsh.exe)</li>
+                      <li><span class="strong">GrantedAccess</span>: 許可されたアクセスの内容</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">4</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\SysWOW64\netsh.exe)</li>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (netsh advfirewall firewall add rule name=Trend protocol=TCP dir=in localport=[接続先ポート番号] action=allow)</li>
+                      <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">IntegrityLevel</span>: 特権レベル (Medium)</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル (サーバー検体のパス)</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン(サーバー検体のパス)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (C:\Windows\SysWOW64\netsh.exe)</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 必須ラベル</span>: 権限昇格の要否</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: 新プロセスを作成した親プロセスのパス</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">5</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">10</td>
+                    <td class="border">Process accessed (rule: ProcessAccess)</td>
+                    <td class="border">Process accessed.<ul>
+                      <li><span class="strong">SourceProcessGUID/SourceProcessId/SourceThreadId</span>: アクセス元プロセスのプロセス/スレッドID</li>
+                      <li><span class="strong">SourceImage</span>: アクセス元プロセスのパス (サーバー検体のパス)</li>
+                      <li><span class="strong">TargetProcessGUID/TargetProcessId</span>: アクセス先プロセスのプロセスID</li>
+                      <li><span class="strong">TargetImage</span>: アクセス先プロセスのパス (C:\Windows\SysWOW64\netsh.exe)</li>
+                      <li><span class="strong">GrantedAccess</span>: 許可されたアクセスの内容</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">6</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">12</td>
+                    <td class="border">Registry object added or deleted (rule: RegistryEvent)</td>
+                    <td class="border">Registry object added or deleted.<ul>
+                      <li><span class="strong">EventType</span>: 処理の種類 (CreateKey)</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\SysWOW64\netsh.exe)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">TargetObject</span>: 作成・削除されたレジストリキー・値 (\REGISTRY\MACHINE\SOFTWARE\Policies\Microsoft\Windows\IPSEC)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">7</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">5</td>
+                    <td class="border">Process terminated (rule: ProcessTerminate)</td>
+                    <td class="border">Process terminated.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス終了日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\SysWOW64\netsh.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4689</td>
+                    <td class="border">プロセス終了</td>
+                    <td class="border">プロセスが終了しました。<ul>
+                      <li><span class="strong">ログの日時</span>: プロセス終了日時 (ローカル時刻)</li>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (C:\Windows\SysWOW64\netsh.exe)</li>
+                      <li><span class="strong">プロセス情報 > 終了状態</span>: プロセスの戻り値 (0x1)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">8</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">5</td>
+                    <td class="border">Process terminated (rule: ProcessTerminate)</td>
+                    <td class="border">Process terminated.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス終了日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\SysWOW64\netsh.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4689</td>
+                    <td class="border">プロセス終了</td>
+                    <td class="border">プロセスが終了しました。<ul>
+                      <li><span class="strong">ログの日時</span>: プロセス終了日時 (ローカル時刻)</li>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (C:\Windows\SysWOW64\netsh.exe)</li>
+                      <li><span class="strong">プロセス情報 > 終了状態</span>: プロセスの戻り値 (0x1)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">9</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">11</td>
+                    <td class="border">File created (rule: FileCreate)</td>
+                    <td class="border">File created.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">TargetFilename</span>: 作成されたファイル (C:\Windows\Prefetch\NETSH.EXE-[文字列].pf)</li>
+                      <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\NETSH.EXE-[文字列].pf)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendDataを含む)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限 (WriteDataまたはAddFile, AppendData)</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">10</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5158</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (サーバー検体のパス)</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: バインドしたローカルポート (ポート番号)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用したプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5154</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、アプリケーションまたはサービスによるポートでの着信接続のリッスンが許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (サーバー検体のパス)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: 送信元IPアドレス</li>
+                      <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 送信元ポート番号 (ポート番号)</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">11</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\rundll32.exe)</li>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (C:\Windows\System32\rundll32.exe C:\Windows\System32\FirewallControlPanel.dll,ShowNotificationDialog /ETOnly 0 /OnProfiles 7 /OtherAllowed 0 /OtherBlocked 0 /OtherEdgeAllowed 0 /NewBlocked 2 "[サーバー検体のパス]")</li>
+                      <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">IntegrityLevel</span>: 特権レベル (Medium)</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン (C:\Windows\System32\svchost.exe -k LocalServiceNoNetwork)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (LOCAL SERVICE)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 (LOCAL SERVICE)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (NT AUTHORITY)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (C:\Windows\System32\rundll32.exe)</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 必須ラベル</span>: 権限昇格の要否</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: 新プロセスを作成した親プロセスのパス</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">12</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5447</td>
+                    <td class="border">その他のポリシー変更イベント</td>
+                    <td class="border">Windows フィルターリング プラットフォームのフィルターが変更されました。複数回発生する。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (LOCAL SERVICE)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 (NT AUTHORITY\LOCAL SERVICE)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロバイダー情報 > ID</span>: プロバイダーのID</li>
+                      <li><span class="strong">プロバイダー情報 > 名前</span>: プロバイダーの名前</li>
+                      <li><span class="strong">変更情報 > 変更の種類</span>: 実施した処理内容 (追加)</li>
+                      <li><span class="strong">フィルター情報 > ID</span>: フィルターUUID</li>
+                      <li><span class="strong">フィルター情報 > 名前</span>: フィルター名 (サーバー検体の実行ファイル)</li>
+                      <li><span class="strong">フィルター情報 > 実行時ID</span>: フィルター実行時ID</li>
+                      <li><span class="strong">追加情報 > 条件</span>: フィルタの条件</li>
+                      <li><span class="strong">追加情報 > フィルター アクション</span>: 一致時の動作 (許可)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4946</td>
+                    <td class="border">MPSSVC ルールレベル ポリシーの変更</td>
+                    <td class="border">Windows ファイアウォールの例外の一覧が変更されました。規則が追加された。<ul>
+                      <li><span class="strong">変更されたプロファイル</span>: 変更されたプロファイル (プライベート)</li>
+                      <li><span class="strong">追加された規則 > 規則 ID</span>: 実行したプロセスの規則ID (TCP Query User{[英数]-[英数]-[英数]-[英数]-[英数]}[検体のパス])</li>
+                      <li><span class="strong">追加された規則 > 規則名</span>: 実行したプロセス名 (サーバー検体の実行ファイル)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5031</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows ファイアウォールが、ネットワーク上の着信接続のアプリケーションによる受け入れをブロックしました。<ul>
+                      <li><span class="strong">プロファイル</span>: 使用されたプロファイル (プライベート)</li>
+                      <li><span class="strong">アプリケーション</span>: 検体のパス (サーバー検体のパス)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5447</td>
+                    <td class="border">その他のポリシー変更イベント</td>
+                    <td class="border">Windows フィルターリング プラットフォームのフィルターが変更されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (LOCAL SERVICE)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名(NT AUTHORITY\LOCAL SERVICE)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロバイダー情報 > ID</span>: プロバイダーのID</li>
+                      <li><span class="strong">プロバイダー情報 > 名前</span>: プロバイダーの名前</li>
+                      <li><span class="strong">変更情報 > 変更の種類</span>: 実施した処理内容 (追加)</li>
+                      <li><span class="strong">フィルター情報 > ID</span>: フィルターUUID</li>
+                      <li><span class="strong">フィルター情報 > 名前</span>: フィルター名 (サーバー検体の実行ファイル)</li>
+                      <li><span class="strong">フィルター情報 > 実行時ID</span>: フィルター実行時ID</li>
+                      <li><span class="strong">追加情報 > 条件</span>: フィルタの条件</li>
+                      <li><span class="strong">追加情報 > フィルター アクション</span>: 一致時の動作 (禁止)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="4">13</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">11</td>
+                    <td class="border">File created (rule: FileCreate)</td>
+                    <td class="border">File created.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">TargetFilename</span>: 作成されたファイル (C:\Windows\Prefetch\[サーバー検体の実行ファイル]-[文字列].pf)</li>
+                      <li><span class="strong">CreationUtcTime</span>: ファイル作成日時 (UTC)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4656</td>
+                    <td class="border">ファイル システム / その他のオブジェクト アクセス イベント</td>
+                    <td class="border">オブジェクトに対するハンドルが要求されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: ファイルの種類 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\[サーバー検体の実行ファイル]-[文字列].pf)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4663</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトへのアクセスが試行されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > オブジェクトの種類</span>: 対象の区分 (File)</li>
+                      <li><span class="strong">オブジェクト > オブジェクト名</span>: 対象のファイル名 (C:\Windows\Prefetch\[サーバー検体の実行ファイル]-[文字列].pf)</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: ハンドルを閉じたプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                      <li><span class="strong">アクセス要求情報 > アクセス/アクセス理由/アクセス マスク</span>: 要求された権限</li>
+                      <li><span class="strong">成功の監査</span>: 成否 (アクセス成功)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4658</td>
+                    <td class="border">ファイル システム</td>
+                    <td class="border">オブジェクトに対するハンドルが閉じました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (SYSTEM)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 ([ホスト名]$)</li>
+                      <li><span class="strong">サブジェクト > アカウント ドメイン</span>: 実行したアカウントの所属ドメイン (ドメイン)</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">オブジェクト > ハンドルID</span>: 当該ハンドルの識別ID (イベントID: 4656で取得されたハンドル)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: オブジェクトを要求したプロセス名 (C:\Windows\System32\svchost.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="5">14</td>
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5447</td>
+                    <td class="border">その他のポリシー変更イベント</td>
+                    <td class="border">Windows フィルターリング プラットフォームのフィルターが変更されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (LOCAL SERVICE)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名 (NT AUTHORITY\LOCAL SERVICE)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロバイダー情報 > ID</span>: プロバイダーのID</li>
+                      <li><span class="strong">プロバイダー情報 > 名前</span>: プロバイダーの名前</li>
+                      <li><span class="strong">変更情報 > 変更の種類</span>: 実施した処理内容 (追加)</li>
+                      <li><span class="strong">フィルター情報 > ID</span>: フィルターUUID</li>
+                      <li><span class="strong">フィルター情報 > 名前</span>: フィルター名 (サーバー検体の実行ファイル)</li>
+                      <li><span class="strong">フィルター情報 > 実行時ID</span>: フィルター実行時ID</li>
+                      <li><span class="strong">追加情報 > 条件</span>: フィルタの条件</li>
+                      <li><span class="strong">追加情報 > フィルター アクション</span>: 一致時の動作 (許可)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5447</td>
+                    <td class="border">その他のポリシー変更イベント</td>
+                    <td class="border">Windows フィルターリング プラットフォームのフィルターが変更されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (LOCAL SERVICE)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名(NT AUTHORITY\LOCAL SERVICE)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロバイダー情報 > ID</span>: プロバイダーのID</li>
+                      <li><span class="strong">プロバイダー情報 > 名前</span>: プロバイダーの名前</li>
+                      <li><span class="strong">変更情報 > 変更の種類</span>: 実施した処理内容 (削除)</li>
+                      <li><span class="strong">フィルター情報 > ID</span>: フィルターUUID</li>
+                      <li><span class="strong">フィルター情報 > 名前</span>: フィルター名 (サーバー検体の実行ファイル)</li>
+                      <li><span class="strong">フィルター情報 > 実行時ID</span>: フィルター実行時ID</li>
+                      <li><span class="strong">追加情報 > 条件</span>: フィルタの条件</li>
+                      <li><span class="strong">追加情報 > フィルター アクション</span>: 一致時の動作 (許可)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5447</td>
+                    <td class="border">その他のポリシー変更イベント</td>
+                    <td class="border">Windows フィルターリング プラットフォームのフィルターが変更されました。 (Windows フィルターリング プラットフォームのフィルターが変更されました。)<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID</span>: 実行したユーザーSID (LOCAL SERVICE)</li>
+                      <li><span class="strong">サブジェクト > アカウント名</span>: 実行したアカウント名(NT AUTHORITY\LOCAL SERVICE)</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロバイダー情報 > ID</span>: プロバイダーのID</li>
+                      <li><span class="strong">プロバイダー情報 > 名前</span>: プロバイダーの名前 (Microsoft Corporation)</li>
+                      <li><span class="strong">変更情報 > 変更の種類</span>: 実施した処理内容 (削除)</li>
+                      <li><span class="strong">フィルター情報 > ID</span>: フィルターUUID</li>
+                      <li><span class="strong">フィルター情報 > 名前</span>: フィルター名 (検体の実行ファイル)</li>
+                      <li><span class="strong">フィルター情報 > 実行時ID</span>: フィルター実行時ID</li>
+                      <li><span class="strong">追加情報 > 条件</span>: フィルタの条件</li>
+                      <li><span class="strong">追加情報 > フィルター アクション</span>: 一致時の動作 (禁止)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4947</td>
+                    <td class="border">MPSSVC ルールレベル ポリシーの変更</td>
+                    <td class="border">Windows ファイアウォールの例外の一覧が変更されました。規則が変更されました。<ul>
+                      <li><span class="strong">変更されたプロファイル</span>: 変更されたプロファイル (プライベート)</li>
+                      <li><span class="strong">追加された規則 > 規則 ID</span>: 実行したプロセスの規則ID (UDP Query User{[英数]-[英数]-[英数]-[英数]-[英数]}[検体のパス])</li>
+                      <li><span class="strong">追加された規則 > 規則名</span>: 実行したプロセス名 (サーバー検体の実行ファイル)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4947</td>
+                    <td class="border">MPSSVC ルールレベル ポリシーの変更</td>
+                    <td class="border">Windows ファイアウォールの例外の一覧が変更されました。規則が変更されました。<ul>
+                      <li><span class="strong">変更されたプロファイル</span>: 変更されたプロファイル (プライベート)</li>
+                      <li><span class="strong">追加された規則 > 規則 ID</span>: 実行したプロセスの規則ID (TCP Query User{[英数]-[英数]-[英数]-[英数]-[英数]}[検体のパス])</li>
+                      <li><span class="strong">追加された規則 > 規則名</span>: 実行したプロセス名 (サーバー検体の実行ファイル)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">15</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">5</td>
+                    <td class="border">Process terminated (rule: ProcessTerminate)</td>
+                    <td class="border">Process terminated.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス終了日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\System32\rundll32.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">16</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (サーバー検体のパス)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続先IPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続先ホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (ポート番号)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (接続元IPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (接続元ホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (ハイポート)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">5156</td>
+                    <td class="border">フィルタリング プラットフォームの接続</td>
+                    <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。<ul>
+                      <li><span class="strong">アプリケーション情報 > プロセスID</span>: プロセスID</li>
+                      <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行プロセス (サーバー検体のパス)</li>
+                      <li><span class="strong">ネットワーク情報 > 方向</span>: 通信方向 (着信)</li>
+                      <li><span class="strong">ネットワーク情報 > 送信元アドレス/ソース ポート</span>: 送信元IPアドレス/ポート番号 ([接続先IPアドレス]/[接続先ポート番号])</li>
+                      <li><span class="strong">ネットワーク情報 > 宛先アドレス/宛先ポート</span>: 宛先IPアドレス/ポート番号 ([接続元IPアドレス]/[ハイポート])</li>
+                      <li><span class="strong">ネットワーク情報 > プロトコル</span>: 使用されたプロトコル (6=TCP)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">17</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">1</td>
+                    <td class="border">Process Create (rule: ProcessCreate)</td>
+                    <td class="border">Process Create.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス実行日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\SysWOW64\cmd.exe)</li>
+                      <li><span class="strong">CommandLine</span>: 実行コマンドのコマンドライン (cmd /c dir)</li>
+                      <li><span class="strong">CurrentDirectory</span>: 作業ディレクトリ</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">LogonGuid/LogonId</span>: ログオンセッションのID</li>
+                      <li><span class="strong">IntegrityLevel</span>: 特権レベル (Medium)</li>
+                      <li><span class="strong">Hashes</span>: 実行ファイルのハッシュ値</li>
+                      <li><span class="strong">ParentProcessGuid/ParentProcessId</span>: 親プロセスのプロセスID</li>
+                      <li><span class="strong">ParentImage</span>: 親プロセスの実行ファイル (サーバー検体のパス)</li>
+                      <li><span class="strong">ParentCommandLine</span>: 親プロセスのコマンドライン (サーバー検体のパス)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4688</td>
+                    <td class="border">プロセス作成</td>
+                    <td class="border">新しいプロセスが作成されました。<ul>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: 実行ファイルのパス (C:\Windows\SysWOW64\cmd.exe)</li>
+                      <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: 権限昇格の有無 (1)</li>
+                      <li><span class="strong">プロセス情報 > 必須ラベル</span>: 権限昇格の要否</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセスID</span>: 新プロセスを作成した親プロセスのプロセスID。Windows 7では「クリエイター プロセスID」</li>
+                      <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: 新プロセスを作成した親プロセスのパス</li>
+                      <li><span class="strong">ログの日時</span>: プロセス実行日時 (ローカル時刻)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">18</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">10</td>
+                    <td class="border">Process accessed (rule: ProcessAccess)</td>
+                    <td class="border">Process accessed.<ul>
+                      <li><span class="strong">SourceProcessGUID/SourceProcessId/SourceThreadId</span>: アクセス元プロセスのプロセス/スレッドID</li>
+                      <li><span class="strong">SourceImage</span>: アクセス元プロセスのパス (サーバー検体のパス)</li>
+                      <li><span class="strong">TargetProcessGUID/TargetProcessId</span>: アクセス先プロセスのプロセスID</li>
+                      <li><span class="strong">TargetImage</span>: アクセス先プロセスのパス (C:\Windows\SysWOW64\cmd.exe)</li>
+                      <li><span class="strong">GrantedAccess</span>: 許可されたアクセスの内容</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="2">19</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">5</td>
+                    <td class="border">Process terminated (rule: ProcessTerminate)</td>
+                    <td class="border">Process terminated.<ul>
+                      <li><span class="strong">UtcTime</span>: プロセス終了日時 (UTC)</li>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (C:\Windows\SysWOW64\cmd.exe)</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">セキュリティ</td>
+                    <td class="border">4689</td>
+                    <td class="border">プロセス終了</td>
+                    <td class="border">プロセスが終了しました。<ul>
+                      <li><span class="strong">ログの日時</span>: プロセス終了日時 (ローカル時刻)</li>
+                      <li><span class="strong">サブジェクト > セキュリティID/アカウント名/アカウント ドメイン</span>: 実行したユーザーSID/アカウント名/ドメイン</li>
+                      <li><span class="strong">サブジェクト > ログオンID</span>: プロセスを実行したユーザーのセッションID</li>
+                      <li><span class="strong">プロセス情報 > プロセスID</span>: プロセスID (16進数)</li>
+                      <li><span class="strong">プロセス情報 > プロセス名</span>: 実行ファイルのパス (C:\Windows\SysWOW64\cmd.exe)</li>
+                      <li><span class="strong">プロセス情報 > 終了状態</span>: プロセスの戻り値</li>
+                      </ul></td>
+                  </tr>
+                  <tr class="border">
+                    <td class="border" rowspan="1">20</td>
+                    <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                    <td class="border">3</td>
+                    <td class="border">Network connection detected (rule: NetworkConnect)</td>
+                    <td class="border">Network connection detected.<ul>
+                      <li><span class="strong">ProcessGuid/ProcessId</span>: プロセスID</li>
+                      <li><span class="strong">Image</span>: 実行ファイルのパス (サーバー検体のパス)</li>
+                      <li><span class="strong">User</span>: 実行ユーザー</li>
+                      <li><span class="strong">Protocol</span>: プロトコル (tcp)</li>
+                      <li><span class="strong">SourceIp</span>: 送信元IPアドレス (接続先IPアドレス)</li>
+                      <li><span class="strong">SourceHostname</span>: 送信元ホスト名 (接続先ホスト名)</li>
+                      <li><span class="strong">SourcePort</span>: 送信元ポート番号 (接続先ポート番号)</li>
+                      <li><span class="strong">DestinationIp</span>: 宛先IPアドレス (接続元IPアドレス)</li>
+                      <li><span class="strong">DestinationHostname</span>: 宛先ホスト名 (接続元ホスト名)</li>
+                      <li><span class="strong">DestinationPort</span>: 宛先ポート番号 (ハイポート)</li>
+                      </ul></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#DestinationDetails-MFT" class="collapse" id="a-DestinationDetails-MFT" onclick="showhide('DestinationDetails-MFT');">-</a> <a name="DestinationDetails-MFT">MFT</a></h3>
+            <div class="section" id="div-DestinationDetails-MFT">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">パス</th>
+                    <th class="border_header">ヘッダフラグ</th>
+                    <th class="border_header">有効</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="1">1</td>
+                    <td class="border">[ドライブ名]:\Windows\Prefetch\[サーバー検体の実行ファイル名]-[文字列].pf</td>
+                    <td class="border">FILE</td>
+                    <td class="border">ALLOCATED</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#DestinationDetails-Prefetch" class="collapse" id="a-DestinationDetails-Prefetch" onclick="showhide('DestinationDetails-Prefetch');">-</a> <a name="DestinationDetails-Prefetch">Prefetch</a></h3>
+            <div class="section" id="div-DestinationDetails-Prefetch">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">Prefetchファイル</th>
+                    <th class="border_header">プロセス名</th>
+                    <th class="border_header">プロセスパス</th>
+                    <th class="border_header">ログから得られる情報</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="1">1</td>
+                    <td class="border">:\Windows\Prefetch\[サーバー検体の実行ファイル名]-[文字列].pf</td>
+                    <td class="border">[サーバー検体の実行ファイル名]</td>
+                    <td class="border">[サーバー検体のパス]</td>
+                    <td class="border">Last Run Time (最終実行日時)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#DestinationDetails-Registry" class="collapse" id="a-DestinationDetails-Registry" onclick="showhide('DestinationDetails-Registry');">-</a> <a name="DestinationDetails-Registry">レジストリエントリ</a></h3>
+            <div class="section" id="div-DestinationDetails-Registry">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">パス</th>
+                    <th class="border_header">種類</th>
+                    <th class="border_header">値</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="4">1</td>
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\TCP Query User{[GUID]}[サーバー検体のパス]</td>
+                    <td class="border">String</td>
+                    <td class="border">v2.10|Action=Allow|Active=TRUE|Dir=In|Protocol=6|Profile=Private|App=[サーバー検体のパス]|Name=tpcsrv.exe|Desc=tpcsrv.exe|Defer=User|</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\UDP Query User{[GUID]}[サーバー検体のパス]</td>
+                    <td class="border">String</td>
+                    <td class="border">v2.10|Action=Allow|Active=TRUE|Dir=In|Protocol=17|Profile=Private|App=[サーバー検体のパス]|Name=tpcsrv.exe|Desc=tpcsrv.exe|Defer=User|</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\TCP Query User{[GUID]}[サーバー検体のパス]</td>
+                    <td class="border">String</td>
+                    <td class="border">v2.10|Action=Allow|Active=TRUE|Dir=In|Protocol=6|Profile=Private|App=[サーバー検体のパス]|Name=tpcsrv.exe|Desc=tpcsrv.exe|Defer=User|</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\UDP Query User{[GUID]}[サーバー検体のパス]</td>
+                    <td class="border">String</td>
+                    <td class="border">v2.10|Action=Allow|Active=TRUE|Dir=In|Protocol=17|Profile=Private|App=[サーバー検体のパス]|Name=tpcsrv.exe|Desc=tpcsrv.exe|Defer=User|</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <h3 class="subsection"><a href="#DestinationDetails-USNJournal" class="collapse" id="a-DestinationDetails-USNJournal" onclick="showhide('DestinationDetails-USNJournal');">-</a> <a name="DestinationDetails-USNJournal">USNジャーナル</a></h3>
+            <div class="section" id="div-DestinationDetails-USNJournal">
+              <table class="border">
+                <thead>
+                  <tr class="border">
+                    <th class="border_header">#</th>
+                    <th class="border_header">ファイル名</th>
+                    <th class="border_header">処理</th>
+                    <th class="border_header">属性</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border">
+                    <td class="border" rowspan="3">1</td>
+                    <td class="border">[サーバー検体の実行ファイル名]-[文字列].pf</td>
+                    <td class="border">FILE_CREATE</td>
+                    <td class="border">archive+not_indexed</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">[サーバー検体の実行ファイル名]-[文字列].pf</td>
+                    <td class="border">DATA_EXTEND+FILE_CREATE</td>
+                    <td class="border">archive+not_indexed</td>
+                  </tr>
+                  <tr class="border">
+                    <!-- rowspan -->
+                    <td class="border">[サーバー検体の実行ファイル名]-[文字列].pf</td>
+                    <td class="border">CLOSE+DATA_EXTEND+FILE_CREATE</td>
+                    <td class="border">archive+not_indexed</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+        </div>
+        <hr class="section_divider">
+      <h2 class="section"><a href="#Packets" class="collapse" id="a-Packets" onclick="showhide('Packets');">-</a> <a name="Packets">パケットキャプチャ</a></h2>
+        <div class="section" id="div-Packets">
+          <table class="border">
+            <thead>
+              <tr class="border">
+                <th class="border_header">#</th>
+                <th class="border_header">処理</th>
+                <th class="border_header">送信元ホスト</th>
+                <th class="border_header">送信元ポート番号</th>
+                <th class="border_header">宛先ホスト</th>
+                <th class="border_header">宛先ポート番号</th>
+                <th class="border_header">プロトコル/アプリケーション</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border">
+                <td class="border" rowspan="1">1</td>
+                <td class="border">[PSH, ACK]: ヘッダなどからの判別は出来ないが、平文であるため、キャプチャを読み解くことで実行内容とその結果を確認することが可能。</td>
+                <td class="border">接続元ホスト</td>
+                <td class="border">ハイポート</td>
+                <td class="border">接続先ホスト</td>
+                <td class="border">実行時に指定されたポート</td>
+                <td class="border">TCP</td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+  </body>
+</html>

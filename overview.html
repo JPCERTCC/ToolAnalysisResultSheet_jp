@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>このサイトについて</title>
+
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+  <h1>このサイトについて</h1>
+  <p>このサイトは、ネットワーク内部に侵入した攻撃者が悪用する可能性が高い49個のツールを実行した際に、どのようなログがWindowsに記録されるのかを調査し、まとめています。調査するログなどの対象は、以下を対象としています。 なお、下記項目の中で最もツールの実行痕跡が残るのはイベントログであることを確認しています。そのため、ここではイベントログの調査を中心にしたものになっています。
+  </p>
+  <ul class="list-unstyled">
+    <ul>
+      <li>イベントログ</li>
+      <li>実行履歴</li>
+      <li>Prefetch</li>
+      <li>USNジャーナル</li>
+      <li>MFT</li>
+      <li>UserAssist</li>
+      <li>パケットキャプチャ</li>
+    </ul>
+  </ul>
+  <p>また本調査の概要、使用方法などをまとめた報告書を、以下で公開しています。ツール分析結果シートを使用する際は、一度報告書をご確認いただくことをお勧めします。</p>
+  <p><a href="https://www.jpcert.or.jp/research/ir_research.html">インシデント調査のための攻撃ツール等の実行痕跡調査に関する報告書 （第2版）</a></p>
+  <br>
+  <h2>各シートの項目について</h2>
+  <p>各ツールの分析結果は表形式で解説しており、各項目で記載している内容について以下の通りです。</p>
+<table class="table">
+  <thead class="thead-inverse">
+    <tr>
+      <th>項目</th>
+      <th>内容</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>ツール概要</th>
+      <td>ツールについての説明およびツールの攻撃時における想定利用例について記載</td>
+    </tr>
+    <tr>
+      <th>ツール動作概要</th>
+      <td>ツールを使用する際の権限、通信方式、関連するサービスについて記載</td>
+    </tr>
+    <tr>
+      <th>ログから得られる情報</th>
+      <td>デフォルト設定（標準設定）および監査ポリシーの設定およびSysmonがインストールされた状態（追加設定）でツール実行時に得られるログの概要を記載</td>
+    </tr>
+    <tr>
+      <th>実行成功時に確認できる痕跡</th>
+      <td>ツールの実行が、成功したことを確認する方法を記載</td>
+    </tr>
+    <tr>
+      <th>実行時に記録される主要な情報</th>
+      <td>対象のイベントログやレジストリ、USNジャーナル、MFTなどで記録される調査に活用できる重要な情報を記載（すべての記録される情報を記載しているわけではない）</td>
+    </tr>
+    <tr>
+      <th>詳細</th>
+      <td>「実行時に記録される主要な情報」には含まれていない記録されるすべてのログについて記載</td>
+    </tr>
+    <tr>
+      <th>備考</th>
+      <td>その他に記録される可能性があるログや検証時に確認した事項について記載</td>
+    </tr>
+  </tbody>
+</table>
+  <br>
+  <h2>注意点</h2>
+  <p>Windowsの標準設定では調査のために十分なイベントログを取得できません。そのため本調査では、次の設定をした場合に記録されるログを調査しています。</p>
+  <ul class="list-unstyled">
+    <ul>
+      <li>監査ポリシーの有効化</li>
+      <li>Sysmonのインストール</li>
+    </ul>
+  </ul>
+  <p>監査ポリシーの有効化方法やSysmonのインストール方法については、<a href="https://www.jpcert.or.jp/research/ir_research.html">レポート</a>をご覧ください。</p>
+  <br>
+  <footer class="footer">
+    <div>
+      <p class="text-center">Copyright © 2017 JPCERT/CC All Rights Reserved.</p>
+    </div>
+  </footer>
+</body>
+
+</html>
