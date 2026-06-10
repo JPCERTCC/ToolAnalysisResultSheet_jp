@@ -4,8 +4,3 @@
 
   https://jpcertcc.github.io/ToolAnalysisResultSheet_jp/
 
-  また本調査の概要、使用方法などをまとめた報告書を、以下で公開しています。  
-
-  [インシデント調査のための攻撃ツール等の実行痕跡調査に関する報告書 （第2版）](https://www.jpcert.or.jp/research/ir_research.html)
-
-  ツール分析結果シートを使用する際は、一度報告書をご確認いただくことをお勧めします。  
