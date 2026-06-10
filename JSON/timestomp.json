@@ -1,0 +1,307 @@
+{
+    "Summary": {
+        "ToolName": "timestomp",
+        "Category": "痕跡の削除",
+        "Description": "ファイルのタイムスタンプを変更する。",
+        "Usage": "攻撃者が利用したことでタイムスタンプが変更されたファイルのタイムスタンプを戻すことで、ファイルに対してアクセスしたことを隠蔽する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "Sysmon": "ファイル更新日時変更の記録",
+                "監査ポリシー": "ファイルのメタデータ変更の記録",
+                "監査ポリシー・Sysmon": "実行履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "「セキュリティ」ログのイベント4663において、対象ファイルに対する\"WriteAttributes\"のキーワードが\"成功の監査\"となっている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ParentProcessName": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイル名] [コマンドライン]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "[対象のファイル]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteAttributes",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 2,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "TargetFilename": "[対象のファイル]",
+                    "CreationUtcTime": "[変更後のタイムスタンプ(UTC)]",
+                    "PreviousCreationUtcTime": "[変更前のタイムスタンプ(UTC)]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[対象のファイル]",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED。Timestampの情報が変更される。"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": ["FileCreate+DataExtend"]
+                },
+                {
+                    "File": "[変更対象のファイル]",
+                    "Operation": ["BasicInfoChange+Close"]
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ParentProcessName": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイル名] [コマンドライン]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Hashes": "[実行ファイルのハッシュ値]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "HandleId": "[ハンドルID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\VirtualStore",
+                    "AccessList": "WRITE_DAC, WRITE_OWNER, SYNCHRONIZE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\VirtualStore",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WRITE_DAC, WRITE_OWNER",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "HandleId": "[ハンドルID]",
+                    "ObjectType": "File",
+                    "ObjectName": "[対象のファイル]",
+                    "AccessList": "SYNCHRONIZE, ReadAttributes, WriteAttributes",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "ObjectName": "[対象のファイル]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 2,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "TargetFilename": "[対象のファイル]",
+                    "CreationUtcTime": "[変更後のタイムスタンプ(UTC)]",
+                    "PreviousCreationUtcTime": "[変更前のタイムスタンプ(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile)、AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "CreationUtcTime": "[発生日時(UTC)]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[対象のファイル]",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED。Timestampの情報が変更される。"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": ["FileCreate+DataExtend"]
+                },
+                {
+                    "File": "[変更対象のファイル]",
+                    "Operation": ["BasicInfoChange+Close"]
+                }
+            ]
+        }
+    }
+}

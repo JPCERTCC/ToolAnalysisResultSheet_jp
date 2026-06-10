@@ -1,0 +1,363 @@
+{
+    "Summary": {
+        "ToolName": "Htran",
+        "Category": "通信の不正中継",
+        "Description": "通信をトンネリングさせる。",
+        "Usage": "ファイアウォールなどで許可されているポートを経由して、許可されていないポートの通信を通過させる。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": ["任意のTCPポート"]
+        },
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": ["任意のTCPポート"]
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            },
+            "Target": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー": "実行履歴、中継ホスト(攻撃者)・中継先ホスト(接続先)とのネットワーク通信"
+            },
+            "Target": {
+                "監査ポリシー・Sysmon": "実行履歴、ネットワーク通信履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "「セキュリティ」ログのイベント5156において、中継ホスト・中継先ホストとそれぞれ通信している"
+        ],
+        "Target": [
+            "「セキュリティ」ログのイベント5156において、想定していないホストからの通信が着信している"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイル名] -tran [中継ホストの待受ポート番号] [中継先IPアドレス] [中継先ポート番号]",
+                    "ProcessId": "[親プロセスID]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[中継ホストIPアドレス]",
+                    "DestPort": "[中継ホストの待受ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[中継ホストIPアドレス]",
+                    "SourcePort": "[中継ホストの接続元ポート番号]",
+                    "DestAddress": "[中継先IPアドレス]",
+                    "DestPort": "[中継先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "\\VOLUME{[ボリュームGUID]}\\WINDOWS\\SYSTEM32\\[実行ファイル名]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend+FileCreate+Close"
+                    ]
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[中継ホストIPアドレス]",
+                    "SourcePort": "[中継ホストの接続元ポート番号]",
+                    "DestAddress": "[中継先IPアドレス]",
+                    "DestPort": "[中継先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[中継ホストIPアドレス]",
+                    "SourceHostname": "[中継ホスト名]",
+                    "SourcePort": "[中継ホストの接続元ポート番号]",
+                    "DestinationIp": "[中継先IPアドレス]",
+                    "DestinationHostname": "[中継先ホスト名]",
+                    "DestinationPort": "[中継先ポート番号]"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイル名] -tran [中継ホストの待受ポート番号] [中継先IPアドレス] [中継先ポート番号]",
+                    "ProcessId": "[親プロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイル名] -tran [中継に使用するポート番号] [中継IPアドレス] [中継ポート番号]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "ImageLoaded": "[読み取ったDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルなどのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[中継ホストIPアドレス]",
+                    "DestPort": "[中継ホストの待受ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[中継ホストIPアドレス]",
+                    "DestinationHostname": "[中継ホスト名]",
+                    "DestinationPort": "[中継ホストの待受ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[中継ホストIPアドレス]",
+                    "SourcePort": "[中継ホストの接続元ポート番号]",
+                    "DestAddress": "[中継先IPアドレス]",
+                    "DestPort": "[中継先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[中継ホストIPアドレス]",
+                    "SourceHostname": "[中継ホスト名]",
+                    "SourcePort": "[中継ホストの接続元ポート番号]",
+                    "DestinationIp": "[中継先IPアドレス]",
+                    "DestinationHostname": "[中継先ホスト名]",
+                    "DestinationPort": "[中継先ポート番号]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "\\VOLUME{[ボリュームGUID]}\\WINDOWS\\SYSTEM32\\[実行ファイル名]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend+FileCreate+Close"
+                    ]
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[中継ホストIPアドレス]",
+                    "SourcePort": "[中継ホストの接続元ポート番号]",
+                    "DestAddress": "[中継先IPアドレス]",
+                    "DestPort": "[中継先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[中継ホストIPアドレス]",
+                    "SourceHostname": "[中継ホスト名]",
+                    "SourcePort": "[中継ホストの接続元ポート番号]",
+                    "DestinationIp": "[中継先IPアドレス]",
+                    "DestinationHostname": "[中継先ホスト名]",
+                    "DestinationPort": "[中継先ポート番号]"
+                }
+            ]
+        }
+    },
+    "Note": [
+        "本調査では「中継ホスト」を「接続元」、「中継先」を「接続先」として記載している。中継ホストを利用するホストにおいては、本ツール特有の記録は生じない",
+        "ログの内容は使用されたアプリケーションにより異なる"
+    ]
+}

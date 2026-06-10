@@ -1,0 +1,220 @@
+{
+    "Summary": {
+        "ToolName": "nmap",
+        "Category": "情報収集",
+        "Description": "ネットワーク調査に使用する。",
+        "Usage": "ネットワーク内に存在するホストの列挙や、接続可能なポートの調査に使用する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー, Sysmon": "実行履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "「セキュリティ」ログのイベント4688で検体の実行が記録されており、イベント4689でプロセスの戻り値(実行結果)が、\"0x0\"となっている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "Category": "Process Creation",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセス名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "ProcessId": "[親プロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "ImageLoaded": "[読み取ったDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルなどのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[イベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe]",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ]
+                }
+            ]
+        }
+    },
+    "Note": [
+        "nmapは多様なことが実行できるため、指定したプロトコルなどによりその動作は異なる。通信内容は「セキュリティ」ログのイベント5156や5152、「Sysmon」ログのイベント3などから確認できる"
+    ]
+}

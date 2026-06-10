@@ -1,0 +1,269 @@
+{
+    "Summary": {
+        "ToolName": "dcdiag",
+        "Category": "情報収集",
+        "Description": "ドメインコントローラーの状態を分析・調査する。",
+        "Usage": "ドメインコントローラーの問題を調査し、それを利用して攻撃手法を検討する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Domain Controller": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": ["標準ユーザ","管理ユーザ"]
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Domain Controller": {
+                "MFT・USNジャーナル": "\"/f\"オプションを指定した場合、出力されるログファイルの作成が記録される。ターミナル上で実施したのみの場合は区別出来ない"
+            }
+        },
+        "Additional": {
+            "Domain Controller": {
+                "監査ポリシー・Sysmon": "実行履歴、/\"f\"オプションを指定した場合の出力ファイルの作成"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Domain Controller": [
+            "dcdiag.exeが実行され、終了状態が0となっている",
+            "\"/f\"オプションを指定した場合は、指定したファイルが作成されている"
+        ]
+    },
+    "KeyEvents": {
+        "Domain Controller": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\dcdiag.exe",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "\"C:\\WINDOWS\\system32\\dcdiag.exe\" [実行内容]",
+                    "MandatoryLabel": "Mandatory Label\\High Mandatory Level"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\dcdiag.exe"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ログファイル名]",
+                    "Flag": "FILE",
+                    "Note": "/fオプションを指定した場合にコマンド実行時の出力がログファイルに記録される。"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[ログファイル名]",
+                    "Operation": ["FileCreate", "DataExtend", "Close"]
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Domain Controller": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\dcdiag.exe",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "\"C:\\WINDOWS\\system32\\dcdiag.exe\" [実行内容]",
+                    "MandatoryLabel": "Mandatory Label\\High Mandatory Level"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\dcdiag.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "\"C:\\WINDOWS\\system32\\dcdiag.exe\" [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\dcdiag.exe",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\dcdiag.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[ドメインコントローラーIPアドレス]",
+                    "DestPort": "135, 389, 445, [ドメインコントローラーポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\dcdiag.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "135, 389, 445, [接続先ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[ドメインコントローラーIPアドレス]",
+                    "DestPort": "389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "389"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "TargetUserSid": "SYSTEM",
+                    "TargetUserName": "[コンピューターアカウント]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "LogonType": 3,
+                    "LogonProcessName": "Kerberos",
+                    "AuthenticationPackageName": "Kerberos",
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\SYSVOL",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS\\SYSVOL\\sysvol",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\SYSVOL",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS\\SYSVOL\\sysvol",
+                    "RelativeTargetName": "[ドメイン名]\\StarterGPOs 他",
+                    "AccessList": "READ_CONTROL, ReadAttributes",
+                    "Note": "sysvol配下のファイルに対して複数発生する。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\dcdiag.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\dcdiag.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                }
+            ]
+        }
+    },
+    "Note": [
+        "記載内容はドメインコントローラーであるWindows Server上で、直接実行したもの",
+        "本ツールはネットワーク経由で実行することも可能である。クライアント版Windowsから実行した際は、Prefetchなどの記録が残る",
+        "dcdiag.exeの実行後、終了するまでの内容は指定したオプションにより異なる",
+        "\"/f\"オプションにより実行結果をファイルに記録することが可能である。この場合は作成したファイルの記録が残る"
+    ]
+}

@@ -1,0 +1,1151 @@
+{
+    "Summary": {
+        "ToolName": "BadSuccessor",
+        "Category": "権限昇格",
+        "Description": "Windows Server 2025で導入されたDelegated Managed Service Account（dMSA）機能を悪用することで、攻撃者が任意のユーザーと同等の権限を取得できる。",
+        "Usage": "新規のdMSAアカウントを作成し、CreateChildを保有する任意のアカウントに対して任意の管理アカウントの権限を「継承」する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "none",
+            "Windows 10 + Windows Server 2012": "none",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Target": {
+            "OS": "Windows Server 2025",
+            "DomainMember": true,
+            "Privilege": "管理者ユーザー"
+        },
+        "Source": {
+            "OS": "Windows 11",
+            "DomainMember": true,
+            "Privilege": "標準ユーザー"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Target": {
+                "監査ポリシー・Sysmon":"実行履歴"
+            },
+            "Host": {
+                "Prefetch":"実行履歴"
+            }
+        },
+        "Additional": {
+            "Target": {
+                "監査ポリシー":"実行履歴"
+            },
+            "Source": {
+                "監査ポリシー・Sysmon":"実行履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Target": [
+            "SharpSuccessorの実行によりイベントID: 4741・4722のログが出力される。イベントID: 4741はTargetUserNameとSamAccountNameに、イベントID: 4722はTargetUserNameに新規に作成されたdMSAアカウント名が記載される"
+        ],
+        "Source": [
+            "作成されたdMSAアカウントを利用するためにTGSがリクエストされ、イベントID: 4688のログが出力される。ログのCommandLine上に新規に作成されたdMSAアカウント名が記載される"
+        ]
+    },
+    "KeyEvents": {
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイルのパス] add /impersonate:Administrator /path:ou=bstest,dc=[ドメイン名] /account:[ドメインユーザー名] /name:[dMSAアカウント名]",
+                    "ProcessId": "[親プロセスID]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4741,
+                    "TargetUserName": "[新規作成アカウントのユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetSid": "[新しいコンピューターアカウントの SID]",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "-",
+                    "SamAccountName": "[新規作成アカウントのユーザー名]",
+                    "DisplayName": "-",
+                    "UserPrincipalName": "-",
+                    "HomeDirectory": "-",
+                    "HomePath": "-",
+                    "ScriptPath": "-",
+                    "ProfilePath": "-",
+                    "UserWorkstations": "-",
+                    "PasswordLastSet": "[パスワードが最後に設定された日時]",
+                    "AccountExpires": "期限なし",
+                    "PrimaryGroupId": "515",
+                    "AllowedToDelegateTo": "-",
+                    "OldUacValue": "0x0",
+                    "NewUacValue": "0x80",
+                    "UserAccountControl": "Workstation Trust Account Enabled",
+                    "UserParameters": "[ユーザー固有の追加パラメータ]",
+                    "SidHistory": "[SID 履歴]",
+                    "LogonHours": "%%1794",
+                    "DnsHostName": "[ドメイン名]\\[ユーザー名]",
+                    "Note": "TargetUserName、SamAccountNameに新規に作成されたdMSAアカウント名が記載される。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4722,
+                    "TargetUserName": "[新規作成アカウントのユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetSid": "[新規作成アカウントのユーザーSID]",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "0x1547a8",
+                    "Note": "TargetUserNameに新規に作成されたdMSAアカウントの情報が記載される。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5136,
+                    "OpCorrelationID": "[ログオンID]",
+                    "AppCorrelationID": "[アプリケーションID]",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "DSName": "[ドメインコントローラ名]",
+                    "DSType": "%%14676",
+                    "ObjectDN": "[オブジェクト名]",
+                    "ObjectGUID": "[オブジェクトGUID]",
+                    "ObjectClass": "[オブジェクトクラス]",
+                    "AttributeLDAPDisplayName": "[LDAP属性名]",
+                    "AttributeSyntaxOID": "[属性識別子]",
+                    "AttributeValue": "CN=[dMSAアカウント名],OU=bstest,DC=[ドメイン名]",
+                    "OperationType": "%%14674"
+                }
+            ]
+        },
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイル名] tgtdeleg /nowrap",
+                    "ProcessId": "[親プロセスID]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイル名] asktgs /targetuser:[dMSAアカウント名]$ /service:krbtgt/[ドメイン名] /opsec /dmsa /nowrap /ptt /ticket:<Hash>",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイル名] asktgs /user:[dMSAアカウント名]$ /service:cifs/[ドメインコントローラーFQDN] /opsec /dmsa /nowrap /ptt /ticket:<Hash>",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイル名] tgtdeleg /nowrap",
+                    "ProcessId": "[親プロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentUser": "[親プロセスの実行ユーザー]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "Service": "-",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "Service": "-",
+                    "PrivilegeList": "SeCreateGlobalPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "Outbound",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "64240",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "389"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (or ListDirectory), WriteData (or AddFile), AppendData (or AddSubdirectory or CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベントID: 4656で取得されたハンドル]",
+                    "AccessList": "WriteData (or AddFile), AppendData (or AddSubdirectory or CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベントID: 4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "TargetFilename C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時（UTC）]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイル名] asktgs /targetuser:[dMSAアカウント名]$ /service:krbtgt/[ドメイン名] /opsec /dmsa /nowrap /ptt /ticket:<Hash>",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザー]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "Service": "-",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "Service": "-",
+                    "PrivilegeList": "SeCreateGlobalPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "Outbound",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "88",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "88"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (or ListDirectory), WriteData (or AddFile), AppendData (or AddSubdirectory or CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベントID: 4656で取得されたハンドル]",
+                    "AccessList": "WriteData (or AddFile), AppendData (or AddSubdirectory or CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベントID: 4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "TargetFilename C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時（UTC）]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイル名] asktgs /user:[dMSAアカウント名]$ /service:cifs/[ドメインコントローラーFQDN] /opsec /dmsa /nowrap /ptt /ticket:<Hash>",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザー]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "Service": "-",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "Service": "-",
+                    "PrivilegeList": "SeCreateGlobalPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "Outbound",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "88",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "88"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (or ListDirectory), WriteData (or AddFile), AppendData (or AddSubdirectory or CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベントID: 4656で取得されたハンドル]",
+                    "AccessList": "WriteData (or AddFile), AppendData (or AddSubdirectory or CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベントID: 4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "TargetFilename C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時（UTC）]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイル名]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[実行ファイル名]",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]",
+                    "Operation": [
+                        "DataExtend",
+                        "FileCreate",
+                        "Close"
+                    ],
+                    "Note": "Archive"
+                },
+                {
+                    "File": "[実行ファイル名]",
+                    "Operation": [
+                        "BasicInfoChange",
+                        "Close"
+                    ],
+                    "Note": "Archive"
+                },
+                {
+                    "File": "[実行ファイル名]",
+                    "Operation": [
+                        "NamedDataExtend",
+                        "StreamChange",
+                        "Close"
+                    ],
+                    "Note": "Archive"
+                },
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend",
+                        "FileCreate",
+                        "Close"
+                    ],
+                    "Note": "Archive|NotContentIndexed"
+                },
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": [
+                        "RenameOldName"
+                    ],
+                    "Note": "Archive|NotContentIndexed"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイルのパス] add /impersonate:Administrator /path:ou=bstest,dc=[ドメイン名] /account:[ドメインユーザー名] /name:[dMSAアカウント名]",
+                    "ProcessId": "[親プロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentUser": "[親プロセスの実行ユーザー]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "Service": "-",
+                    "PrivilegeList": "SeCreateGlobalPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "Outbound",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "389"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\SOFTWARE\\Microsoft\\ADs\\Providers\\LDAP\\CN=Aggregate,CN=Schema,CN=Configuration,DC=[ドメイン名]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Windows\\SchCache\\[ドメイン名].sch",
+                    "CreationUtcTime": "[ファイル作成日時（UTC）]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\SOFTWARE\\Microsoft\\ADs\\Providers\\LDAP\\CN=Aggregate,CN=Schema,CN=Configuration,DC=[ドメイン名]\\File",
+                    "Details": "%%LOCALAPPDATA%%\\Microsoft\\Windows\\SchCache\\[ドメイン名].sch",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\SOFTWARE\\Microsoft\\ADs\\Providers\\LDAP\\CN=Aggregate,CN=Schema,CN=Configuration,DC=[ドメイン名]\\Time",
+                    "Details": "20251030021737.0Z",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4741,
+                    "TargetUserName": "[新規作成アカウントのユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetSid": "[新しいコンピューターアカウントの SID]",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "-",
+                    "SamAccountName": "[新規作成アカウントのユーザー名]",
+                    "DisplayName": "-",
+                    "UserPrincipalName": "-",
+                    "HomeDirectory": "-",
+                    "HomePath": "-",
+                    "ScriptPath": "-",
+                    "ProfilePath": "-",
+                    "UserWorkstations": "-",
+                    "PasswordLastSet": "[パスワードが最後に設定された日時]",
+                    "AccountExpires": "期限なし",
+                    "PrimaryGroupId": "515",
+                    "AllowedToDelegateTo": "-",
+                    "OldUacValue": "0x0",
+                    "NewUacValue": "0x80",
+                    "UserAccountControl": "Workstation Trust Account Enabled",
+                    "UserParameters": "[ユーザー固有の追加パラメータ]",
+                    "SidHistory": "[SID 履歴]",
+                    "LogonHours": "%%1794",
+                    "DnsHostName": "[ドメイン名]\\[ユーザー名]",
+                    "Note": "TargetUserName、SamAccountNameに新規に作成されたdMSAアカウント名が記載される。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4722,
+                    "TargetUserName": "[新規作成アカウントのユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetSid": "[新規作成アカウントのユーザーSID]",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "0x1547a8",
+                    "Note": "TargetUserNameに新規に作成されたdMSAアカウントの情報が記載される。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5136,
+                    "OpCorrelationID": "[ログオンID]",
+                    "AppCorrelationID": "[アプリケーションID]",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "DSName": "[ドメインコントローラ名]",
+                    "DSType": "%%14676",
+                    "ObjectDN": "[オブジェクト名]",
+                    "ObjectGUID": "[オブジェクトGUID]",
+                    "ObjectClass": "[オブジェクトクラス]",
+                    "AttributeLDAPDisplayName": "[LDAP属性名]",
+                    "AttributeSyntaxOID": "[属性識別子]",
+                    "AttributeValue": "CN=[dMSAアカウント名],OU=bstest,DC=[ドメイン名]",
+                    "OperationType": "%%14674"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5136,
+                    "OpCorrelationID": "[ログオンID]",
+                    "AppCorrelationID": "[アプリケーションID]",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "DSName": "[ドメインコントローラ名]",
+                    "DSType": "%%14676",
+                    "ObjectDN": "[オブジェクト名]",
+                    "ObjectGUID": "[オブジェクトGUID]",
+                    "ObjectClass": "[オブジェクトクラス]",
+                    "AttributeLDAPDisplayName": "[LDAP属性名]",
+                    "AttributeSyntaxOID": "[属性識別子]",
+                    "AttributeValue": "2",
+                    "OperationType": "%%14674"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "TargetUserName": "[チケットを要求したユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[チケット発行対象のユーザーSID]",
+                    "TicketOptions": "Forwardable, Renewable, Canonicalize",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "TargetUserName": "[チケットを要求したユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[チケット発行対象のユーザーSID]",
+                    "TicketOptions": "Forwardable, Renewable, Canonicalize, Renewable-ok",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4770,
+                    "TargetUserName": "[チケットを要求したユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[チケット発行対象のユーザーSID]",
+                    "TicketOptions": "RENEWABLE, RENEWABLE-OK",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "TargetUserName": "[チケットを要求したユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[チケット発行対象のユーザーSID]",
+                    "TicketOptions": "Forwardable, Renewable, Canonicalize",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4770,
+                    "TargetUserName": "[チケットを要求したユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[チケット発行対象のユーザーSID]",
+                    "TicketOptions": "RENEWABLE, RENEWABLE-OK",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "TargetUserName": "[チケットを要求したユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[チケット発行対象のユーザーSID]",
+                    "TicketOptions": "Forwardable, Renewable, Canonicalize, Renewable-ok",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege SeBackupPrivilege SeRestorePrivilege SeTakeOwnershipPrivilege SeDebugPrivilege SeSystemEnvironmentPrivilege SeLoadDriverPrivilege SeImpersonatePrivilege SeDelegateSessionUserImpersonatePrivilege SeEnableDelegationPrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "0x33a004",
+                    "LogonType": 3,
+                    "LogonProcessName": "Kerberos",
+                    "AuthenticationPackageName": "Kerberos",
+                    "WorkstationName": "[接続元ホスト名]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ImpersonationLevel": "偽装",
+                    "ElevatedToken": true
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4627,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "0x33a004",
+                    "LogonType": 3,
+                    "EventIdx": 1,
+                    "EventCountTotal":1,
+                    "GroupMembership": "[グループSID]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "AccessList": "ReadData (or ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\C$",
+                    "ShareLocalPath": "\\??\\C:\\",
+                    "AccessList": "ReadData (or ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\C$",
+                    "ShareLocalPath": "\\??\\C:\\",
+                    "RelativeTargetName": "\\",
+                    "AccessList": "ReadAttributes",
+                    "AccessReason": "-"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\C$",
+                    "ShareLocalPath": "\\??\\C:\\",
+                    "RelativeTargetName": "\\",
+                    "AccessList": "SYNCHRONIZE ReadData (or ListDirectory)  ReadAttributes",
+                    "AccessReason": "-"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKU\\[ユーザーSID]\\SOFTWARE\\Microsoft\\ADs\\Providers\\LDAP\\CN=Aggregate,CN=Schema,CN=Configuration,DC=[ドメイン名]\\File",
+                    "Type": "String",
+                    "Value": "%%LOCALAPPDATA%%\\Microsoft\\Windows\\SchCache\\[ドメイン名].sch"
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\SOFTWARE\\Microsoft\\ADs\\Providers\\LDAP\\CN=Aggregate,CN=Schema,CN=Configuration,DC=[ドメイン名]\\Time",
+                    "Type": "String",
+                    "Value": "[タイムスタンプ]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[実行ファイルのパス]",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]",
+                    "Operation": [
+                        "DataOverwrite",
+                        "DataExtend",
+                        "FileCreate",
+                        "BasicInfoChange",
+                        "Close"
+                    ]
+                }
+            ]
+        }
+    }
+}

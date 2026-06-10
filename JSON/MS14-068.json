@@ -1,0 +1,740 @@
+{
+    "Summary": {
+        "ToolName": "MS14-068 Exploit",
+        "Category": "ドメイン管理者権限、アカウントの奪取",
+        "Description": "ドメインユーザーの権限を、ドメイン管理者権限に変更する。",
+        "Usage": "入手したドメインユーザのアカウントを用いて、管理者になりすまし不正な操作をおこなう。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "false"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "",
+            "DomainMember": true,
+            "Privilege": "標準ユーザー",
+            "Protocol": [
+                "88/tcp",
+                "445/tcp"
+            ],
+            "Service": "Workstation",
+            "Note": ""
+        },
+        "Target": {
+            "OS": "",
+            "DomainMember": true,
+            "Privilege": "標準ユーザー",
+            "Protocol": [
+                "88/tcp",
+                "445/tcp"
+            ],
+            "Service": "Active Directory Domain Service",
+            "Note": ""
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー, Sysmon": "実行履歴"
+            },
+            "Target": {
+                "監査ポリシー": "標準ユーザーに特権が付与されたことが記録される。または、その要求に失敗していることが記録される"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Target": [
+            "ADのイベントログ「セキュリティ」のイベントID: 4672において、標準ユーザーに対して上位の特権が認可されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "(ファイル システム|Kernel Object)",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[作業ディレクトリ]\\TGT_[ユーザー名]@[ドメイン].ccache",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, AppendDataを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[作業ディレクトリ]\\TGT_[ユーザー名]@[ドメイン名].ccache",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "TGT_[ユーザー名]@[ドメイン名].ccache",
+                    "Operation": [
+                        "CLOSE",
+                        "DATA_EXTEND",
+                        "FILE_CREATE"
+                    ],
+                    "Note": ""
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "Category": "Kerberos サービス チケットの操作",
+                    "Description": "Kerberos サービス チケットが要求されました。",
+                    "TargetUserName": "[チケットを要求したユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[チケット発行対象のユーザーSID]",
+                    "TicketOptions": "0x40810000",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x3C",
+                    "Note": ""
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "Category": "Process Creation",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "新プロセスを作成した親プロセスのパス",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "Category": "Registry object added or deleted",
+                    "Description": "Registry object added or deleted",
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\services\\Tcpip\\Parameters",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "検体の実行ファイル名",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "88",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[検体のパス]",
+                    "TargetFilename": "[作業ディレクトリ]\\TGT_[ユーザー名]@[ドメイン].ccache",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "(ファイル システム|Kernel Object)",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[作業ディレクトリ]\\TGT_[ユーザー名]@[ドメイン].ccache",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteDataまたはAddFile, AppendDataを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "(ファイル システム|Kernel Object)",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "作業ディレクトリ]\\TGT_[ユーザー名]@[ドメイン].ccache",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, AppendDataを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "(ファイル システム|Kernel Object)",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "Category": "Process Creation",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[mimikatzの検体のパス] kerberos::ptc TGT_[ユーザー名]@[ドメイン].ccache",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセス名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "Category": "Sensitive Privilege Use",
+                    "Description": "特権のあるサービスが呼び出されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "Service": "[サービス名]",
+                    "PrivilegeList": "SeTcbPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[作業ディレクトリ]\\TGT_[ユーザー名]@[ドメイン名].ccache",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "TGT_[ユーザー名]@[ドメイン名].ccache",
+                    "Operation": [
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "TGT_[ユーザー名]@[ドメイン名].ccache",
+                    "Operation": [
+                        "DATA_EXTEND",
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "TGT_[ユーザー名]@[ドメイン名].ccache",
+                    "Operation": [
+                        "CLOSE",
+                        "DATA_EXTEND",
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "88",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[宛先ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4768,
+                    "Category": "Kerberos 認証サービス",
+                    "Description": "Kerberos 認証チケット (TGT) が要求されました。",
+                    "TargetUserName": "[チケットを要求したユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetSid": "[ユーザSID]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[サービスSID]",
+                    "TicketOptions": "0x50800000",
+                    "Status": "0x0",
+                    "TicketEncryptionType": "-",
+                    "PreAuthType": "-",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "CertIssuerName": "[証明書名]",
+                    "CertSerialNumber": "[証明書シリアル番号]",
+                    "CertThumbprint": "[証明書識別子]",
+                    "ResponseTicket": "-",
+                    "AccountSupportedEncryptionTypes": "-",
+                    "AccountAvailableKeys": "-",
+                    "ServiceSupportedEncryptionTypes": "-",
+                    "ServiceAvailableKeys": "-",
+                    "DCSupportedEncryptionTypes": "-",
+                    "DCAvailableKeys": "-"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "Category": "Kerberos サービス チケットの操作",
+                    "Description": "Kerberos サービス チケットが要求されました。",
+                    "TargetUserName": "[チケットを要求したユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[チケット発行対象のユーザーSID]",
+                    "TicketOptions": "0x50800000s",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x0",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "445",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "Category": "Kerberos サービス チケットの操作",
+                    "Description": "Kerberos サービス チケットが要求されました。",
+                    "TargetUserName": "[チケットを要求したユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[チケット発行対象のユーザーSID]",
+                    "TicketOptions": "0x40810000",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x3C",
+                    "Note": ""
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "AS-REQ (メッセージ内の、Kerberos > as-req > padata > PA-DATA PA-PAC-REQUESTのinclude-pacがFalseとなっている。",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "88",
+            "Protocol": "KRB5",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "AS-REP",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "KRB5",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "TGS-REQ (メッセージ内の、Kerberos > tgs-req > padata > PA-DATA PA-PAC-REQUESTのinclude-pacがFalseとなっている)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "88",
+            "Protocol": "TCP",
+            "Application": "TCP"
+        },
+        {
+            "Operation": "TGS-REP (メッセージ内の、Kerberos > tgs-rep > ticket > enc-partのetypeがeTYPE-ARCFOUR-HMAC-MD5 (23)となっている)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "TCP",
+            "Application": "TCP"
+        },
+        {
+            "Operation": "TGS-REQ (メッセージ内の、Kerberos > tgs-req > padata > PA-DATA PA-TGS-REQ > padata-type > padata-value > ap-req > ticket内の、enc-partの情報が直前のTGS-REPで取得した内容と同様 (eTYPE-ARCFOUR-HMAC-MD5)となっている)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "88",
+            "Protocol": "KRB5",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "KRB Error: KRB5KRB_ERR_GENERIC (ドメインコントローラーのイベントID: 4769に記録されている「エラーコード 0x3C」は汎用エラーを指すため、このメッセージを返しているものと思われる)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "KRB5",
+            "Application": "KRB5"
+        }
+    ]
+}

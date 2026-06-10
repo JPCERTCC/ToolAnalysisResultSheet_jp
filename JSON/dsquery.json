@@ -1,0 +1,174 @@
+{
+    "Summary": {
+        "ToolName": "dsquery",
+        "Category": "情報収集",
+        "Description": "Active Directoryから、ユーザーやグループなどの情報を取得する。",
+        "Usage": "Active Directoryからアカウント情報を収集し、攻撃対象として利用可能なユーザーやホストを選択する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Domain Controller": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "標準ユーザー (ただし、実行するユーザの権限により取得出来ない情報が存在する)",
+            "Protocol": [
+                "389/tcp"
+            ]
+        }
+    },
+    "Findings": {
+        "Additional": {
+            "Domain Controller": {
+                "監査ポリシー・Sysmon": "実行履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Domain Controller": [
+            "dsqueryコマンドの実行が実行履歴に記録されている"
+        ]
+    },
+    "KeyEvents": {
+        "Domain Controller": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイルのパス] [クエリ]",
+                    "ProcessId": "[親プロセスID]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "DestAddress": "[ドメインコントローラーIPアドレス]",
+                    "DestPort": "389",
+                    "Protocol": "6 (TCP)"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Domain Controller": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイルのパス] [クエリ]",
+                    "ProcessId": "[親プロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\[実行ファイルのパス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "DestAddress": "[ドメインコントローラーIPアドレス]",
+                    "DestPort": "389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "受信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "DestAddress": "[ドメインコントローラーIPアドレス]",
+                    "DestPort": "389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[ドメインコントローラーIPアドレス]",
+                    "DestinationHostname": "[ドメインコントローラーホスト名]",
+                    "DestinationPort": "389"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                }
+            ]
+        }
+    },
+    "Note": [
+        "記載内容はドメインコントローラーであるWindows Server上で、直接実行したもの。",
+        "本ツールはネットワーク経由で実行することも可能である。クライアント版Windowsから実行した際は、Prefetchなどの記録が残る。"
+    ]
+}

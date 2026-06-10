@@ -1,0 +1,3726 @@
+{
+    "Summary": {
+        "ToolName": "PsExec",
+        "Category": "コマンド実行",
+        "Description": "リモートホスト上でコマンドを実行する。",
+        "Usage": "ドメイン内のホストやサーバーでリモートコマンドを実行する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": [
+                "88/tcp (ドメイン環境下で実施する場合)",
+                "135/tcp",
+                "445/tcp",
+                "ハイポート/tcp"
+            ]
+        },
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "Admin",
+            "Protocol": [
+                "88/tcp (ドメイン環境下で実施する場合)",
+                "135/tcp",
+                "445/tcp",
+                "ハイポート/tcp"
+            ]
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "レジストリ": "PsExecの使用許諾契約に同意した際に作成されるレジストリ値",
+                "Prefetch": "実行履歴"
+            },
+            "Target": {
+                "イベントログ": "PSEXESVCサービスがインストールされ、開始・終了したことが記録される",
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "PsExecプロセスを実行したこと、接続先にネットワーク接続したこと、リモート実行されたコマンド名および引数の記録",
+                "Sysmon": "PsExecの使用許諾契約に同意した際に作成されるレジストリ値",
+                "パケットキャプチャ": "445/tcpによる通信"
+            },
+            "Target": {
+                "監査ポリシー・Sysmon": "SMB経由でPSEXESVC.exeが作成・アクセスされたこと、接続元からネットワーク接続されたこと、リモート実行されたコマンド名及び引数の記録",
+                "パケットキャプチャ": "PSEXESVC及びその出力ファイル (-stdin、-stdout、-stderr) のSMBによる送信"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "イベントログ「セキュリティ」にpsexec.exeのイベントID:4689 （プロセスが終了しました）が記録され、実行結果（戻り値）が\"0x0\"となっている"
+        ],
+        "Target": [
+            "イベントログ「システム」のイベントID:7045でPSEXESVCサービスがインストールされたことが記録されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイルのパス] \\\\[接続先IPアドレス] [リモートコマンド]",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセスのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\Explorer.EXE",
+                    "TargetObject": "HKU\\[ユーザーSID]_Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache\\[実行ファイルのパス].FriendlyAppName",
+                    "Details": "Execute processes remotely",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\Explorer.EXE",
+                    "TargetObject": "HKU\\[ユーザーSID]_Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache\\[実行ファイルのパス].ApplicationCompany",
+                    "Details": "Sysinternals - www.sysinternals.com",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Sysinternals\\PsExec\\EulaAccepted",
+                    "Details": "0x00000001",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-SmbClient/Connectivity",
+                    "EventID": 30830,
+                    "Server name": "[接続先IPアドレス]",
+                    "ServerSocketAddress": "[接続先IPアドレス]:[接続先ポート番号]",
+                    "Transport": "TCPIP",
+                    "InstanceName": "\\Device\\LanmanRedirector"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Crypto-NCrypt/KeyMgmt",
+                    "EventID": 23,
+                    "ProcessName": "[実行ファイル名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "PSEXEC64.EXE",
+                    "Process Path": "\\VOLUME{[GUID]}\\[実行ファイルのフォルダパス]\\PSEXEC64.EXE"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKU\\[ユーザーSID]_Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache\\[実行ファイルのパス].FriendlyAppName",
+                    "Type": "REG_SZ",
+                    "Value": "Execute processes remotely"
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]_Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache\\[実行ファイルのパス].ApplicationCompany",
+                    "Type": "REG_SZ",
+                    "Value": "Sysinternals - www.sysinternals.com"
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Sysinternals\\PsExec\\EulaAccepted",
+                    "Type": "DWORD",
+                    "Value": "0x00000001"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": [
+                        "CREATE",
+                        "EXTEND",
+                        "CLOSE"
+                    ],
+                    "Note": "ARCHIVE|NOINDEX"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "\\",
+                    "AccessList": "ReadAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "PSEXESVC.exe",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "AccessList": "WriteData (または AddFile)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "RelativeTargetName": "PSEXESVC",
+                    "AccessList": "READ_CONTROL"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "\\PSEXESVC",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "TargetFilename": "C:\\Windows\\PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "IsExecutable": false,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "AccessList": "DELETE, ReadAttributes"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "TargetFilename": "C:\\ProgramData\\Microsoft\\Crypto\\RSA\\S-1-5-18\\88d05cb4fa49aee2efb7ec0a762a098e_50f135f1-ba2f-4355-87ee-19ef5df9733a",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Crypto-NCrypt/KeyMgmt",
+                    "EventID": 23,
+                    "ProcessName": "[実行ファイル名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 17,
+                    "EventType": "CreatePipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "PipeName": "\\PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stdin",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 17,
+                    "EventType": "CreatePipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "PipeName": "\\PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stdout",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 17,
+                    "EventType": "CreatePipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "PipeName": "\\PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stderr",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "RelativeTargetName": "PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stdin",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "\\PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stdin",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "RelativeTargetName": "PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stdout",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), ReadEA, ReadAttributes"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "\\PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stdout",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "RelativeTargetName": "PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stderr",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), ReadEA, ReadAttributes"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "\\PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stderr",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 17,
+                    "EventType": "CreatePipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "PipeName": "<Anonymous Pipe>",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "<Anonymous Pipe>",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[リモート実行対象コマンドのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[リモート実行対象のコマンド]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ParentProcessName": "C:\\Windows\\PSEXESVC.exe",
+                    "Note": "リモート実行コマンドによって内容が変わる可能性がある"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[リモート実行対象コマンドのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[リモート実行対象ファイルのメタデータ]",
+                    "CommandLine": "[リモート実行対象のコマンド]",
+                    "CurrentDirectory": "C:\\WINDOWS\\system32\\",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "ParentProcessId": "[実行プロセスID]",
+                    "ParentImage": "C:\\Windows\\PSEXESVC.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "ParentUser": "NT AUTHORITY\\SYSTEM",
+                    "Note": "リモート実行コマンドによって内容が変わる可能性がある"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7045,
+                    "ServiceName": "PSEXESVC",
+                    "ImagePath": "%SystemRoot\\PSEXESVC.exe",
+                    "ServiceType": "ユーザー モード サービス",
+                    "StartType": "要求による開始",
+                    "AccountName": "LocalSystem"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC\\DeleteFlag",
+                    "Details": "0x00000001",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC\\Start",
+                    "Details": "0x00000004",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "DeleteKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "PSEXESVC.exe",
+                    "AccessList": "DELETE, ReadAttributes"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\PSEXESVC.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "PSEXESVC.exe",
+                    "AccessList": "DELETE"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Image": "System",
+                    "TargetFilename": "C:\\Windows\\PSEXESVC.exe",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "IsExecutable": false,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "TargetUserSid": "[実行ユーザーのSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetLogonId": "[イベント4624で記録されたログオンID]",
+                    "LogonType": 3
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[リモート実行対象ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[リモート実行対象ファイル名]",
+                    "Process Path": "\\VOLUME{01dc48a41d103c62-841d1627}\\WINDOWS\\SYSTEM32\\[リモート実行対象ファイル名]",
+                    "Note": "リモート実行対象のコマンドによって変わる"
+                },
+                {
+                    "File": "C:\\Windows\\Prefetch\\PSEXESVC.EXE-[ハッシュ値].pf",
+                    "Process Name": "PSEXESVC.EXE",
+                    "Process Path": "\\VOLUME{01dc48a41d103c62-841d1627}\\WINDOWS\\PSEXESVC.EXE"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\PSEXESVC.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "PSEXESVC.exe",
+                    "Operation": [
+                        "CREATE",
+                        "EXTEND",
+                        "OVERWRITE",
+                        "CLOSE"
+                    ],
+                    "Note": "ARCHIVE"
+                },
+                {
+                    "File": "PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "Operation": [
+                        "CREATE",
+                        "EXTEND"
+                    ],
+                    "Note": "ARCHIVE"
+                },
+                {
+                    "File": "PSEXEC-[接続元ホスト名]-[文字列].key -> [文字列].key",
+                    "Operation": [
+                        "RENAME"
+                    ],
+                    "Note": "ARCHIVE"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイルのパス] \\\\[接続先IPアドレス] [リモートコマンド]",
+                    "ProcessId": "[親プロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] \\\\[接続先IPアドレス] [リモートコマンド]",
+                    "CurrentDirectory": "[実行ファイルの親フォルダパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentUser": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "ImageLoaded": "[DLLファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\Explorer.EXE",
+                    "TargetObject": "HKU\\[ユーザーSID]_Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache\\[実行ファイルのパス].FriendlyAppName",
+                    "Details": "Execute processes remotely",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\Explorer.EXE",
+                    "TargetObject": "HKU\\[ユーザーSID]_Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache\\[実行ファイルのパス].ApplicationCompany",
+                    "Details": "Sysinternals - www.sysinternals.com",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Sysinternals\\PsExec",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": "実行ファイル名を変更してもレジストリキーは変わらない"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Sysinternals\\PsExec\\EulaAccepted",
+                    "Details": "0x00000001",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": "実行ファイル名を変更してもレジストリキーは変わらない"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[直前のイベント5158でバインドしたポート]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Microsoft-Windows-SmbClient/Connectivity",
+                    "EventID": 30830,
+                    "ServerSocketAddress": "[接続先IPアドレス]:[接続先ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[直前のイベント5158でバインドしたポート]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "135",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "135"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[直前のイベント5158でバインドしたポート]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "135",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "135"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[直前のイベント5158でバインドしたポート]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Roaming\\Microsoft\\Crypto\\RSA\\[ユーザーSID]\\5c4cc7572632e7f639d339f84df7d166_8fd930dd-6246-482f-ad84-5e9d239d4ae9",
+                    "HandleId": "[直前のイベント4690で複製したハンドル]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Roaming\\Microsoft\\Crypto\\RSA\\[ユーザーSID]\\5c4cc7572632e7f639d339f84df7d166_8fd930dd-6246-482f-ad84-5e9d239d4ae9",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイル名]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Roaming\\Microsoft\\Crypto\\RSA\\[ユーザーSID]\\5c4cc7572632e7f639d339f84df7d166_8fd930dd-6246-482f-ad84-5e9d239d4ae9",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Crypto-NCrypt/KeyMgmt",
+                    "EventID": 23,
+                    "User": "SYSTEM",
+                    "KeyName": "[接続先コンピューターアカウント]",
+                    "KeyFileName": "[文字列]",
+                    "ProcessName": "[実行ファイル名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイル名]",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\bam\\State\\UserSettings\\[ユーザーSID]\\[実行ファイルのパス]",
+                    "Details": "Binary Data",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "PSEXEC64.EXE",
+                    "Process Path": "\\VOLUME{[GUID]}\\[実行ファイルのパス]"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKU\\[ユーザーSID]_Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache\\[実行ファイルのパス].FriendlyAppName",
+                    "Type": "REG_SZ",
+                    "Value": "Execute processes remotely"
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]_Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache\\[実行ファイルのパス].ApplicationCompany",
+                    "Type": "REG_SZ",
+                    "Value": "Sysinternals - www.sysinternals.com"
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Sysinternals\\PsExec\\EulaAccepted",
+                    "Type": "DWORD",
+                    "Value": "0x00000001"
+                },
+                {
+                    "Path": "HKLM\\System\\CurrentControlSet\\Services\\bam\\State\\UserSettings\\[ユーザーSID]\\[実行ファイルのパス]",
+                    "Type": "REG_BINARY",
+                    "Value": "Binary Data"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\[実行ファイルのパス]",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]",
+                    "Operation": [
+                        "CLOSE"
+                    ],
+                    "Note": "NORMAL"
+                },
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": [
+                        "CREATE",
+                        "EXTEND",
+                        "CLOSE"
+                    ],
+                    "Note": "ARCHIVE|NOINDEX"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "SourcePort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続先IPアドレス]",
+                    "SourcePort": "[接続先ポート番号]",
+                    "DestAddress": "[ドメインコントローラーIPアドレス]",
+                    "DestPort": "135",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4776,
+                    "PackageName": "MICROSOFT_AUTHENTICATION_PACKAGE_V1_0",
+                    "TargetUserName": "[ユーザー名]",
+                    "Workstation": "[接続元ホスト名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "0x0",
+                    "TargetUserSid": "[実行ユーザーのSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "\\",
+                    "AccessList": "ReadAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "PSEXESVC.exe",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "PSEXESVC.exe",
+                    "AccessList": "WriteData (または AddFile)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\PSEXESVC.exe",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "4"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\PSEXESVC.exe",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile)",
+                    "ProcessId": "4"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\PSEXESVC.exe",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteAttributes",
+                    "ProcessId": "4"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "4"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "System",
+                    "TargetFilename": "C:\\Windows\\PSEXESVC.exe",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 29,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "System",
+                    "TargetFilename": "C:\\Windows\\PSEXESVC.exe",
+                    "Hashes": "[PSEXESVC.exeのハッシュ値]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\svchost.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "135",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\services.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4776,
+                    "PackageName": "MICROSOFT_AUTHENTICATION_PACKAGE_V1_0",
+                    "TargetUserName": "[ユーザー名]",
+                    "Workstation": "[接続元ホスト名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "0x0",
+                    "TargetUserSid": "[実行ユーザーのSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4697,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ServiceName": "PSEXESVC",
+                    "ServiceFileName": "%SystemRoot%\\PSEXESVC.exe",
+                    "ServiceType": "0x10",
+                    "ServiceStartType": "3",
+                    "ServiceAccount": "LocalSystem"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "SC Manager",
+                    "ObjectType": "SERVICE OBJECT",
+                    "ObjectName": "PSEXESVC",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "AccessMask": "DELETE, READ_CONTROL, WRITE_DAC, サービス構成情報の照会, サービス構成情報の設定, サービス ステータスの照会, サービスの依存関係の列挙, サービスの開始, サービスの停止, サービスの一時停止または続行, サービスからの情報の照会, サービス固有の制御コマンドの実行",
+                    "ProcessName": "C:\\Windows\\System32\\services.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC\\Type",
+                    "Details": "DWORD (0x00000010)",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC\\Start",
+                    "Details": "DWORD (0x00000003)",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC\\ErrorControl",
+                    "Details": "DWORD (0x00000000)",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC\\ImagePath",
+                    "Details": "%%SystemRoot%%\\PSEXESVC.exe",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC\\DisplayName",
+                    "Details": "PSEXESVC",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC\\ObjectName",
+                    "Details": "LocalSystem",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\PSEXESVC.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "ParentProcessName": "C:\\Windows\\System32\\services.exe",
+                    "MandatoryLabel": "Mandatory Label\\System Mandatory Level"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\PSEXESVC.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[PSEXESVC.exeのメタデータ]",
+                    "CommandLine": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "CurrentDirectory": "C:\\WINDOWS\\system32\\",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "System",
+                    "Hashes": "[PSEXESVC.exeのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\services.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\services.exe",
+                    "ParentUser": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\PSEXESVC.exe",
+                    "ImageLoaded": "[読み取ったDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルなどのメタデータ]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 17,
+                    "EventType": "CreatePipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "PipeName": "\\PSEXESVC",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "AccessList": "WriteData (または AddFile)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "4"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile)",
+                    "ProcessId": "4"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "System",
+                    "TargetFilename": "C:\\Windows\\PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "RelativeTargetName": "PSEXESVC",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "\\PSEXESVC",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, 実行/スキャン, DeleteChild, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\PSEXESVC.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\PSEXESVC.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, ReadAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\PSEXESVC.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\PSEXESVC.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4660,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\PSEXESVC.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\PSEXESVC.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "TargetFilename": "C:\\Windows\\PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "IsExecutable": false,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "AccessList": "DELETE, ReadAttributes"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\lsass.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "GrantedAccess": "0x1000"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "NT Local Security Authority / Authentication Service",
+                    "Service": "LsaRegisterLogonProcess()",
+                    "PrivilegeList": "SeTcbPrivilege",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\lsass.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "GrantedAccess": "0x1478"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "TargetFilename": "C:\\ProgramData\\Microsoft\\Crypto\\RSA\\S-1-5-18",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\ProgramData\\Microsoft\\Crypto\\RSA\\S-1-5-18\\88d05cb4fa49aee2efb7ec0a762a098e_50f135f1-ba2f-4355-87ee-19ef5df9733a",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\PSEXESVC.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\ProgramData\\Microsoft\\Crypto\\RSA\\S-1-5-18\\88d05cb4fa49aee2efb7ec0a762a098e_50f135f1-ba2f-4355-87ee-19ef5df9733a",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\PSEXESVC.exe",
+                    "ResourceAttributes": "S:AI"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\PSEXESVC.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "TargetFilename": "C:\\ProgramData\\Microsoft\\Crypto\\RSA\\S-1-5-18\\88d05cb4fa49aee2efb7ec0a762a098e_50f135f1-ba2f-4355-87ee-19ef5df9733a",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Crypto-NCrypt/KeyMgmt",
+                    "EventID": 23,
+                    "KeyName": "[接続先コンピューターアカウント]",
+                    "KeyFileName": "[文字列]",
+                    "ProcessName": "[実行ファイル名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "RelativeTargetName": "PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stdin",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 17,
+                    "EventType": "CreatePipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "PipeName": "\\PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stdin",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "\\PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stdin",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "RelativeTargetName": "PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stdout",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), ReadEA, ReadAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "RelativeTargetName": "PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stderr",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), ReadEA, ReadAttributes"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 17,
+                    "EventType": "CreatePipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "PipeName": "\\PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stdout",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 17,
+                    "EventType": "CreatePipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "PipeName": "\\PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stderr",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 17,
+                    "EventType": "CreatePipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "PipeName": "<Anonymous Pipe>",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "\\PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stdout",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "\\PSEXESVC-[接続元ホスト名]-[実行元プロセスID]-stderr",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "<Anonymous Pipe>",
+                    "Image": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "TargetUserSid": "[実行ユーザーのSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "ProcessName": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "ProcessId": "[実行プロセスID]",
+                    "EnabledPrivilegeList": "SeBackupPrivilege, SeRestorePrivileg",
+                    "DisabledPrivilegeList": "-",
+                    "Note": "BackupとRestoreで各2回ずつ発生"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[リモート実行対象コマンドのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[リモート実行対象コマンド]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ParentProcessName": "C:\\Windows\\PSEXESVC.exe",
+                    "Note": "ここからリモート実行対象コマンド終了までの動作は指定したプログラムによって異なる。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[リモート実行対象コマンドのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[リモート実行対象ファイルのメタデータ]",
+                    "CommandLine": "[リモート実行対象コマンド]",
+                    "CurrentDirectory": "C:\\WINDOWS\\system32\\",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "ParentProcessId": "[実行プロセスID]",
+                    "ParentImage": "C:\\Windows\\PSEXESVC.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\PSEXESVC.exe",
+                    "ParentUser": "NT AUTHORITY\\SYSTEM",
+                    "Note": "ここからリモート実行対象コマンド終了までの動作は指定したプログラムによって異なる。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[リモート実行対象コマンドのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[リモート実行対象コマンドのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[リモートコマンド実行ファイル名]-[文字列].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "Note": "実行コマンドや権限によっては出ない場合がある。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[リモートコマンド実行ファイル名]-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "Note": "実行コマンドや権限によっては出ない場合がある。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4690で複製されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "Note": "実行コマンドや権限によっては出ない場合がある。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[リモートコマンド実行ファイル名]-[文字列].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Note": "実行コマンドや権限によっては出ない場合がある。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "TargetUserSid": "[実行ユーザーのSID]",
+                    "TargetUserName": "[接続先コンピューターアカウント]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "ProcessName": "C:\\Windows\\System32\\services.exe",
+                    "ProcessId": "[プロセスID]",
+                    "EnabledPrivilegeList": "SeBackupPrivilege, SeRestorePrivilege, SeSecurityPrivilege, SeTakeOwnershipPrivilege",
+                    "DisabledPrivilegeList": "-"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "SC Manager",
+                    "ObjectType": "SC_MANAGER OBJECT",
+                    "ObjectName": "ServicesActive",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "AccessList": "DELETE, READ_CONTROL, WRITE_DAC, サービス コントローラーへの接続, 新しいサービスの作成, サービスの列挙, 排他的アクセスのためのサービス データベースのロック, サービス データベースのロック状態の照会, サービス データベースの前回正常起動時構成の設定",
+                    "ProcessName": "C:\\Windows\\System32\\services.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "SC Manager",
+                    "ObjectType": "SERVICE OBJECT",
+                    "ObjectName": "PSEXESVC",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "AccessList": "DELETE, READ_CONTROL, WRITE_DAC, サービス構成情報の照会, サービス構成情報の設定, サービス ステータスの照会, サービスの依存関係の列挙, サービスの開始, サービスの停止, サービスの一時停止または続行, サービスからの情報の照会, サービス固有の制御コマンドの実行",
+                    "ProcessName": "C:\\Windows\\System32\\services.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC\\DeleteFlag",
+                    "Details": "0x00000001",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC\\Start",
+                    "Details": "0x00000004",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[接続先コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\PSEXESVC.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\PSEXESVC.exe",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "DeleteKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\services.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\PSEXESVC",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "PSEXESVC.exe",
+                    "AccessList": "DELETE, ReadAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4690で複製されたハンドル]",
+                    "ProcessId": "0x4"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\PSEXESVC.exe",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, ReadAttributes",
+                    "ProcessId": "4"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\PSEXESVC.exe",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "4"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\PSEXESVC.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\PSEXESVC.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\PSEXESVC.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\WINDOWS",
+                    "RelativeTargetName": "PSEXESVC.exe",
+                    "AccessList": "DELETE, ReadAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\PSEXESVC.exe",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, ReadAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\PSEXESVC.exe",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "4"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4660,
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "0x4"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "0x4"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Image": "System",
+                    "TargetFilename": "C:\\Windows\\PSEXESVC.exe",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "IsExecutable": false,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "TargetUserSid": "[実行ユーザーのSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetLogonId": "[イベント4624で記録されたログオンID]",
+                    "LogonType": 3
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\PSEXESVC.EXE-[ハッシュ値].pf",
+                    "Process Name": "PSEXESVC.EXE",
+                    "Process Path": "\\VOLUME{01dc48a41d103c62-841d1627}\\WINDOWS\\PSEXESVC.EXE",
+                    "Note": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\PSEXESVC.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "PSEXESVC.exe",
+                    "Operation": [
+                        "CREATE",
+                        "EXTEND",
+                        "OVERWRITE",
+                        "CLOSE"
+                    ],
+                    "Note": "ARCHIVE"
+                },
+                {
+                    "File": "PSEXEC-[接続元ホスト名]-[文字列].key",
+                    "Operation": [
+                        "CREATE",
+                        "EXTEND"
+                    ],
+                    "Note": "ARCHIVE"
+                },
+                {
+                    "File": "PSEXEC-[接続元ホスト名]-[文字列].key -> [文字列].key",
+                    "Operation": [
+                        "RENAME"
+                    ],
+                    "Note": "ARCHIVE"
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "Session message; Negotiate Protocol",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Request, NTLMSSP_NEGOTIATE",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Response, Error: STATUS_MORE_PROCESSING_REQUIRED, NTLMSSP_CHALLENGE",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Request, NTLMSSP_AUTH, User: [接続元コンピュータアカウント名]\\\\[ユーザー名]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request, Tree: '\\\\\\\\[接続先]\\\\ADMIN$'",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Response, Tree: '\\\\\\\\[接続先]\\\\ADMIN$'",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Response FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: <share>",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: <share>",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: <share>",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response, File: <share>",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: PSEXESVC.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Request, File: PSEXESVC.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Request, File: PSEXESVC.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Request, File: PSEXESVC.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FILE_INFO/SMB2_FILE_NETWORK_OPEN_INFO, File: PSEXESVC.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: PSEXESVC.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Bind: call_id: 2, Fragment: Single, 3 context items: EPMv4 V3.0 (32bit NDR), EPMv4 V3.0 (64bit NDR), EPMv4 V3.0 (6cb71c2c-9812-4540-0300-000000000000)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "135",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Bind_ack: call_id: 2, Fragment: Single, max_xmit: 5840 max_recv: 5840, 3 results: Provider rejection, Acceptance, Negotiate ACK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "135",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Map request, SVCCTL, 32bit NDR",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "135",
+            "Protocol": "tcp",
+            "Application": "EPM"
+        },
+        {
+            "Operation": "Map response, SVCCTL, 32bit NDR",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "135",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "EPM"
+        },
+        {
+            "Operation": "Bind: call_id: 2, Fragment: Single, 2 context items: SVCCTL V2.0 (32bit NDR), SVCCTL V2.0 (6cb71c2c-9812-4540-0300-000000000000), NTLMSSP_NEGOTIATE",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Bind_ack: call_id: 2, Fragment: Single, max_xmit: 5840 max_recv: 5840, 2 results: Acceptance, Negotiate ACK, NTLMSSP_CHALLENGE",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "AUTH3: call_id: 2, Fragment: Single, NTLMSSP_AUTH, User: [接続元コンピュータアカウント名]\\\\[ユーザー名]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "OpenSCManager2 request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "OpenSCManager2 response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CreateServiceW request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CreateServiceW response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CloseServiceHandle request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CloseServiceHandle response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "OpenServiceW request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "OpenServiceW response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "StartServiceW request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "StartServiceW response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "QueryServiceStatus request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "QueryServiceStatus response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "QueryServiceStatus request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "QueryServiceStatus response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CloseServiceHandle request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CloseServiceHandle response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CloseServiceHandle request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CloseServiceHandle response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "Create Request, File: PSEXEC-[接続元コンピュータアカウント名]-[文字列].key",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: PSEXEC-[接続元コンピュータアカウント名]-[文字列].key",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Request, File: PSEXEC-[接続元コンピュータアカウント名]-[文字列].key",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response, File: PSEXEC-[接続元コンピュータアカウント名]-[文字列].key",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request, Tree: '\\\\\\\\[接続先]\\\\IPC$'",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Response, Tree: '\\\\\\\\[接続先]\\\\IPC$'",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: PSEXESVC",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: PSEXESVC",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FILE_INFO/SMB2_FILE_STANDARD_INFO, File: PSEXESVC",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response, File: PSEXESVC",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_PIPE_TRANSCEIVE",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Lease Break Notification",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Lease Break Acknowledgment",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Lease Break Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Lease Break Notification",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Lease Break Acknowledgment",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Lease Break Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Response FSCTL_PIPE_TRANSCEIVE",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FILE_INFO/SMB2_FILE_NETWORK_OPEN_INFO, File: PSEXEC-[接続元コンピュータアカウント名]-[文字列].key",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response, File: PSEXEC-[接続元コンピュータアカウント名]-[文字列].key",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: PSEXEC-[接続元コンピュータアカウント名]-[文字列].key",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response, File: PSEXEC-[接続元コンピュータアカウント名]-[文字列].key",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: PSEXEC-[接続元コンピュータアカウント名]-[文字列].key",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, Error: STATUS_OBJECT_NAME_NOT_FOUND",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Request Len:4 Off:0, File: PSEXESVC",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response, File: PSEXESVC",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Request, File: PSEXESVC",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response, File: PSEXESVC",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Request, File: PSEXESVC",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response, File: PSEXESVC",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Request, File: PSEXESVC",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response, File: PSEXESVC",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request, File: PSEXESVC",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Response, File: PSEXESVC",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_PIPE_WAIT Pipe: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdin",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Response FSCTL_PIPE_WAIT",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdin",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdin",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FILE_INFO/SMB2_FILE_STANDARD_INFO, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdin",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdin",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_PIPE_WAIT Pipe: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdout",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Response FSCTL_PIPE_WAIT",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdout",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdout",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FILE_INFO/SMB2_FILE_STANDARD_INFO, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdout",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdout",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_PIPE_WAIT Pipe: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stderr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Response FSCTL_PIPE_WAIT",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stderr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stderr",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FILE_INFO/SMB2_FILE_STANDARD_INFO, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stderr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stderr",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request Len:4 Off:0, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdout",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request Len:4 Off:0, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stderr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Response, Error: STATUS_PENDING",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Response, Error: STATUS_PENDING",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Response, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdout",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdout",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2",
+            "Note": "繰り返し発生する"
+        },
+        {
+            "Operation": "Read Response, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdout",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2",
+            "Note": "繰り返し発生する"
+        },
+        {
+            "Operation": "Read Response, Error: STATUS_PIPE_DISCONNECTED",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stderr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdout",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stderr",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Response, Error: STATUS_PIPE_DISCONNECTED",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdout",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdout",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request, File: PSEXESVC",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Response, File: PSEXESVC",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: PSEXESVC",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response, File: PSEXESVC",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "OpenSCManager2 request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "OpenSCManager2 response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "OpenServiceW request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "OpenServiceW response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "ControlService request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "ControlService response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "QueryServiceStatus request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "QueryServiceStatus response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CloseServiceHandle request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CloseServiceHandle response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "OpenServiceW request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "OpenServiceW response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "DeleteService request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "DeleteService response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CloseServiceHandle request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CloseServiceHandle response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CloseServiceHandle request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[送信先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "CloseServiceHandle response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[送信先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SVCCTL"
+        },
+        {
+            "Operation": "Create Request, File: PSEXESVC.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Request FILE_INFO/SMB2_FILE_DISPOSITION_INFO",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Response, Error: STATUS_CANNOT_DELETE, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: PSEXESVC.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: PSEXESVC.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Request FILE_INFO/SMB2_FILE_DISPOSITION_INFO",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: PSEXESVC.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response, File: PSEXESVC.exe",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdin",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[送信元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response, File: PSEXESVC-[接続元コンピュータアカウント名]-[実行元プロセスID]-stdin",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[送信元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        }
+    ],
+    "Note": [
+        "サービス名\"PSEXESVC\"はクライアント実行時に指定することで変更が可能",
+        "接続先のレジストリについて、サービスの登録に伴いレジストリ値の書き込みは発生するが、PSEXESVCの終了と共に削除されるため、実行後の差分とはならない"
+    ]
+}

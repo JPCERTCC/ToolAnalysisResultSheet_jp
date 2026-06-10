@@ -1,0 +1,1272 @@
+{
+    "Summary": {
+        "ToolName": "ntdsutil",
+        "Category": "情報収集",
+        "Description": "Active Directory データベースの保守に使用する。",
+        "Usage": "NTDS.DIT（NTDSのデータベース）を抽出し、他のツールを用いてパスワードを解析する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows Server",
+            "DomainMember": true,
+            "Privilege": "Admin"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "監査ポリシー・Sysmon": "サービスの開始、ストレージデバイスに対するドライバのインストール履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "ntdsutil.exeが実行され、「セキュリティ」ログにイベント8222が記録されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\ntdsutil.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "\"C:\\WINDOWS\\system32\\ntdsutil.exe\" \"activate instance ntds\" ifm \"create full [出力先ディレクトリ]\" q q",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "-",
+                    "TargetDomainName": "-",
+                    "TargetLogonId": "0x0",
+                    "ParentProcessName": "[親実行ファイルのパス]",
+                    "MandatoryLabel": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\VSSVC.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "-",
+                    "TargetDomainName": "-",
+                    "TargetLogonId": "0x0",
+                    "ParentProcessName": "C:\\Windows\\System32\\services.exe",
+                    "MandatoryLabel": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\System32\\svchost.exe -k swprv",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "-",
+                    "TargetDomainName": "-",
+                    "TargetLogonId": "0x0",
+                    "ParentProcessName": "C:\\Windows\\System32\\services.exe",
+                    "MandatoryLabel": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetFilename": "[出力先ディレクトリ]\\registry",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetFilename": "[出力先ディレクトリ]\\Active Directory",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetFilename": "C:\\System Volume Information\\RemoteVss\\{[GUID1]}-{[GUID2]}.PMS",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Application",
+                    "EventID": 2006
+                },
+                {
+                    "Channel": "Microsoft-Windows-Kernel-PnP/Configuration",
+                    "EventID": 400,
+                    "DeviceInstanceId": "",
+                    "DriverName": "volsnap.inf",
+                    "ClassGuid": "[デバイスセットアップクラスのGUID]",
+                    "DriverDate": "",
+                    "DriverVersion": "",
+                    "DriverProvider": "",
+                    "DriverSection": "",
+                    "DriverRank": "",
+                    "MatchingDeviceId": "STORAGE\\VolumeSnapshot",
+                    "DeviceUpdated": false,
+                    "Status": "0x0",
+                    "DriverInbox": true,
+                    "Parent Device": "[シャドウコピーの親デバイス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Kernel-PnP/Configuration",
+                    "EventID": 410,
+                    "DeviceInstanceId": "[シャドウコピーのインスタンスID]",
+                    "DriverName": "[シャドウコピー作成時に使用されたドライバ名]",
+                    "ClassGuid": "[デバイスセットアップクラスのGUID]",
+                    "ServiceName": "",
+                    "LowerFilters": "",
+                    "UpperFilters": "",
+                    "Problem": "0x0",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 8222,
+                    "User SID": "[ユーザーSID]",
+                    "User name": "[ドメイン名]\\[ユーザー名]",
+                    "Process ID": "[プロセスID]",
+                    "Process image name": "C:\\Windows\\System32\\ntdsutil.exe",
+                    "Shadow Set ID": "[シャドウコピーのグループID]",
+                    "Shadow ID": "[シャドウコピーのID]",
+                    "Original Machine": "[ドメインコントローラーのホスト名]",
+                    "Original Volume": "[シャドウコピー対象のボリューム]",
+                    "Shadow device name": "\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Control\\DeviceClasses\\{[デバイスインターフェイスクラスのGUID]}\\##?#STORAGE#VolumeSnapshot#HarddiskVolumeSnapshot[スナップショット番号]#{[デバイスインターフェイス インスタンスのGUID]}\\DeviceInstance",
+                    "Type": "RegSz",
+                    "Value": "STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\System Volume Information",
+                    "Flag": "FOLDER",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\System Volume Information\\RemoteVss",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\Windows\\NTDS",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\temp\\ntds",
+                    "Flag": "FOLDER",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\temp\\ntds\\Active Directory",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\temp\\ntds\\registry",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\System Volume Information",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "temp",
+                    "Operation": "FileCreate|Close",
+                    "Note": "Directory"
+                },
+                {
+                    "File": "ntds",
+                    "Operation": "FileCreate|Close",
+                    "Note": "Directory"
+                },
+                {
+                    "File": "registry",
+                    "Operation": "FileCreate|Close",
+                    "Note": "Directory"
+                },
+                {
+                    "File": "Active Directory",
+                    "Operation": "FileCreate|Close",
+                    "Note": "Directory"
+                },
+                {
+                    "File": "msxml3.dll",
+                    "Operation": "Close",
+                    "Note": "Archive"
+                },
+                {
+                    "File": "RemoteVss",
+                    "Operation": "FileCreate|Close",
+                    "Note": "Directory"
+                },
+                {
+                    "File": "RemoteVss",
+                    "Operation": "IndexableChange|BasicInfoChange|Close",
+                    "Note": "Hidden|System|Directory|NotContentIndexed"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\ntdsutil.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "\"C:\\WINDOWS\\system32\\ntdsutil.exe\" \"activate instance ntds\" ifm \"create full [出力先ディレクトリ]\" q q",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "-",
+                    "TargetDomainName": "-",
+                    "TargetLogonId": "0x0",
+                    "ParentProcessName": "[親実行ファイルのパス]",
+                    "MandatoryLabel": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\ntdsutil.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "\"C:\\WINDOWS\\system32\\ntdsutil.exe\" \"activate instance ntds\" ifm \"create full [出力先ディレクトリ]\" q q\"",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\VSSVC.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "-",
+                    "TargetDomainName": "-",
+                    "TargetLogonId": "0x0",
+                    "ParentProcessName": "C:\\Windows\\System32\\services.exe",
+                    "MandatoryLabel": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\VSSVC.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "CurrentDirectory": "C:\\WINDOWS\\system32\\",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\services.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\services.exe",
+                    "ParentUser": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\System32\\svchost.exe -k swprv",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "-",
+                    "TargetDomainName": "-",
+                    "TargetLogonId": "0x0",
+                    "ParentProcessName": "C:\\Windows\\System32\\services.exe",
+                    "MandatoryLabel": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "C:\\WINDOWS\\System32\\svchost.exe -k swprv",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "System",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\services.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\services.exe",
+                    "ParentUser": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\ntdsutil.exe",
+                    "ImageLoaded": "[ntdsutil.exeに読み込まれたモジュール(DLLなど)]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "GrantedAccess": "0x1000"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "param1": "Volume Shadow Copy",
+                    "param2": "実行中"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "param1": "Microsoft Software Shadow Copy Provider",
+                    "param2": "実行中"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetFilename": "[出力先ディレクトリ]",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": "ディレクトリの階層毎に当イベントが記録される。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Image": "C:\\WINDOWS\\system32\\lsass.exe",
+                    "TargetFilename": "C:\\Windows\\NTDS\\edbtmp.log",
+                    "Hashes": "[.logファイルのハッシュ値]",
+                    "IsExecutable": false,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\lsass.exe",
+                    "TargetFilename": "C:\\Windows\\SystemTemp\\DSW10D0.tmp",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetFilename": "C:\\$SNAP_[実行日時]_VOLUMEC$",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetFilename": "[出力先ディレクトリ]\\Active Directory\\ntds.jfm",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetFilename": "[出力先ディレクトリ]\\Active Directory\\ntds.dit",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetFilename": "[ユーザー用テンポラリフォルダ]\\tmp.edb",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetFilename": "[ユーザー用テンポラリフォルダ]\\tmp.edb",
+                    "Hashes": ".edbファイルのハッシュ値",
+                    "IsExecutable": false,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetFilename": "[出力先ディレクトリ]\\registry\\SYSTEM",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetFilename": "[出力先ディレクトリ]\\registry\\SECURITY",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Image": "C:\\WINDOWS\\system32\\lsass.exe",
+                    "TargetFilename": "C:\\Windows\\System32\\config\\netlogon.dnb",
+                    "Hashes": ".dnbファイルのハッシュ値",
+                    "IsExecutable": false,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\lsass.exe",
+                    "TargetFilename": "C:\\Windows\\System32\\config\\netlogon.dnb",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Image": "C:\\WINDOWS\\system32\\lsass.exe",
+                    "TargetFilename": "C:\\Windows\\System32\\config\\netlogon.dns",
+                    "Hashes": ".dnsファイルのハッシュ値",
+                    "IsExecutable": false,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\lsass.exe",
+                    "TargetFilename": "C:\\Windows\\System32\\config\\netlogon.dns",
+                    "CreationUtcTime": "[ファイル作成時刻]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\ntdsutil.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "0:0:0:0:1",
+                    "SourceHostname": "[ループバックアドレスのホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "0:0:0:0:1",
+                    "DestinationHostname": "[ループバックアドレスのホスト名]",
+                    "DestinationPort": "389"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\ntdsutil.exe",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "17 (UDP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\ntdsutil.exe",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\ntdsutil.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[ループバックアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[ループバックアドレス]",
+                    "DestPort": "389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "",
+                    "TargetUserSid": "[対象ユーザーSID]",
+                    "TargetUserName": "[対象ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "",
+                    "ProcessName": "C:\\Windows\\System32\\ntdsutil.exe",
+                    "ProcessId": "[プロセスID]",
+                    "EnabledPrivilegeList": "SeBackupPrivilege",
+                    "DisabledPrivilegeList": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "[コンピューターアカウント]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "",
+                    "ProcessName": "C:\\Windows\\System32\\VSSVC.exe",
+                    "ProcessId": "[プロセスID]",
+                    "EnabledPrivilegeList": "SeBackupPrivilege",
+                    "DisabledPrivilegeList": "-"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "[コンピューターアカウント]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "",
+                    "ProcessName": "C:\\Windows\\System32\\VSSVC.exe",
+                    "ProcessId": "[プロセスID]",
+                    "EnabledPrivilegeList": "SeRestorePrivilege",
+                    "DisabledPrivilegeList": "-"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "",
+                    "TargetUserSid": "[対象ユーザーSID]",
+                    "TargetUserName": "[対象ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "",
+                    "ProcessName": "C:\\Windows\\System32\\ntdsutil.exe",
+                    "ProcessId": "[プロセスID]",
+                    "EnabledPrivilegeList": "SeManageVolumePrivilege",
+                    "DisabledPrivilegeList": "-"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4799,
+                    "TargetUserName": "[対象ユーザー名]",
+                    "TargetDomainName": "Builtin",
+                    "TargetUserSid": "[対象ユーザーSID]",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "",
+                    "CallerProcessId": "[プロセスID]",
+                    "CallerProcessName": "C:\\Windows\\System32\\VSSVC.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4799,
+                    "TargetUserName": "[対象ユーザー名]",
+                    "TargetDomainName": "Builtin",
+                    "TargetUserSid": "[対象ユーザーSID]",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "",
+                    "CallerProcessId": "[プロセスID]",
+                    "CallerProcessName": "C:\\Windows\\System32\\ntdsutil.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "",
+                    "ObjectServer": "",
+                    "Service": "",
+                    "PrivilegeList": "SeCreateGlobalPrivilege",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\ntdsutil.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\VssapiPublisher",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\ProductOptions",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\Registry Writer",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\COM+ REGDB Writer",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\ASR Writer",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\Shadow Copy Optimization Writer",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Enum\\SCSI\\[ストレージデバイス名]\\[PnPデバイスインスタンスID]\\Device Parameters\\Partmgr",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\Lovelace",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\VssvcPublisher",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\FSProvider_{[ファイルシステムプロバイダーIDのGUID]}",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\SwProvider_{[ソフトウェアプロバイダーIDのGUID]}",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\Lovelace(C:_)",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 9,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\VSSVC.exe",
+                    "Device": "\\Device\\HarddiskVolume[ボリューム番号]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Application",
+                    "EventID": 2005
+                },
+                {
+                    "Channel": "Application",
+                    "EventID": 2001
+                },
+                {
+                    "Channel": "Application",
+                    "EventID": 2003
+                },
+                {
+                    "Channel": "Application",
+                    "EventID": 2006
+                },
+                {
+                    "Channel": "Microsoft-Windows-Kernel-PnP/Configuration",
+                    "EventID": 400,
+                    "DeviceInstanceId": "STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]",
+                    "DriverName": "volsnap.inf",
+                    "ClassGuid": "{[デバイスセットアップクラスのGUID]}",
+                    "DriverDate": "[ドライバーのリリース日]",
+                    "DriverVersion": "[ドライバーバージョン]",
+                    "DriverProvider": "Microsoft",
+                    "DriverSection": "volume_snapshot_install.NTamd64",
+                    "DriverRank": "",
+                    "MatchingDeviceId": "STORAGE\\VolumeSnapshot",
+                    "DeviceUpdated": false,
+                    "Status": "0x0",
+                    "DriverInbox": true,
+                    "Parent Device": "[シャドウコピーの親デバイス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Kernel-PnP/Configuration",
+                    "EventID": 410,
+                    "DeviceInstanceId": "[シャドウコピーのインスタンスID]",
+                    "DriverName": "volsnap.inf",
+                    "ClassGuid": "{[デバイスセットアップクラスのGUID]}",
+                    "ServiceName": "",
+                    "LowerFilters": "",
+                    "UpperFilters": "",
+                    "Problem": "0x0",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 9,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\VSSVC.exe",
+                    "Device": "\\Device\\HarddiskVolume[ボリューム番号]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 9,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\VSSVC.exe",
+                    "Device": "\\Device\\Harddisk0\\DR0",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "PipeName": "\\lsass",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "PipeName": "\\wkssvc",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4904,
+                    "SubjectUserSid": "",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "",
+                    "AuditSourceName": "VSSAudit",
+                    "EventSourceId": "",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\VSSVC.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\ntdsutil.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag 以下の複数キー",
+                    "Details": "Binary Data",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\lsass.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag 以下の複数キー",
+                    "Details": "",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag 以下の複数キー",
+                    "Details": "",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\DFSRs.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag 以下の複数キー",
+                    "Details": "",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag 以下の複数キー",
+                    "Details": "",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Ntfs/Operational",
+                    "EventID": 9,
+                    "DeviceName": "\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]",
+                    "Reason": "マウント"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Ntfs/Operational",
+                    "EventID": 10,
+                    "DeviceName": "\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]",
+                    "MediaType": "ハード ディスク"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Ntfs/Operational",
+                    "EventID": 4,
+                    "DeviceNameLength": "\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Ntfs/Operational",
+                    "EventID": 9,
+                    "DeviceName": "\\Device\\HarddiskVolume[ボリューム番号]",
+                    "Reason": "例外または構成の変更により、再読み込みが要求されました"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Ntfs/Operational",
+                    "EventID": 10,
+                    "DeviceName": "\\Device\\HarddiskVolume[ボリューム番号]",
+                    "MediaType": "ハード ディスク"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 8222,
+                    "Data1": "[ユーザーSID]",
+                    "Data2": "[ドメイン名]\\[ユーザー名]",
+                    "Data3": "[プロセスID]",
+                    "Data4": "C:\\Windows\\System32\\ntdsutil.exe",
+                    "Data5": "[シャドウコピーのグループID]",
+                    "Data6": "[シャドウコピーのID]",
+                    "Data7": "[プロバイダーID]",
+                    "Data8": "[ドメインコントローラーのホスト名]",
+                    "Data9": "[シャドウコピー対象のボリューム]",
+                    "Data10": "作成されたシャドウコピー名(\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy[ボリューム番号])"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 98,
+                    "DriveName": "??",
+                    "DeviceName": "\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Ntfs/Operational",
+                    "EventID": 300,
+                    "DeviceName": "\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "svchost.exe",
+                    "DismountReason": "User request"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Ntfs/Operational",
+                    "EventID": 301
+                },
+                {
+                    "Channel": "Microsoft-Windows-Ntfs/Operational",
+                    "EventID": 302
+                },
+                {
+                    "Channel": "Microsoft-Windows-Ntfs/Operational",
+                    "EventID": 303,
+                    "DeviceName": "\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "svchost.exe",
+                    "DismountReason": "User request"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\ntdsutil.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\ntdsutil.exe"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Control\\Class\\{[デバイスセットアップクラスのGUID]}\\0000\\DriverDesc",
+                    "Type": "RegSz",
+                    "Value": "Generic volume shadow copy"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Control\\Class\\{[デバイスセットアップクラスのGUID]}\\0000\\ProviderName",
+                    "Type": "RegSz",
+                    "Value": "Microsoft"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Control\\Class\\{[デバイスセットアップクラスのGUID]}\\0000\\DriverDateData",
+                    "Type": "RegBinary",
+                    "Value": "[ドライバー更新日時のバイナリ値]"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Control\\Class\\{[デバイスセットアップクラスのGUID]}\\0000\\DriverDate",
+                    "Type": "RegSz",
+                    "Value": "[ドライバーの更新日時]"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Control\\Class\\{[デバイスセットアップクラスのGUID]}\\0000\\DriverVersion",
+                    "Type": "RegSz",
+                    "Value": "[バージョン番号]"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Control\\Class\\{[デバイスセットアップクラスのGUID]}\\0000\\InfPath",
+                    "Type": "RegSz",
+                    "Value": "volsnap.inf"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Control\\DeviceClasses\\{[デバイスインターフェイスクラスのGUID]}\\##?#STORAGE#VolumeSnapshot#HarddiskVolumeSnapshot[スナップショット番号]#{[デバイスインターフェイス インスタンスのGUID]}\\DeviceInstance",
+                    "Type": "RegSz",
+                    "Value": "STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]\\Capabilities",
+                    "Type": "RegDword",
+                    "Value": "240"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]\\ConfigFlags",
+                    "Type": "RegDword",
+                    "Value": "0x00000000"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]\\ContainerID",
+                    "Type": "RegSz",
+                    "Value": "{[デバイスコンテナIDのGUID]}"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]\\HardwareID",
+                    "Type": "RegMultiSz",
+                    "Value": "[文字列]"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]\\ClassGUID",
+                    "Type": "RegSz",
+                    "Value": "{[デバイスセットアップクラスのGUID]}"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]\\DeviceDesc",
+                    "Type": "RegSz",
+                    "Value": "@volsnap.inf,%storage\\volumesnapshot.devicedesc%;Generic volume shadow copy"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]\\Driver",
+                    "Type": "RegSz",
+                    "Value": "{[デバイスセットアップクラスのGUID]}\\0000"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]\\Mfg",
+                    "Type": "RegSz",
+                    "Value": "@volsnap.inf,%msft%;Microsoft"
+                },
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Enum\\STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]\\Address",
+                    "Type": "RegDword",
+                    "Value": "0x00000000"
+                },
+                {
+                    "Path": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag 以下の複数キー",
+                    "Type": "Binary",
+                    "Value": "[バイナリ値]"
+                },
+                {
+                    "Path": "HKLM\\System\\CurrentControlSet\\Enum\\SCSI\\[ストレージデバイス名]\\[PnPデバイスインスタンスID]\\Device Parameters\\Partmgr\\PartitionTableCache",
+                    "Type": "Binary",
+                    "Value": "[バイナリ値]"
+                },
+                {
+                    "Path": "HKLM\\System\\CurrentControlSet\\Enum\\SCSI\\[ストレージデバイス名]\\[PnPデバイスインスタンスID]\\Device Parameters\\Partmgr\\SnapshotDataCache",
+                    "Type": "Binary",
+                    "Value": "[バイナリ値]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\System Volume Information",
+                    "Flag": "FOLDER",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\System Volume Information\\RemoteVss",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\Windows",
+                    "Flag": "FOLDER",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\Windows\\NTDS",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\Windows\\SystemTemp",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\Windows\\debug",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\[出力先ディレクトリ]",
+                    "Flag": "FOLDER",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\[出力先ディレクトリ]\\Active Directory",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\[出力先ディレクトリ]\\registry",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\[出力先ディレクトリ]\\registry",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": ".\\System Volume Information",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[出力先ディレクトリ]",
+                    "Operation": "FileCreate|Close",
+                    "Note": "Directory"
+                },
+                {
+                    "File": "ntds",
+                    "Operation": "FileCreate|Close",
+                    "Note": "Directory"
+                },
+                {
+                    "File": "registry",
+                    "Operation": "FileCreate|Close",
+                    "Note": "Directory"
+                },
+                {
+                    "File": "Active Directory",
+                    "Operation": "FileCreate|Close",
+                    "Note": "Directory"
+                },
+                {
+                    "File": "vss_ps.dll",
+                    "Operation": "Close",
+                    "Note": "Archive"
+                },
+                {
+                    "File": "msxml3.dll",
+                    "Operation": "Close",
+                    "Note": "Archive"
+                },
+                {
+                    "File": "RemoteVss",
+                    "Operation": "FileCreate|Close",
+                    "Note": "Directory"
+                },
+                {
+                    "File": "RemoteVss",
+                    "Operation": "IndexableChange|BasicInfoChange|Close",
+                    "Note": "Hidden|System|Directory|NotContentIndexed"
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,732 @@
+{
+    "Summary": {
+        "ToolName": "AceHash",
+        "Category": "パスワード、ハッシュ入手",
+        "Description": "パスワードハッシュ値を取得し、ホストにログオンする。",
+        "Usage": "ログオンパスワードが不明な場合、取得したパスワードハッシュ値を使用してリモートホストにログオンする。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "false"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "Admin",
+            "Protocol": [
+                "445/tcp"
+            ]
+        },
+        "Domain Controller": {
+            "OS": "Windows Server",
+            "DomainMember": true,
+            "Privilege": "User",
+            "Protocol": [
+                "445/tcp"
+            ]
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴"
+            },
+            "Domain Controller": {
+                "監査ポリシー": "NTLM認証の成功,\"\\\\*\\C$\"へのアクセス"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Domain Controller": [
+            "イベントログ「セキュリティ」のイベントID:4624にNTLM認証が成功したことが記録されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] -l",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": "-l オプションはハッシュ取得"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\Windows\\system32\\lsass.exe",
+                    "GrantedAccess": "0x1FFFFF"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x1",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] -s [ユーザー名]:[ドメイン名]:[ハッシュ] [リモート実行コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": "-s オプションはログオン"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[リモート実行ファイルのメタデータ]",
+                    "CommandLine": "[リモート実行コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンセッションのID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[実行ファイルのパス]",
+                    "ParentCommandLine": "[実行ファイルのパス] -s [ユーザー名]:[ドメイン名]:[ハッシュ] [リモート実行コマンドライン]",
+                    "ParentUser": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "SourceProcessId": "[プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\Windows\\system32\\lsass.exe",
+                    "GrantedAccess": "0x1FFFFF"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "SourceIp": "[接続先IPアドレス]",
+                    "SourceHostname": "[接続先ホスト名]",
+                    "SourcePort": "[接続先ポート番号]",
+                    "DestinationIp": "[接続元IPアドレス]",
+                    "DestinationHostname": "[接続元スト名]",
+                    "DestinationPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[リモート実行ファイルパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0xFFFFFFFF",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルパス]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]",
+                    "Note": ""
+                }
+            ]
+        },
+        "Domain Controller": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "SourceIp": "[ドメインコントローラーIPアドレス]",
+                    "SourceHostname": "[ドメインコントローラーホスト名]",
+                    "SourcePort": "445",
+                    "DestinationIp": "[送信元IPアドレス]",
+                    "DestinationHostname": "[送信元ホスト名]",
+                    "DestinationPort": "[送信元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4776,
+                    "PackageName": "MICROSOFT_AUTHENTICATION_PACKAGE_V1_0",
+                    "TargetUserName": "[指定されたアカウント]",
+                    "Workstation": "[接続元ホスト名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeEnableDelegationPrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "Category": "Logon",
+                    "Description": "アカウントが正常にログオンしました。",
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[アカウント名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[認証を実行したユーザーのセッションID]",
+                    "TargetUserSid": "[実行ユーザーのSID]",
+                    "TargetUserName": "[アカウント名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンされたユーザーのセッションID]",
+                    "LogonProcessName": "NtLmSsp",
+                    "AuthenticationPackageName": "NTLM",
+                    "LmPackageName": "NTLM V2",
+                    "KeyLength": 128,
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ImpersonationLevel": "偽装",
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[アカウント名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\C$",
+                    "ShareLocalPath": "\\??\\C:\\",
+                    "RelativeTargetName": "\\",
+                    "AccessList": "SYNCHRONIZE, ReadAttributes"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] -l",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": "-l オプションはハッシュ取得"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "NewProcessId": "[プロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeFull(2)",
+                    "ProcessId": "[新プロセスを作成した親プロセスのプロセスID]",
+                    "ParentProcessName": "[新プロセスを作成した親プロセスのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\Windows\\system32\\lsass.exe",
+                    "GrantedAccess": "0x1FFFFF"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 8,
+                    "Category": "CreateRemoteThread detected",
+                    "Description": "CreateRemoteThread detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[作成元プロセスID]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargeProcessId": "[作成先プロセスID]",
+                    "TargetImage": "C:\\Windows\\System32\\lsass.exe",
+                    "NewThreadId": "[新規スレッドのスレッドID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x1",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC）]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\WINDOWS\\system32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\WINDOWS\\system32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\WINDOWS\\system32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] -s [ユーザー名]:[ドメイン名]:[ハッシュ] [リモート実行コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": "-s オプションはログオン"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeFull(2)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "[実行ファイルのパス] -s [ユーザー名]:[ドメイン名]:[ハッシュ] [リモート実行コマンドライン]",
+                    "ParentProcessName": "[親プロセス名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[リモート実行ファイルのメタデータ]",
+                    "CommandLine": "[リモート実行コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンセッションのID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[実行ファイルのパス]",
+                    "ParentCommandLine": "[実行ファイルのパス] -s [ユーザー名]:[ドメイン名]:[ハッシュ] [リモート実行コマンドライン]",
+                    "ParentUser": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[リモート実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeFull(2)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "[実行ファイルのパス] -s [ユーザー名]:[ドメイン名]:[ハッシュ] [リモート実行コマンドライン]",
+                    "ParentProcessName": "[親プロセス名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "SourceProcessId": "[プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\Windows\\system32\\lsass.exe",
+                    "GrantedAccess": "0x1FFFFF"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 8,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargetImage": "C:\\Windows\\system32\\lsass.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "SourceIp": "[接続先IPアドレス]",
+                    "SourceHostname": "[接続先ホスト名]",
+                    "SourcePort": "[接続先ポート番号]",
+                    "DestinationIp": "[接続元IPアドレス]",
+                    "DestinationHostname": "[接続元スト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[ドメインコントローラーIPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[リモート実行ファイルパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[リモート実行ファイルパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[実行ファイルパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0xFFFFFFFF",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "File System",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[当該ハンドルの識別ID]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData, WriteAttributesを含む",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "File System",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "File System",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]",
+                    "Note": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": ""
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "FILE_CREATE",
+                        "DATA_EXTEND+FILE_CREATE",
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ],
+                    "Note": ""
+                },
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "DATA_TRUNCATION",
+                        "DATA_EXTEND+DATA_TRUNCATION",
+                        "CLOSE+DATA_EXTEND+DATA_TRUNCATION"
+                    ],
+                    "Note": ""
+                }
+            ]
+        },
+        "Domain Controller": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "SourceIp": "[ドメインコントローラーIPアドレス]",
+                    "SourceHostname": "[ドメインコントローラーホスト名]",
+                    "SourcePort": "445",
+                    "DestinationIp": "[送信元IPアドレス]",
+                    "DestinationHostname": "[送信元ホスト名]",
+                    "DestinationPort": "[送信元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[ドメインコントローラーIPアドレス]",
+                    "SourcePort": "445",
+                    "DestAddress": "[送信元IPアドレス]",
+                    "DestPort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4776,
+                    "PackageName": "MICROSOFT_AUTHENTICATION_PACKAGE_V1_0",
+                    "TargetUserName": "[指定されたアカウント]",
+                    "Workstation": "[接続元ホスト名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeEnableDelegationPrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "Category": "Logon",
+                    "Description": "アカウントが正常にログオンしました。",
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[アカウント名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[認証を実行したユーザーのセッションID]",
+                    "TargetUserSid": "[実行ユーザーのSID]",
+                    "TargetUserName": "[アカウント名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンされたユーザーのセッションID]",
+                    "LogonProcessName": "NtLmSsp",
+                    "AuthenticationPackageName": "NTLM",
+                    "LmPackageName": "NTLM V2",
+                    "KeyLength": 128,
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ImpersonationLevel": "偽装",
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[アカウント名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "(\\\\*\\IPC$",
+                    "ShareLocalPath": "",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[アカウント名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\C$",
+                    "ShareLocalPath": "\\??\\C:\\",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[アカウント名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\C$",
+                    "ShareLocalPath": "\\??\\C:\\",
+                    "RelativeTargetName": "\\",
+                    "AccessList": "SYNCHRONIZE, ReadAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "TargetUserSid": "[実行したユーザーSID]",
+                    "TargetUserName": "[アカウント名]",
+                    "TargetLogonId": "[認証を実行したユーザーのセッションID]",
+                    "LogonType": 3
+                }
+            ]
+        }
+    },
+    "Note": [
+        "ハッシュ値の取得と使用で2回実行したもの",
+        "記載のものに加えて、ハッシュ値を用いて実行されたバイナリのログが別途残る"
+    ]
+}

@@ -1,0 +1,483 @@
+{
+    "Summary": {
+        "ToolName": "sdelete",
+        "Category": "痕跡の削除",
+        "Description": "ファイルを複数回上書きしてから削除する。",
+        "Usage": "攻撃の過程で作成されたファイルを、復元できないように削除する。",
+        "Availability": [
+            "",""
+        ],
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "レジストリ": "sdeleteに利用における使用許諾契約書への同意"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "プロセス追跡の監査": "sdeleteの実行履歴。グループポリシーで有効化している場合、引数から削除したファイル名が分かる",
+                "ファイルシステムの監査": "複数回のファイル名変更、上書き、削除",
+                "USNジャーナル": "複数回のファイル名変更、上書き、削除",
+                "Sysmon": "sdeleteの実行履歴。引数から削除したファイル名が分かる"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "イベントログ「セキュリティ」のイベントID: 4656、4663でファイル名がAAA.AAAからZZZ.ZZZまで順番に変更されることが確認できる",
+            "USNジャーナルより、削除対象ファイルのデータが上書きされた後にファイル名がAAA.AAAからZZZ.ZZZまで順番に変更され、その後データが削除されることが確認できる"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "ParentProcessName": "[親プロセスのパス]",
+                    "Note": "CommandLine中に削除対象のファイルが含まれる。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Sysinternals\\SDelete\\EulaAccepted",
+                    "Details": "DWORD (0x00000001)",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[削除対象のファイル]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[削除対象のファイルのパス]\\AAA.AAA",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": "以降、「BBB.BBB」「CCC.CCC」のように、アルファベットを1文字ずつ変えながらZZZ.ZZZまでイベント4656・4663が繰り返される。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[削除対象のファイルのパス]\\ZZZ.ZZZ",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4660,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": "本イベント内に記録されるハンドルIDは直前のZZZ.ZZZに対して要求されたハンドルのものと同一となる。"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "\\VOLUME[GUID]\\[実行ファイルのパス]"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKU\\Software\\Sysinternals\\SDelete\\EulaAccepted",
+                    "Type": "REG_DWORD",
+                    "Value": "1",
+                    "Note": "実行ファイル名を変えても作成されるレジストリキーは変わらない。"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Flag": "FILE"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[削除対象のファイル]",
+                    "Operation": ["RenameNewName", "DataExtend", "DataOverwrite"]
+                },
+                {
+                    "File": "AAA.AAA",
+                    "Operation": ["RenameNewName", "RenameOldName"],
+                    "Note": "以降、「BBB.BBB」「CCC.CCC」のように、アルファベットを1文字ずつ変えながらZZZ.ZZZまで繰り返される。"
+                },
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": ["FileCreate", "DataExtend", "Close"]
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "ParentProcessName": "[親プロセスのパス]",
+                    "Note": "CommandLine中に削除対象のファイルが含まれる。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": "CommandLine中に削除対象のファイルが含まれる。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "ImageLoaded": "[読み取ったDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": "DLLファイルの数だけ繰り返される。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Sysinternals\\SDelete",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Sysinternals\\SDelete\\EulaAccepted",
+                    "Details": "DWORD (0x00000001)",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[削除対象のファイル]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[削除対象のファイル]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[削除対象のファイルのパス]\\AAA.AAA",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, SYNCHRONIZE, ReadAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[削除対象のファイルのパス]\\AAA.AAA",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": "以降、「BBB.BBB」「CCC.CCC」のように、アルファベットを1文字ずつ変えながらZZZ.ZZZまで、イベント4656・4663・4658が繰り返される。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[削除対象のファイルのパス]\\ZZZ.ZZZ",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, SYNCHRONIZE, ReadAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[削除対象のファイルのパス]\\ZZZ.ZZZ",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4660,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": "本イベント内に記録されるハンドルIDは直前のZZZ.ZZZに対して要求されたハンドルのものと同一となる。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "[削除対象のファイルのパス]\\ZZZ.ZZZ",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "IsExecutable": false,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "\\VOLUME[GUID]\\[実行ファイルのパス]"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKU\\Software\\Sysinternals\\SDelete\\EulaAccepted",
+                    "Type": "REG_DWORD",
+                    "Value": 1,
+                    "Note": "実行ファイル名を変えても作成されるレジストリキーは変わらない。"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Flag": "FILE"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[削除対象のファイル]",
+                    "Operation": ["RenameNewName", "RenameNewName|Close", "DataExtend", "DataExtend|Close", "DataOverwrite", "DataOverwrite|Close", "RenameOldName"]
+                },
+                {
+                    "File": "[実行ファイル名]",
+                    "Operation": "Close"
+                },
+                {
+                    "File": "AAA.AAA",
+                    "Operation": ["RenameNewName", "RenameNewName|Close", "RenameOldName"],
+                    "Note": "以降、「BBB.BBB」「CCC.CCC」のように、アルファベットを1文字ずつ変えながらZZZ.ZZZまで繰り返される。"
+                },
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": ["FileCreate", "DataExtend|FileCreate", "DataExtend|FileCreate|Close"]
+                }
+            ]
+        }
+    }
+}

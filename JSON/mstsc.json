@@ -1,0 +1,1734 @@
+{
+    "Summary": {
+        "ToolName": "RDP",
+        "Category": "リモートログイン",
+        "Description": "リモートデスクトップサービスが稼働しているサーバーに接続する。",
+        "Usage": "接続したホスト上でファイルを閲覧したり、他のホストに接続するための情報を収集したり、他のホストに接続する踏み台として利用する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": ["3389/tcp"]
+		},
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": ["3389/tcp"],
+            "Service": "Remote Desktop Services"
+		}
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴",
+                "Microsoft-Windows-TerminalServices-RDPClient/Operational": "RDPセッションの接続開始・終了日時、接続元IPアドレス、ログインされたユーザー名及びアカウントドメイン、接続の成否"
+            },
+            "Target": {
+                "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational": "RDPセッションの接続開始・終了日時、接続元IPアドレス、ログインされたユーザー名及びアカウントドメイン、接続の成否",
+                "Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational": "RDPセッションの接続開始・終了日時、接続元IPアドレス、ログインされたユーザー名及びアカウントドメイン、接続の成否"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー, Sysmon": "実行履歴、3389/tcpを用いた通信"
+            },
+            "Target": {
+                "監査ポリシー, Sysmon": "3389/tcpを用いた通信"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "「Microsoft-Windows-TerminalServices-RDPClient/Operational」ログにイベント1027、1026が記録されている"
+        ],
+        "Target": [
+            "「セキュリティ」ログにイベント4778が記録されている",
+            "「Microsoft-Windows-TerminalServices-LocalSessionManager/Operational」ログ にイベント24、25が記録されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5379,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "TargetName": "TERMSRV/接続先のIPアドレス",
+                    "ClientProcessId": "[プロセスID]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\domadmin\\Documents\\Default.rdp",
+                    "AccessList": "SYNCHRONIZE, WriteAttributesを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\WINDOWS\\system32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-RDPClient/Operational",
+                    "EventID": 1024,
+                    "Server Name": "[接続先ホスト]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-RDPClient/Operational",
+                    "EventID": 1029,
+                    "TraceMessage": "[ユーザー名のSHA256ハッシュ値をBASE64エンコードしたもの]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "Image": " C:\\Windows\\system32\\mstsc.exe",
+                    "ProcessId": "[実行プロセスID]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Terminal Server Client\\Servers\\[接続先ホスト]\\UsernameHint"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "Image": " C:\\Windows\\system32\\mstsc.exe",
+                    "ProcessId": "[実行プロセスID]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Terminal Server Client\\Default\\MRU0"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\MSTSC.EXE-[ハッシュ値].pf",
+                    "Process Name": "MSTSC.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM32\\MSTSC.EXE"
+    			}
+            ],
+            "Registry": [
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\SOFTWARE\\Microsoft\\Terminal Server Client\\Default\\MRU0",
+                    "Type": "String",
+                    "Value": "[ターゲットホスト]"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\SOFTWARE\\Microsoft\\Terminal Server Client\\Servers\\<接続先ホスト>\\UsernameHint",
+                    "Type": "String",
+                    "Value": "[ユーザー名]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\MSTSC.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Users\\[ユーザー名]\\Documents\\Default.rdp",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "MSTSC.EXE-[ハッシュ値].pf",
+                    "Operation": "DataExtend|FileCreate|Close",
+                    "Note": "Archive|NotContentIndexed"
+                },
+                {
+                    "File": "Default.rdp",
+                    "Operation": "DataExtend|FileCreate|Close",
+                    "Note": "Hidden|Archive"
+                },
+                {
+                    "File": "[文字列].automaticDestinations-ms",
+                    "Operation": "DataOverwrite|DataExtend|FileCreate|Close",
+                    "Note": "Archive"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational",
+                    "EventID": 1149,
+                    "Param1": "[ユーザー名]",
+                    "Param2": "[ドメイン名]",
+                    "Param3": "[接続元IPアドレス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
+                    "EventID": 24,
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "SessionID": "[セッションID]",
+                    "Address": "[接続元IPアドレス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
+                    "EventID": 25,
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "SessionID": "[セッションID]",
+                    "Address": "[接続元IPアドレス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4778,
+                    "AccountName": "[ユーザー名]",
+                    "AccountDomain": "[ドメイン名]",
+                    "SessionName": "RDP-Tcp#[セッションID]",
+                    "ClientName": "[接続元ホスト名]",
+                    "ClientAddress": "[接続元IPアドレス]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\TSTHEME.EXE-[ハッシュ値].pf",
+                    "Process Name": "TSTHEME.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM32\\TSTHEME.EXE"
+                },
+                {
+                    "File": "C:\\Windows\\Prefetch\\RDPCLIP.EXE-[ハッシュ値].pf",
+                    "Process Name": "RDPCLIP.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM32\\RDPCLIP.EXE"
+                }
+            ],
+            "MFT": [
+              {
+                "Path": "C:\\Windows\\Prefetch\\TSTHEME.EXE-[ハッシュ値].pf",
+                "Flag": "FILE",
+                "Note": "ALLOCATED"
+            },
+            {
+                "Path": "C:\\Windows\\Prefetch\\RDPCLIP.EXE-[ハッシュ値].pf",
+                "Flag": "FILE",
+                "Note": "ALLOCATED"
+            }
+
+            ],
+            "USNJournal": [
+                {
+                    "File": "TSTHEME.EXE-[ハッシュ値].pf",
+                    "Operation": "CREATE|EXTEND|CLOSE",
+                    "Note": "ARCHIVE|NOINDEX"
+                },
+                {
+                    "File": "RDPCLIP.EXE-[ハッシュ値].pf",
+                    "Operation": "CREATE|EXTEND|CLOSE",
+                    "Note": "ARCHIVE|NOINDEX"
+                }
+            ]
+        }
+    },
+    "Details":  {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\mstsc.exe",
+                    "CommandLine": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\mstsc.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\mstsc.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "Image": " C:\\Windows\\system32\\mstsc.exe",
+                    "ProcessId": "[実行プロセスID]",
+                    "TargetObject": "[作成・削除されたレジストリキー・値]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "HandleId": "[ハンドルID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\Documents\\Default.rdp",
+                    "AccessList": "SYNCHRONIZE, WriteAttributesを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\MSTSC.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\MSTSC.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "ProcessId": "[プロセスID]",
+                    "Image": " C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\MSTSC.EXE-[ハッシュ値].pf"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "HandleId": "[ハンドルID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Terminal Server Client\\Cache",
+                    "AccessList": "SYNCHRONIZE, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Terminal Server Client\\Cache",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\mstsc.exe",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\mstsc.exe",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "3389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\mstsc.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "3389"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5379,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "TargetName": "TERMSRV/[接続先IPアドレス]",
+                    "ClientProcessId": "[プロセスID]",
+                    "Note": "RDPクライアントの接続先欄に値を入力する度に、TargetNameにその入力状況が入ったログが記録される（オートコンプリートの動作）。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\mstsc.exe",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\mstsc.exe",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "3389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-RDPClient/Operational",
+                    "EventID": 1024,
+                    "Server Name": "[接続先ホスト]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-RDPClient/Operational",
+                    "EventID": 1028,
+                    "TraceMessage": "supported"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-RDPClient/Operational",
+                    "EventID": 1029,
+                    "TraceMessage": "[ユーザー名のSHA256ハッシュ値をBASE64エンコードしたもの]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-RDPClient/Operational",
+                    "EventID": 1025
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-RDPClient/Operational",
+                    "EventID": 1027,
+                    "DomainName": "[ドメイン名]",
+                    "SessionId": "[セッションID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
+                    "EventID": 59,
+                    "Function": "RpcGetCurrentSessionCapabilities",
+                    "CallerImageName": "\"C:\\Windows\\System32\\CredentialUIBroker.exe\" NonAppContainerFailedMip -Embedding",
+                    "SessionId": "[セッションID]",
+                    "ClientProcessId": "[プロセスID]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4648,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetServerName": "[接続先ホスト名]",
+                    "TargetInfo": "[接続先ホスト名]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
+                    "EventID": 59,
+                    "Function": "RpcGetCurrentSessionCapabilities",
+                    "CallerImageName": "\"C:\\Windows\\System32\\mstsc.exe",
+                    "SessionId": "[セッションID]",
+                    "ClientProcessId": "[実行プロセスID]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "HandleId": "[ハンドルID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Terminal Server Client\\Cache 以下の複数ファイル",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Terminal Server Client\\Cache 以下の複数ファイル",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": " C:\\Windows\\system32\\mstsc.exe",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Terminal Server Client\\Cache 以下の複数ファイル"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "Image": " C:\\Windows\\system32\\mstsc.exe",
+                    "ProcessId": "[実行プロセスID]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Terminal Server Client\\Servers\\接続先のIPアドレス\\UsernameHint"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "Image": " C:\\Windows\\system32\\mstsc.exe",
+                    "ProcessId": "[実行プロセスID]",
+                    "TargetObject": "HKCR\\CLSID\\{A8CDFF1C-4878-43be-B5FD-F8091C1C60D0}\\Instance"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "Image": " C:\\Windows\\system32\\mstsc.exe",
+                    "ProcessId": "[実行プロセスID]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Terminal Server Client\\Default\\MRU0"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "Image": " C:\\Windows\\system32\\mstsc.exe",
+                    "ProcessId": "[実行プロセスID]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Terminal Server Client\\Default\\AddIns\\RDPDR"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": " C:\\Windows\\mstsc.exe",
+                    "ProcessId": "[実行プロセスID]",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\bam\\State\\UserSettings\\[ユーザーSID]\\Device\\HarddiskVolume[ボリューム番号]\\Windows\\System32\\mstsc.exe",
+                    "Details": "Binary Data"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": " C:\\Windows\\mstsc.exe",
+                    "ProcessId": "[実行プロセスID]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Terminal Server Client\\Default\\MRU0",
+                    "Details": "[接続先IPアドレス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": " C:\\Windows\\mstsc.exe",
+                    "ProcessId": "[実行プロセスID]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Terminal Server Client\\Servers\\[接続先IPアドレス]\\UsernameHint",
+                    "Details": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": " C:\\Windows\\mstsc.exe",
+                    "ProcessId": "[実行プロセスID]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows\\IsMRUEstablished)",
+                    "Details": "DWORD (0x00000000)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "HandleId": "[ハンドルID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\Documents\\Default.rdp",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\Documents\\Default.rdp",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": " C:\\Windows\\system32\\mstsc.exe",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\Documents\\Default.rdp"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\WINDOWS\\system32\\mstsc.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": " C:\\Windows\\System32\\mstsc.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-RDPClient/Operational",
+                    "EventID": 1105
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-RDPClient/Operational",
+                    "EventID": 1026,
+                    "Disconnect Reason": "[理由コード]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\MSTSC.EXE-[ハッシュ値].pf",
+                    "Process Name": "MSTSC.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM32\\MSTSC.EXE"
+    			}
+            ],
+            "Registry": [
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\SOFTWARE\\Microsoft\\Terminal Server Client\\Default\\MRU0",
+                    "Type": "REG_SZ",
+                    "Value": "[接続先ホスト]"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\SOFTWARE\\Microsoft\\Terminal Server Client\\Default\\AddIns",
+                    "Type": "Key",
+                    "Value": "(値の設定無し)"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\SOFTWARE\\Microsoft\\Terminal Server Client\\Default\\AddIns\\RDPDR",
+                    "Type": "Key",
+                    "Value": "(値の設定無し)"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\SOFTWARE\\Microsoft\\Terminal Server Client\\Servers\\<接続先ホスト>\\UsernameHint",
+                    "Type": "REG_SZ",
+                    "Value": "[ユーザー名]"
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\UserAssist\\{GUID}\\Count\\Zvpebfbsg.Jvaqbjf.ErzbgrQrfxgbc",
+                    "Type": "REG_BINARY",
+                    "Value": "[バイナリ値]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\MSTSC.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Terminal Server Client",
+                    "Flag": "FOLDER",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Terminal Server Client\\Cache",
+                    "Flag": "FOLDER",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Terminal Server Client\\Cache\\bcache[数字].bmc",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Users\\[ユーザー名]\\Documents\\Default.rdp",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "mstsc.exe",
+                    "Operation": "Close",
+                    "Note": "Archive|SparseFile|ReparsePoint"
+                },
+                {
+                    "File": "mstscax.dll",
+                    "Operation": "Close",
+                    "Note": "Archive|SparseFile|ReparsePoint"
+                },
+                {
+                    "File": "MSTSC.EXE-[ハッシュ値].pf",
+                    "Operation": "DataExtend|FileCreate|Close",
+                    "Note": "Archive|NotContentIndexed"
+                },
+                {
+                    "File": "Default.rdp",
+                    "Operation": "FileCreate|DataExtend|FileCreate|Close",
+                    "Note": "Hidden|Archive"
+                },
+                {
+                    "File": "Terminal Server Client",
+                    "Operation": "FileCreate|Close",
+                    "Note": "Directory"
+                },
+                {
+                    "File": "bcache[数字].bmc",
+                    "Operation": "FileCreate|Close",
+                    "Note": "Archive|NotContentIndexed"
+                },
+                {
+                    "File": "英数字文字列.automaticDestinations-ms",
+                    "Operation": "DataOverwrite|DataExtend|FileCreate|Close",
+                    "Note": "Archive"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "3389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe",
+                    "User": "NT AUTHORITY\\NETWORK SERVICE",
+                    "Protocol": "tcp",
+                    "SourceIp": "[接続先IPアドレス]",
+                    "SourceHostname": "[接続先ホスト名]",
+                    "SourcePort": "3389",
+                    "DestinationIp": "[接続元IPアドレス]",
+                    "DestinationHostname": "[接続元ホスト名]",
+                    "DestinationPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational",
+                    "EventID": 261,
+                    "listerName": "RDP-Tcp"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational",
+                    "EventID": 1149,
+                    "Param1": "[ユーザー名]",
+                    "Param2": "[ドメイン名]",
+                    "Param3": "[接続元IPアドレス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5058,
+                    "SubjectUserSid": "NETWORK SERVICE",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ProviderName": "Microsoft Software Key Storage Provider",
+                    "AlgorithmName": "UNKNOWN",
+                    "KeyName": "TSSecKeySet1",
+                    "KeyType": "マシン キー",
+                    "KeyFilePath": "C:\\ProgramData\\Microsoft\\Crypto\\RSA\\MachineKeys\\[文字列]",
+                    "Operation": "保存されたキーをファイルから読み取ります。",
+                    "ReturnCode": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5061,
+                    "SubjectUserSid": "NETWORK SERVICE",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ProviderName": "Microsoft Software Key Storage Provider",
+                    "AlgorithmName": "RSA",
+                    "KeyName": "TSSecKeySet1",
+                    "KeyType": "マシン キー",
+                    "Operation": "キーを開きます。",
+                    "ReturnCode": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "LogonType": 3,
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "WorkstationName": "[接続元のホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "SourcePort": "0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetLogonId": "[イベント4624で記録されたログオンID]",
+                    "LogonType": 3
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "LogonType": 3,
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "WorkstationName": "[接続元のホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "SourcePort": "0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\INF\\termmou.PNF",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\INF\\termmou.PNF",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\INF\\termmou.PNF",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 6,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ImageLoaded": "C:\\Windows\\System32\\drivers\\terminpt.sys",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "Signed": "true",
+                    "Signature": "Microsoft Windows",
+                    "SignatureStatus": "Valid"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\INF\\rdpidd.PNF",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\INF\\rdpidd.PNF",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\INF\\rdpidd.PNF",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "NT Local Security Authority / Authentication Service",
+                    "Service": "LsaRegisterLogonProcess()",
+                    "PrivilegeList": "SeTcbPrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 6416,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "DeviceId": "SWD\\RemoteDisplayEnum\\RdpIdd_IndirectDisplay&SessionID_[セッション番号]",
+                    "DeviceDescription": "Microsoft Remote Display Adapter",
+                    "ClassId": "{4d36e968-e325-11ce-bfc1-08002be10318}",
+                    "ClassName": "Display",
+                    "VendorIds": "RdpIdd_IndirectDisplay",
+                    "CompatibleIds": "RdpIdd_IndirectDisplay, SWD\\Generic"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 6416,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "DeviceId": "DISPLAY\\Default_Monitor\\[ID]",
+                    "DeviceDescription": "Generic Monitor",
+                    "ClassId": "{4d36e968-e325-11ce-bfc1-08002be10318}",
+                    "ClassName": "Monitor",
+                    "VendorIds": "MONITOR\\Remote_Monitor",
+                    "CompatibleIds": "*PNP09FF"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\TSTheme.exe",
+                    "ProcessId": "[プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\TSTheme.exe -Embedding",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ParentProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[プロセス実行日時 (UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\TSTheme.exe",
+                    "CommandLine": "C:\\Windows\\system32\\TSTheme.exe -Embedding",
+                    "CurrentDirectory": "C:\\Windows\\system32",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "ParentImage": "C:\\Windows\\System32\\svchost.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\svchost.exe -k DcomLaunch -p"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\TSTheme.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "Image": "C:\\Windows\\system32\\TSTheme.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Remote 以下のキー"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+					"EventType": "CreateKey",
+                    "Image": "C:\\Windows\\system32\\TSTheme.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Remote 以下のキー"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
+                    "EventID": 24,
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "SessionID": "[セッションID]",
+                    "Address": "[接続元IPアドレス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
+                    "EventID": 25,
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "SessionID": "[セッションID]",
+                    "Address": "[接続元IPアドレス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4778,
+                    "AccountName": "[ユーザー名]",
+                    "AccountDomain": "[ドメイン名]",
+                    "SessionName": "RDP-Tcp#[セッションID]",
+                    "ClientName": "[接続元ホスト名]",
+                    "ClientAddress": "[接続元IPアドレス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "NETWORK SERVICE",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\rdpclip.exe",
+                    "ProcessId": "[プロセスID]",
+                    "CommandLine": "rdpclip",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ParentProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[プロセス実行日時 (UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\rdpclip.exe",
+                    "CommandLine": "rdpclip",
+                    "CurrentDirectory": "C:\\Windows\\system32",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "ParentImage": "C:\\Windows\\System32\\svchost.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\svchost.exe -k NetworkService -s TermService"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\rdpclip.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 17,
+                    "EventType": "CreatePipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "PipeName": "\\TSVCPIPE-[GUID]",
+                    "Image": "C:\\WINDOWS\\System32\\svchost.exe",
+                    "User": "NT AUTHORITY\\NETWORK SERVICE"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "PipeName": "\\TSVCPIPE-[GUID]",
+                    "Image": "C:\\WINDOWS\\System32\\svchost.exe",
+                    "User": "NT AUTHORITY\\NETWORK SERVICE"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\INF\\TAPISRV\\[言語ID]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "SYNCHRONIZE, ReadData (または ListDirectory)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\spoolsv.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\spoolsv.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\tsprint.inf_amd64_2456f1b181e738cd 以下の複数ファイル",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "SYNCHRONIZE, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\spoolsv.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4664,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "FileName": "C:\\Windows\\System32\\DriverStore\\FileRepository\\tsprint.inf_amd64_2456f1b181e738cd 以下の複数ファイル",
+                    "LinkName": "C:\\Windows\\System32\\spool\\drivers\\x64\\{719916D7-D9DA-4BE4-AE48-1303B391F134} 以下の同ファイル名"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\spoolsv.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\SystemTemp\\66F727BD-248E-491C-9EF2-A977F7137DA8",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\spoolsv.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\spoolsv.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\spool\\drivers\\x64 以下の複数ファイル",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\spoolsv.exe",
+                    "Note": "ファイル名は\"ts\"（Terminal Services）で始まる。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\spool\\drivers\\x64 以下の複数ファイル",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\spoolsv.exe",
+                    "Note": "ファイル名は\"ts\"（Terminal Services）で始まる。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\spoolsv.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\System32\\spoolsv.exe",
+                    "TargetFilename": "C:\\Windows\\System32\\spool\\drivers 以下の複数ファイル",
+                    "Hashes": "[ファイルのハッシュ値]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 2,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\System32\\spoolsv.exe",
+                    "TargetFilename": "C:\\Windows\\System32\\spool\\drivers 以下の複数ファイル",
+                    "CreationUtcTime": "[変更後のタイムスタンプ(UTC)]",
+                    "PreviousCreationUtcTime": "[発生日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 29,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\System32\\spoolsv.exe",
+                    "TargetFilename": "C:\\Windows\\System32\\spool\\drivers\\x64\\3\\New\\tsprint.dll",
+                    "Hashes": "[ファイルのハッシュ値]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\spool\\drivers\\x64 以下の複数ファイル",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, SYNCHRONIZE, ReadAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\spoolsv.exe",
+                    "Note": "ファイル名は\"ts\"（Terminal Services）で始まる。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\spool\\drivers\\x64 以下の複数ファイル",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\spoolsv.exe",
+                    "Note": "ファイル名は\"ts\"（Terminal Services）で始まる。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\spoolsv.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Image": "C:\\WINDOWS\\System32\\spoolsv.exe",
+                    "TargetFilename": "C:\\Windows\\System32\\spool\\drivers 以下の複数ファイル",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "IsExecutable": true,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\TSTHEME.EXE-[ハッシュ値].pf",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\TSTHEME.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\RDPCLIP.EXE-[ハッシュ値].pf",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\RDPCLIP.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\RDPCLIP.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "ファイル作成時刻"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetLogonId": "[イベント4624で記録されたログオンID]",
+                    "LogonType": 3
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4779,
+                    "AccountName": "[ユーザー名]",
+                    "AccountDomain": "[ドメイン名]",
+                    "SessionName": "RDP-Tcp#[セッションID]",
+                    "ClientName": "[接続元ホスト名]",
+                    "ClientAddress": "[接続元IPアドレス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\TSTheme.exe",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\TSTheme.exe -Embedding",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "ParentProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\TSTheme.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\TSTheme.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\TSTheme.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\TSTHEME.EXE-[ハッシュ値].pf",
+                    "Process Name": "TSTHEME.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM32\\TSTHEME.EXE"
+                },
+                {
+                    "File": "C:\\Windows\\Prefetch\\RDPCLIP.EXE-[ハッシュ値].pf",
+                    "Process Name": "RDPCLIP.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM32\\RDPCLIP.EXE"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\ThemeManager\\ThemeActive",
+                    "Type": "REG_SZ",
+                    "Value": "1"
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Remote\\1\\Control Panel\\Desktop\\WindowMetrics\\MinAnimate",
+                    "Type": "REG_SZ",
+                    "Value": "1"
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Remote\\1\\Control Panel\\Desktop\\UserPreferencesMask",
+                    "Type": "REG_BINARY",
+                    "Value": "[バイナリ値]"
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Remote\\1\\TaskbarAnimations\\DefaultApplied",
+                    "Type": "REG_DWORD",
+                    "Value": "1"
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Remote\\1\\Control Panel\\Desktop\\SmoothScroll\\DefaultApplied",
+                    "Type": "REG_DWORD",
+                    "Value": "1"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "C:\\Windows\\Prefetch\\TSTHEME.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "C:\\Windows\\Prefetch\\RDPCLIP.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "TSTheme.exe",
+                    "Operation": "SECURITY|CLOSE",
+                    "Note": "ARCHIVE|SPARSE|RP"
+                },
+                {
+                    "File": "TSTHEME.EXE-[ハッシュ値].pf",
+                    "Operation": "CREATE|EXTEND|CLOSE",
+                    "Note": "ARCHIVE|NOINDEX"
+                },
+                {
+                    "File": "tsprint.dll",
+                    "Operation": "LINK|CREATE|EXTEND|INFO|CLOSE|EA",
+                    "Note": "ARCHIVE"
+                },
+                {
+                    "File": "tsprint-datafile.dat",
+                    "Operation": "LINK|CREATE|EXTEND|INFO|CLOSE",
+                    "Note": "ARCHIVE"
+                },
+                {
+                    "File": "tsprint-PipelineConfig.xml",
+                    "Operation": "LINK|CREATE|EXTEND|INFO|CLOSE",
+                    "Note": "ARCHIVE"
+                },
+                {
+                    "File": "RDPCLIP.EXE-[ハッシュ値].pf",
+                    "Operation": "CREATE|EXTEND|CLOSE",
+                    "Note": "ARCHIVE|NOINDEX"
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "Cookie: mstshash=[ドメイン名], Negotiate Request",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "3389",
+            "Protocol": "tcp",
+            "Application": "RDP"
+        },
+        {
+            "Operation": "Negotiate Response",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "3389",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "RDP"
+        },
+        {
+            "Operation": "Client Hello (SNI=[接続先ホスト])",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "3389",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Server Hello, Change Cipher Spec, Application Data",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "3389",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Change Cipher Spec, Application Data, Application Data",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "3389",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data, Application Data",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "3389",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "3389",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "3389",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Cookie: mstshash=[ドメイン名], Negotiate Request",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "3389",
+            "Protocol": "tcp",
+            "Application": "RDP"
+        },
+        {
+            "Operation": "Negotiate Response",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "3389",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "RDP"
+        },
+        {
+            "Operation": "Client Hello (SNI=[接続先ホスト])",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "3389",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Server Hello, Change Cipher Spec, Application Data",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "3389",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Change Cipher Spec, Application Data, Application Data",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "3389",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data, Application Data",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "3389",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "3389",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "3389",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        }
+    ],
+    "Note": [
+        "Windows 11クライアント同士のRDP接続を検証",
+        "プリンターやクリップボード共有は初期設定通りとしている。これらの機能を使用しない場合は、発生しないイベントが含まれる"
+    ]
+}

@@ -1,0 +1,838 @@
+{
+    "Summary": {
+        "ToolName": "SDB UAC Bypass",
+        "Category": "権限の昇格",
+        "Description": "アプリケーション互換データベース (SDB) を用いて、UACにより制御されるアプリケーションを管理者権限で実行する。",
+        "Usage": "通常のアプリケーションを実行するように見せかけて、他のアプリケーションを実行させる。この際、本来は管理者権限が必要なアプリケーションを、ユーザーによる承諾を経ることなく実行する。",
+        "Availability": [
+            "",
+            ""
+        ],
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "false"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows 7",
+            "DomainMember": false,
+            "Privilege": "Admin",
+            "Protocol": [],
+            "Service": "",
+            "Note": "管理者パスワードを入力することなく、UACにより管理者権限を利用することが可能な権限を持つユーザー (クライアント端末における、Administratorsグループに所属するユーザー)"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "C:\\Windows\\System32\\sdbinst.exe\"が実行された記録, 親プロセス名, 「回避に使用するアプリケーション」及び「回避実行されたアプリケーション」の記録"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "親プロセス名に、本来は親プロセスとならないことが想定されるアプリケーションを含む、プロセスが実行されたことが記録されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] /q [実行ファイルのSDBファイル].sdb",
+                    "CurrentDirectory": "[実行ファイルの親フォルダパス]",
+                    "User": "[ドメイン名]\\[ユーザ名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親プロセスのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[実行ユーザのSID]",
+                    "SubjectUserName": "[実行ユーザ名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\AppPatch\\Custom\\{[GUID]}.sd",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[回避に使用されるアプリケーションのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[回避に使用されるアプリケーションのメタデータ]",
+                    "CommandLine": "[回避に使用されるアプリケーションのパス]",
+                    "CurrentDirectory": "[回避に使用されるアプリケーションの親フォルダパス]",
+                    "User": "[ドメイン名]\\[ユーザ名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[回避に使用されるアプリケーションのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親プロセスのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Application-Experience/Program-Telemetry",
+                    "EventID": 500,
+                    "Category": "Application-Experience",
+                    "Description": "[Path] に互換性修正プログラムが適用されています。",
+                    "Path": "[回避に使用されるアプリケーションのパス]",
+                    "Info": "[修正したプログラムと修正内容 (Redirect.EXE、{[GUID]}、0x10205)]",
+                    "Note": "確認中"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\SysWOW64\\cmd.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[cmdのメタデータ]",
+                    "CommandLine": "cmd /c C:\\Users\\[ユーザー名]\\AppData\\LocalLow\\[権限昇格して実行するバッチ].bat",
+                    "CurrentDirectory": "C:\\Windows\\system32",
+                    "User": "[ドメイン名]\\[ユーザ名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[cmdのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親プロセスのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "Note": "親プロセスは回避に使用されるアプリケーション"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\SDBINST.EXE-[文字列].pf",
+                    "Process Name": "SDBINST.EXE",
+                    "Process Path": "C:\\Windows\\System32",
+                    "Note": ""
+                },
+                {
+                    "File": "C:\\Windows\\Prefetch\\[回避に使用されるアプリケーションの実行ファイル名]-[文字列].pf",
+                    "Process Name": "[回避に使用されるアプリケーションの実行ファイル名]",
+                    "Process Path": "C:\\Windows\\System32",
+                    "Note": ""
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{[GUID]}.sdb\\DisplayName",
+                    "Type": "String",
+                    "Value": "[回避に使用されるアプリケーションの表示名]",
+                    "Note": ""
+                },
+                {
+                    "Path": "HKU\\[ユーザーのSID]_Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache\\[実行ファイルパス].ApplicationCompany",
+                    "Type": "String",
+                    "Value": "%windir%\\system32\\sdbinst.exe -u \"C:\\Windows\\AppPatch\\Custom\\{[GUID]}.sdb\"",
+                    "Note": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\SDBINST.EXE-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[回避に使用されるアプリケーションの実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "{[GUID]}.sdb",
+                    "Operation": [
+                        "CLOSE+FILE_DELETE"
+                    ],
+                    "Note": ""
+                },
+                {
+                    "File": "[実行ファイルのSDBファイル].sdb",
+                    "Operation": [
+                        "CLOSE+FILE_DELETE"
+                    ],
+                    "Note": ""
+                },
+                {
+                    "File": "[検体SDBインストール用バッチ].bat",
+                    "Operation": [
+                        "CLOSE+FILE_DELETE"
+                    ],
+                    "Note": ""
+                },
+                {
+                    "File": "[回避に使用されるアプリケーションの実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ],
+                    "Note": ""
+                },
+                {
+                    "File": "SDBINST.EXE-[文字列].pf",
+                    "Operation": [
+                        "CLOSE+DATA_EXTEND+DATA_TRUNCATION"
+                    ],
+                    "Note": ""
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "Category": "Process Creation",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[実行ファイルのパス] /q [実行ファイルのSDBファイル].sdb",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセスのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] /q [実行ファイルのSDBファイル].sdb",
+                    "CurrentDirectory": "[実行ファイルの親フォルダパス]",
+                    "User": "[ドメイン名]\\[ユーザ名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親プロセスのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "Category": "Registry object added or deleted",
+                    "Description": "Registry object added or deleted",
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "Category": "Registry object added or deleted",
+                    "Description": "Registry object added or deleted",
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Custom",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "Category": "Registry object added or deleted",
+                    "Description": "Registry object added or deleted",
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Custom\\[回避に使用されるアプリケーションの実行ファイル名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Custom\\[回避に使用されるアプリケーションの実行ファイル名]\\{[GUID]}.sdb",
+                    "Details": "[レジストリに書き込まれた設定値 (QWORD値)]",
+                    "User": "[ドメイン名]\\[ユーザ名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Windows\\AppPatch\\Custom\\{[GUID]}.sdb",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "File System",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\AppPatch\\Custom\\{[GUID]}.sdb",
+                    "HandleId": "[当該ハンドルの識別ID]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData, WriteAttributesを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "File System",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\AppPatch\\Custom\\{[GUID]}.sdb",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "File System",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で複製されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "Category": "Registry object added or deleted",
+                    "Description": "Registry object added or deleted",
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{[GUID]}.sdb",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{[GUID]}.sdb\\DisplayName",
+                    "Details": "[回避に使用されるアプリケーションの表示名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "Category": "Registry object added or deleted",
+                    "Description": "Registry object added or deleted",
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\InstalledSDB\\{[GUID]}",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "Category": "Registry object added or deleted",
+                    "Description": "Registry object added or deleted",
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\InstalledSDB\\{[GUID]}\\DatabasePath",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\InstalledSDB\\{[GUID]}\\DatabaseType",
+                    "Details": "0x00010000",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\InstalledSDB\\{[GUID]}\\DatabaseDescription",
+                    "Details": "[回避に使用されるアプリケーションの表示名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\InstalledSDB\\{[GUID]}\\DatabaseInstallTimeStamp",
+                    "Details": "[タイムスタンプ]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "Category": "Registry object added or deleted",
+                    "Description": "Registry object added or deleted",
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Control\\SESSION MANAGER\\AppCompatCache",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Control\\SESSION MANAGER\\AppCompatCache\\AppCompatCache",
+                    "Details": "Binary Data",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\SDBINST.EXE-[文字列].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "File System",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\SDBINST.EXE-[文字列].pf",
+                    "HandleId": "[当該ハンドルの識別ID]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData, WriteAttributesを含む",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "File System",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\SDBINST.EXE-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "File System",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[回避に使用されるアプリケーションのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[回避に使用されるアプリケーションのメタデータ]",
+                    "CommandLine": "[回避に使用されるアプリケーションのパス]",
+                    "CurrentDirectory": "[回避に使用されるアプリケーションの親フォルダパス]",
+                    "User": "[ドメイン名]\\[ユーザ名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[回避に使用されるアプリケーションのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親プロセスのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "Note": "権限昇格する実行ファイルを実行する"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "Category": "Process Creation",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[回避に使用されるアプリケーションのパス]",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセス名]",
+                    "Note": "権限昇格する実行ファイルを実行する"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Application-Experience/Program-Telemetry",
+                    "EventID": 500,
+                    "Category": "Application-Experience",
+                    "Description": "[Path] に互換性修正プログラムが適用されています。",
+                    "Path": "[回避に使用されるアプリケーションのパス]",
+                    "Info": "[修正したプログラムと修正内容 (Redirect.EXE、{[GUID]}、0x10205)]",
+                    "Note": "確認中"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\SysWOW64\\cmd.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[cmdのメタデータ]",
+                    "CommandLine": "cmd /c C:\\Users\\[ユーザー名]\\AppData\\LocalLow\\[権限昇格して実行するバッチ].bat",
+                    "CurrentDirectory": "C:\\Windows\\system32",
+                    "User": "[ドメイン名]\\[ユーザ名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[cmdのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親プロセスのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "Note": "権限を昇格して実行するバッチが実行される。親プロセスは権限昇格して実行されたプロセスとなる。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "Category": "Process Creation",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\SysWOW64\\cmd.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "cmd /c C:\\Users\\[ユーザー名]\\AppData\\LocalLow\\[権限昇格して実行するバッチ].bat",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセス名]",
+                    "Note": "権限昇格する実行ファイルを実行する。親プロセスは回避に使用されるアプリケーション。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[回避に使用されるアプリケーションのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[回避に使用されるアプリケーションのプロセスID]",
+                    "ProcessName": "[回避に使用されるアプリケーションのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[回避に使用されるアプリケーションの実行ファイル名]-[文字列].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "File System",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[回避に使用されるアプリケーションの実行ファイル名]-[文字列].pf",
+                    "HandleId": "[当該ハンドルの識別ID]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "File System",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[回避に使用されるアプリケーションの実行ファイル名]-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "File System",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "Note": ""
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\SDBINST.EXE-[文字列].pf",
+                    "Process Name": "SDBINST.EXE",
+                    "Process Path": "C:\\Windows\\System32",
+                    "Note": ""
+                },
+                {
+                    "File": "C:\\Windows\\Prefetch\\[回避に使用されるアプリケーションの実行ファイル名]-[文字列].pf",
+                    "Process Name": "[回避に使用されるアプリケーションの実行ファイル名]",
+                    "Process Path": "C:\\Windows\\System32",
+                    "Note": ""
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{[GUID]}.sdb\\DisplayName",
+                    "Type": "String",
+                    "Value": "[回避に使用されるアプリケーションの表示名]",
+                    "Note": ""
+                },
+                {
+                    "Path": "HKU\\[ユーザーのSID]_Classes\\Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache\\[実行ファイルパス].ApplicationCompany",
+                    "Type": "String",
+                    "Value": "%windir%\\system32\\sdbinst.exe -u \"C:\\Windows\\AppPatch\\Custom\\{[GUID]}.sdb\"",
+                    "Note": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\SDBINST.EXE-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[回避に使用されるアプリケーションの実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "{[GUID]}.sdb",
+                    "Operation": [
+                        "FILE_CREATE",
+                        "CLOSE+FILE_CREATE",
+                        "DATA_EXTEND",
+                        "DATA_EXTEND+DATA_OVERWRITE",
+                        "BASIC_INFO_CHANGE+DATA_EXTEND_DATA_OVERWRITE",
+                        "BASIC_INFO_CHANGE+CLOSE+DATA_EXTEND_DATA_OVERWRITE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[実行ファイルのSDBファイル].sdb",
+                    "Operation": [
+                        "CLOSE+FILE_DELETE"
+                    ],
+                    "Note": ""
+                },
+                {
+                    "File": "[検体SDBインストール用バッチ].bat",
+                    "Operation": [
+                        "CLOSE+FILE_DELETE"
+                    ],
+                    "Note": ""
+                },
+                {
+                    "File": "SDBINST.EXE-[文字列].pf",
+                    "Operation": [
+                        "FILE_CREATE",
+                        "DATA_EXTEND+FILE_CREATE",
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "[回避に使用されるアプリケーションの実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "FILE_CREAT",
+                        "DATA_EXTEND+FILE_CREATE",
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "SDBINST.EXE-[文字列].pf",
+                    "Operation": [
+                        "DATA_TRUNCATION",
+                        "DATA_EXTEND+DATA_TRUNCATION",
+                        "CLOSE+DATA_EXTEND+DATA_TRUNCATION"
+                    ],
+                    "Note": "archive+not_indexed"
+                }
+            ]
+        }
+    },
+    "Note": [
+        "Windows 11で実行不可"
+    ]
+}

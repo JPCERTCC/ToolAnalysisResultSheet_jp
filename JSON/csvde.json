@@ -1,0 +1,290 @@
+{
+    "Summary": {
+        "ToolName": "csvde",
+        "Category": "情報収集",
+        "Description": "Active Directory上のアカウント情報をCSV形式で出力する。",
+        "Usage": "Active Directoryからアカウント情報を収集し、攻撃対象として利用可能なユーザーやホストを選択する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": [
+	            "389/tcp"
+            ]
+        }
+    },
+    "Findings": {
+        "Additional": {
+            "Domain Controller": {
+                "監査ポリシー・Sysmon": "実行履歴",
+                "監査ポリシー・Sysmon・USNジャーナル": "アカウント情報を保存したCSVファイルが作成される。CSVファイル作成時に、一時ファイルとしてC:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\csv[ランダムな16進値].tmpが作成される"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Domain Controller": [
+                "csvde.exeが実行されており、\"-f\"オプションで指定されたファイルが作成されている",
+                "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\csv[ランダムな16進値].tmpが作成、削除されている"
+        ]
+    },
+    "KeyEvents": {
+        "Domain Controller": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス] [オプション]",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセスのパス]",
+                    "Note": "CommandLineにおいて、\"-f\"オプションで出力ファイル名が分かる。また、フィルターを使用した場合はフィルター条件も分かる"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス] [オプション]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[実行ユーザー]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親プロセスのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "Note": "CommandLineにおいて、\"-f\"オプションで出力ファイル名が分かる。また、フィルターを使用した場合はフィルター条件も分かる"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\csv[ランダムな16進値].tmp",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\csv[ランダムな16進値].tmp",
+                    "Hashes": "[削除されたファイルのハッシュ値]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "[検体実行時に\"-f\"オプションで指定されたCSVファイル]",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[検体実行時に\"-f\"オプションで指定されたCSVファイル]",
+                    "Flag": "FILE"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "csv[ランダムな16進値].tmp",
+                    "Operation": [
+                        "FileCreate",
+                        "FileCreate|Close",
+                        "RenameOldName",
+                        "DataExtend|FileCreate",
+                        "DataExtend|FileCreate|Close"
+                    ]
+                },
+                {
+                    "File": "[検体実行時に\"-f\"オプションで指定されたCSVファイル]",
+                    "Operation": [
+                        "FileCreate",
+                        "DataExtend|FileCreate",
+                        "DataExtend|FileCreate|Close"
+                    ]
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Domain Controller": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス] [オプション]",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセスのパス]",
+                    "Note": "CommandLineにおいて、\"-f\"オプションで出力ファイル名が分かる。また、フィルターを使用した場合はフィルター条件も分かる"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス] [オプション]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[実行ユーザー]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親プロセスのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "Note": "CommandLineにおいて、\"-f\"オプションで出力ファイル名が分かる。また、フィルターを使用した場合はフィルター条件も分かる"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "ProcessId": "[プロセスID]",
+                    "PipeName": "\\lsass",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[実行ユーザー]",
+                    "UtcTime": "[発生日時(UTC)]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "17 (UDP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourcePort": "389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume3\\windows\\system32\\lsass.exe",
+                    "Direction": "着信",
+                    "SourcePort": "389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\csv[ランダムな16進値].tmp",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\csv[ランダムな16進値].tmp",
+                    "Hashes": "[削除されたファイルのハッシュ値]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "[検体実行時に\"-f\"オプションで指定されたCSVファイル]",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[検体実行時に\"-f\"オプションで指定されたCSVファイル]",
+                    "Flag": "FILE"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "csv[ランダムな16進値].tmp",
+                    "Operation": [
+                        "FileCreate",
+                        "FileCreate|Close",
+                        "RenameOldName",
+                        "DataExtend|FileCreate",
+                        "DataExtend|FileCreate|Close"
+                    ]
+                },
+                {
+                    "File": "[検体実行時に\"-f\"オプションで指定されたCSVファイル]",
+                    "Operation": [
+                        "FileCreate",
+                        "DataExtend|FileCreate",
+                        "DataExtend|FileCreate|Close"
+                    ]
+                }
+            ]
+        }
+    },
+    "Note": [
+        "記載内容はドメインコントローラーであるWindows Server上で、直接実行したもの。",
+        "本ツールはネットワーク経由で実行することも可能である。クライアント版Windowsから実行した際は、Prefetchなどの記録が残る。"
+    ]
+}

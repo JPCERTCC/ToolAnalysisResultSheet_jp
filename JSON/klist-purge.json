@@ -1,0 +1,220 @@
+{
+    "Summary": {
+        "ToolName": "klist purge",
+        "Category": "痕跡の削除",
+        "Description": "保存されたKerberosチケットを削除する。",
+        "Usage": "攻撃時に使用したKerberosチケットをホストから削除する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": true,
+            "Privilege": "User"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "イベントログ「セキュリティ」にklist.exeのイベントID 4689が記録され、実行結果(戻り値)が\"0x0\"となっている。"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\klist.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "\"C:\\WINDOWS\\system32\\klist.exe\" purge",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセス名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\klist.exe"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\klist.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "\"C:\\WINDOWS\\system32\\klist.exe\" purge",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセス名]"
+                },                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\klist.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "\"C:\\WINDOWS\\system32\\klist.exe\" purge",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\klist.exe",
+                    "ImageLoaded": "[読み取ったDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\klist.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\klist.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\klist.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\KLIST.EXE-[文字列].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "ユーザーSID",
+                    "SubjectUserName": "ユーザー名",
+                    "SubjectDomainName": "ドメイン名",
+                    "SubjectLogonId": "ログオンID",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\KLIST.EXE-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "ユーザーSID",
+                    "SubjectUserName": "ユーザー名",
+                    "SubjectDomainName": "ドメイン名",
+                    "SubjectLogonId": "ログオンID",
+                    "HandleId": "[イベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\KLIST-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\KLIST.EXE-[文字列].pf",
+                    "Process Name": "KLIST.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM32\\KLIST.EXE"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\KLIST.EXE-[文字列].pf",
+                    "Flag": "FILE"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "KLIST.EXE-[文字列].pf",
+                    "Operation": [
+                        "FileCreate",
+                        "DataExtend+FileCreate",
+                        "DataExtend+FileCreate+Close",
+                        "RenameOldName"
+                    ]
+                }
+            ]
+        }
+    },
+    "Note": [
+        "klistはチケットのpurge以外の用途にも利用可能であるため、コマンドラインが記録されていないと処理内容が分からない。"
+    ]
+}

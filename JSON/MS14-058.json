@@ -1,0 +1,268 @@
+{
+    "Summary": {
+        "ToolName": "MS14-058 Exploit",
+        "Category": "権限昇格",
+        "Description": "指定した実行ファイルを、SYSTEM権限で実行する。",
+        "Usage": "管理者権限が必要な実行ファイルを、標準ユーザーで実行する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "false"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows 7",
+            "DomainMember": false,
+            "Privilege": "User"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "イベントログ「セキュリティ」のイベントID: 4688および、イベントログ「Sysmon」のイベントID: 1においてSYSTEM権限で実行されているプロセスの、親プロセスがそのプロセスの親となり得ないものとなっている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス] [権限を昇格して実行する実行ファイル]",
+                    "User": "[実行ユーザー]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[権限を昇格して実行する実行ファイルのパス]",
+                    "CommandLine": "[権限を昇格して実行する実行コマンドのコマンドライン]",
+                    "User": "NY AUTHORITY\\SYSTEM",
+                    "Hashes": "[権限を昇格して実行する実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[実行プロセスID]",
+                    "ParentImage": "[実行ファイルのパス]",
+                    "ParentCommandLine": "[実行ファイルのパス] [権限を昇格して実行する実行ファイル]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[ホスト名]$",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": ["CLOSE+DATA_EXTEND+FILE_CREATE"],
+                    "Note": "archive+not_indexed"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス] [権限を昇格して実行する実行ファイル]",
+                    "User": "[実行ユーザー]",
+                    "LogonId": "[ログオンセッションのID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "Category": "プロセス作成",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "NewProcessId": "[実行プロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[新プロセスを作成した親プロセスのプロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[権限を昇格して実行する実行ファイルのパス]",
+                    "CommandLine": "[権限を昇格して実行する実行コマンドのコマンドライン]",
+                    "CurrentDirectory": "[実行ファイルのパス]",
+                    "User": "NY AUTHORITY\\SYSTEM",
+                    "LogonId": "[ログオンセッションのID]",
+                    "IntegrityLevel": "System",
+                    "Hashes": "[権限を昇格して実行する実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[実行プロセスID]",
+                    "ParentImage": "[実行ファイルのパス]",
+                    "ParentCommandLine": "[実行ファイルのパス] [権限を昇格して実行する実行ファイル]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "Category": "プロセス作成",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[ホスト名]$",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "NewProcessId": "[プロセスID]",
+                    "NewProcessName": "[権限を昇格して実行する実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[実行プロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "Category": "Process accessed",
+                    "Description": "Process accessed.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "[アクセス先プロセスのパス]",
+                    "GrantedAccess": "0x1FFFFF"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "プロセス終了",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[ホスト名]$",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": ["FILE_CREATE"],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": ["DATA_EXTEND+FILE_CREATE"],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": ["CLOSE+DATA_EXTEND+FILE_CREATE"],
+                    "Note": "archive+not_indexed"
+                }
+            ]
+        }
+    }
+}

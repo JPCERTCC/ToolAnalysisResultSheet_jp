@@ -1,0 +1,251 @@
+{
+    "Summary": {
+        "ToolName": "PwDump7",
+        "Category": "パスワード、ハッシュ入手",
+        "Description": "ホスト内のパスワードハッシュ一覧を表示する。",
+        "Usage": "取得したハッシュ情報を利用して、他のホストにログオンする。",
+        "Availability": [
+            "",
+            ""
+        ],
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "false"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "Admin",
+            "Protocol": [],
+            "Service": "",
+            "Note": ""
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "イベントログ、実行履歴等では判断できない"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[実行したユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "[プロセスの戻り値]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "\\VOLUME{[GUID]}\\[実行ファイルのパス]",
+                    "Note": ""
+                }
+            ],
+            "Registry": [],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": ""
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ],
+                    "Note": ""
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "NewProcessId": "[プロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeFull(2)",
+                    "MandatoryLabel": "Mandatory Label\\High Mandatory Level",
+                    "ProcessId": "[新プロセスを作成した親プロセスのプロセスID]",
+                    "ParentProcessName": "[新プロセスを作成した親プロセスのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[実行したユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "[プロセスの戻り値]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "File System",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[実行ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[当該ハンドルの識別ID]",
+                    "AccessList": "WriteDataまたはAddFile, AppendDataを含む",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "File System",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "File System",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で複製されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "Note": ""
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "\\VOLUME{[GUID]}\\[実行ファイルのパス]",
+                    "Note": ""
+                }
+            ],
+            "Registry": [],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "FILE_CREATE",
+                        "DATA_EXTEND+FILE_CREATE",
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ],
+                    "Note": ""
+                }
+            ]
+        }
+    }
+}

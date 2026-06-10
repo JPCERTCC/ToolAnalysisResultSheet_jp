@@ -1,0 +1,434 @@
+{
+    "Summary": {
+        "ToolName": "netコマンド (net use)",
+        "Category": "ファイル共有・転送",
+        "Description": "ネットワーク上で公開されている共有ポイントに接続する。",
+        "Usage": "共有ポイントを経由して攻撃に使用するツールを送り込んだり、ファイルサーバーから情報を取得したりする。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": ["445/tcp"]
+        },
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": ["445/tcp"]
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon":" 実行履歴, 445/tcpを使用した通信"
+            },
+            "Target": {
+                "監査ポリシー・Sysmon":"445/tcpを使用した通信",
+                "監査ポリシー":"ファイルへのアクセス履歴や共有パスに対するアクセスが記録される。また、ファイルシステムへの監査が有効な場合は、対象ファイルへのアクセス履歴が記録される"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "「セキュリティ」ログにnet.exeのイベント4689が記録され、実行結果（戻り値）が0x0となっている"
+        ],
+        "Target": [
+            "「セキュリティ」ログのイベント5145に、ファイルが読み取られたことが記録されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく作成されたプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\net.exe",
+                    "ProcessId": "[プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\net.exe use \\\\[接続先]\\[共有パス]"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\[共有パス]",
+                    "ShareLocalPath": "\\??\\[接続先ホストの共有パス]",
+                    "AccessList": "ReadData (or ListDirectory)"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく作成されたプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\net.exe",
+                    "ProcessId": "[プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\net.exe use \\\\[接続先]\\[共有パス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\net.exe use \\\\[接続先]\\[共有パス]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスのプロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "ImageLoaded": "[読み取ったDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルなどのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "\\wkssvc",
+                    "Image": "C:\\WINDOWS\\system32\\net.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\net.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\net.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "[オブジェクト名](C:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "[オブジェクト名](C:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく作成されたプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\xcopy.exe",
+                    "ProcessId": "[プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\xcopy.exe \\\\[接続先ホスト]\\[共有パス] [コピー先]",
+                    "Note": "ここからはファイルコピー。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\xcopy.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\xcopy.exe \\\\[接続先ホスト]\\[共有パス] [コピー先]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスのプロセスID]",
+                    "Note": "ファイルコピーに使用するコマンド。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[コピーするよう指定したファイル]",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[プロセス名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[コピーするよう指定したファイル]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[プロセス名]"
+                },                
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先]",
+                    "DestPort": "445",
+                    "Protocol": "6(TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[プロセス名]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "C:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                },
+                {
+                    "File": "[コピーするよう指定したファイル]",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "NET.EXE-[ハッシュ値].pf",
+                    "Process Name": "NET.EXE",
+                    "Process Path": "C:\\Windows\\System32\\net.exe"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "NET.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "FileCreate",
+                        "DataExtend",
+                        "DataOverwrite",
+                        "Close",
+                        "RenameOldName",
+                        "SecurityChange",
+                        "BasicInfoChange"
+                    ],
+                    "Note": "Archive|NotContentIndexed"
+                },
+                {
+                    "File": "[コピーするよう指定したファイル]",
+                    "Operation": [
+                        "FileCreate",
+                        "SecurityChange",
+                        "BasicInfoChange",
+                        "Close"
+                    ],
+                    "Note": "Archive"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "[オブジェクトの種類](File)",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "ShareLocalPath": "\\??\\[接続先ホストの共有パス]",
+                    "AccessList": "ReadData (or ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6(TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6(TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "AccessList": "ReadData (or ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\[共有パス]",
+                    "ShareLocalPath": "\\??\\[接続先ホストのファイルシステム上の共有ディレクトリ]",
+                    "AccessList": "ReadData (or ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\[共有パス]",
+                    "ShareLocalPath": "\\??\\[接続先ホストのファイルシステム上の共有ディレクトリ]",
+                    "RelativeTargetName": "\\",
+                    "AccessList": "SYNCHRONIZE, ReadData (or ListDirectory), ReadAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\[共有パス]",
+                    "ShareLocalPath": "\\??\\[接続先ホストのファイルシステム上の共有ディレクトリ]",
+                    "RelativeTargetName": "[共有ディレクトリからの相対ファイル名]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (or ListDirectory), ReadEA, ReadAttributes"
+                }
+            ]
+        }
+    }
+}

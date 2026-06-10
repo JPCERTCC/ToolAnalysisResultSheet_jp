@@ -1,0 +1,1045 @@
+{
+    "Summary": {
+        "ToolName": "PowerMemory (Get all the Ticket (RECON))",
+        "Category": "パスワード、ハッシュの入手",
+        "Description": "KDCを介さずにローカルでTGSを生成・メモリロード。",
+        "Usage": "偽装したTGSにてサービスへアクセス",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "none",
+            "Windows 10 + Windows Server 2012": "none",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": true,
+            "Privilege": "Admin",
+            "Protocol": [
+                "88/tcp",
+                "389/tcp"
+            ],
+            "Note": "権限昇格可能なサービス列挙に関するオプションを使用した際に通信が発生する"
+        },
+        "Target": {
+            "OS": "Windows Server",
+            "DomainMember": true,
+            "Privilege": "Admin",
+            "Protocol": [
+                "88/tcp",
+                "389/tcp"
+            ]
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴",
+                "Microsoft-Windows-PowerShell/Operational": "実行されたスクリプトおよびコマンドの内容"
+            },
+            "Target": {
+                "監査ポリシー": "Kerberosチケットの要求ログ"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴、通信履歴"
+            },
+            "Target": {
+                "監査ポリシー・Sysmon": "通信履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "「Microsoft-Windows-PowerShell/Operational」ログにPowerMemoryのスクリプトが記録されている",
+            "「Sysmon」ログにイベント1が記録されており、内容にPowerMemoryの各オプションで使用されるスクリプト名が含まれている"
+        ],
+        "Target": [
+            "想定しないタイミングでクライアントからKerberosチケットが要求されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 4104,
+                    "ScriptBlockText": "[スクリプトの内容]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "CommandLine": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" -ExecutionPolicy Bypass -File \\RECON\\Create-TGSInMemory.ps1",
+                    "CurrentDirectory": "C:\\WINDOWS\\system32\\",
+                    "User": "[ドメイン名]\\[実行ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "ParentCommandLine": "\"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" Start-Process -FilePath powershell.exe -ArgumentList \\\"-ExecutionPolicy Bypass -File \"\\RECON\\Create-TGSInMemory.ps1",
+                    "ParentUser": "[ドメイン名]\\[実行ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "Note": "スクリプト中で子プロセスとしてPowerShellが起動するため、その回数分発生する。"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "TargetUserName": "[チケットを要求したユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[チケット発行対象のユーザーSID]",
+                    "TicketOptions": "0x40810000",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x0"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeFull (2)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "MandatoryLabel": "Mandatory Label\\High Mandatory Level"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "CommandLine": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "CurrentDirectory": "C:\\WINDOWS\\system32\\",
+                    "User": "[ドメイン名]\\[実行ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentUser": "[ドメイン名]\\[実行ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 40961
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 53504
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": ": C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\POWERSHELL.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": ": C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\POWERSHELL.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\POWERSHELL.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "135",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "135"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\svchost.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "389"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "88",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "88"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "TokenElevationType": "TokenElevationTypeFull(2)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "\"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" Start-Process -FilePath powershell.exe -ArgumentList \\\"-ExecutionPolicy Bypass -File \\\"\\RECON\\Create-TGSInMemory.ps1\\\""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "CommandLine": "\"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" Start-Process -FilePath powershell.exe -ArgumentList \\\"-ExecutionPolicy Bypass -File \\\"\\RECON\\Create-TGSInMemory.ps1\\\"",
+                    "CurrentDirectory": "C:\\WINDOWS\\system32\\",
+                    "User": "[ドメイン名]\\[実行ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "ParentCommandLine": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "ParentUser": "[ドメイン名]\\[実行ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "PrivilegeList": "SeCreateGlobalPrivilege",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 40962
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 4104,
+                    "ScriptBlockText": "[スクリプトの内容]"
+                },
+                {
+                    "Channel": "Windows PowerShell",
+                    "EventID": 600,
+                    "ProviderName": "[プロバイダー名]",
+                    "NewProviderState": "Started",
+                    "SequenceNumber": "[シーケンス番号]",
+                    "HostName": "ConsoleHost",
+                    "HostVersion": "[Powershellのバージョン]",
+                    "HostId": "[ホストID]",
+                    "HostApplication": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" Start-Process -FilePath powershell.exe -ArgumentList \\\"-ExecutionPolicy Bypass -File \"\\RECON\\Create-TGSInMemory.ps1"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "TokenElevationType": "TokenElevationTypeFull (2)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "\"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" -ExecutionPolicy Bypass -File \\RECON\\Create-TGSInMemory.ps1"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "CommandLine": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" -ExecutionPolicy Bypass -File \\RECON\\Create-TGSInMemory.ps1",
+                    "CurrentDirectory": "C:\\WINDOWS\\system32\\",
+                    "User": "[ドメイン名]\\[実行ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "ParentCommandLine": "\"C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\" Start-Process -FilePath powershell.exe -ArgumentList \\\"-ExecutionPolicy Bypass -File \"\\RECON\\Create-TGSInMemory.ps1",
+                    "ParentUser": "[ドメイン名]\\[実行ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "Note": "スクリプト中で子プロセスとしてPowerShellが起動するため、その回数分発生する。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "User": "[ドメイン名]\\[実行ユーザー名]",
+                    "Note": "スクリプト中で子プロセスとしてPowerShellが起動するため、その回数分発生する。"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "POWERSHELL.EXE-[ハッシュ値].pf",
+                    "Process Name": "POWERSHELL.EXE",
+                    "Process Path": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "POWERSHELL.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "POWERSHELL.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend",
+                        "FileCreate\nDataExtend",
+                        "FileCreate",
+                        "Close\nFileCreate"
+                    ],
+                    "Note": "Archive|NotContentIndexed"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\svchost.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "135",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": "false",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "135"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": "false",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege, SeEnableDelegationPrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": "false",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "389"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "88",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": "false",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "88"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "TargetUserName": "[チケットを要求したユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[チケット発行対象のユーザーSID]",
+                    "TicketOptions": "0x40810000",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege, SeEnableDelegationPrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetLogonId": "[イベント4624で記録されたログオンID]",
+                    "LogonType": 3,
+                    "Note": "直前のイベント4624でログインされたもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "389",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "389"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetLogonId": "[イベント4624で記録されたログオンID]",
+                    "LogonType": 3,
+                    "Note": "直前のイベント4624でログインされたもの。"
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "searchRequest(1) \"<ROOT>\" baseObject",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "searchResEntry(1) \"<ROOT>\" | searchResDone(1) success [1 result]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "bindRequest(3) \"<ROOT>\" sasl",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "bindResponse(3) success",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (106 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (130 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (111 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (88 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (105 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (141 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "bindRequest(9) \"<ROOT>\" sasl",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "bindResponse(9) success",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (54 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (3040 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (186 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (210 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (11 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (11 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "Standard query 0x8559 SRV _ldap._tcp.Default-First-Site-Name._sites.[接続先ホスト名]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "53",
+            "Protocol": "udp",
+            "Application": "DNS"
+        },
+        {
+            "Operation": "Standard query response 0x8559 No such name SRV _ldap._tcp.Default-First-Site-Name._sites.[接続先ホスト名] SOA [接続先ホスト名]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "53",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "udp",
+            "Application": "DNS"
+        },
+        {
+            "Operation": "Standard query 0xcff0 SRV _ldap._tcp.[接続先ホスト名]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "53",
+            "Protocol": "udp",
+            "Application": "DNS"
+        },
+        {
+            "Operation": "Standard query response 0xcff0 No such name SRV _ldap._tcp.[接続先ホスト名] SOA [接続先ホスト名]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "53",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "udp",
+            "Application": "DNS"
+        },
+        {
+            "Operation": "searchRequest(1) \"<ROOT>\" baseObject",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "searchResEntry(1) \"<ROOT>\" | searchResDone(1) success [1 result]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "TGS-REQ",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "88",
+            "Protocol": "tcp",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "TGS-REP",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "88",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "bindRequest(3) \"<ROOT>\" sasl",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "bindResponse(3) success",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (118 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (85 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (11 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "bindRequest(8) \"<ROOT>\" sasl",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "bindResponse(8) success",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (118 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (85 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "389",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        },
+        {
+            "Operation": "SASL GSS-API Privacy: payload (11 bytes)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "389",
+            "Protocol": "tcp",
+            "Application": "LDAP"
+        }
+    ]
+}

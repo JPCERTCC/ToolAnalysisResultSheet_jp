@@ -1,0 +1,1046 @@
+{
+    "Summary": {
+        "ToolName": "vssadmin",
+        "Category": "情報収集",
+        "Description": "Volume Shadow Copyを作成・操作する。",
+        "Usage": "Volume Shadow CopyよりNTDS.DITやレジストリなど、Windowsが動作している間にはコピー出来ないシステムファイルを抽出する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "Admin",
+            "Service": "Volume Shadow Copy"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "システム イベントログ": "サービス実行履歴",
+                "セキュリティ イベントログ": "シャドウコピーを作成した履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "プロセス追跡の監査・Sysmon": "vssadmin.exeの実行履歴。CommandLineから実行内容が分かる"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "「セキュリティ」イベントログにイベント8222（VSSAudit）が記録されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessName": "C:\\Windows\\System32\\vssadmin.exe",
+                    "CommandLine": "vssadmin create shadow /For=C:",
+                    "Note": "CommandLineに実行時のコマンドラインが記録される。ここから操作内容やシャドウコピーを操作されたボリュームが分かる。ここではドライブCのシャドウコピーを作成している。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\vssadmin.exe",
+                    "CommandLine": "vssadmin create shadow /For=C:",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": "CommandLineに実行時のコマンドラインが記録される。ここから操作内容やシャドウコピーを操作されたボリュームが分かる。ここではドライブCのシャドウコピーを作成している。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessName": "C:\\Windows\\System32\\VSSVC.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "ParentProcessName": "C:\\Windows\\System32\\services.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\VSSVC.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "IntegrityLevel": "System",
+                    "ParentImage": "C:\\Windows\\System32\\services.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\services.exe",
+                    "ParentUser": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "[コンピューターアカウント]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ProcessName": "C:\\Windows\\System32\\VSSVC.exe",
+                    "EnabledPrivilegeList": "SeBackupPrivilege",
+                    "DisabledPrivilegeList": "-"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "[コンピューターアカウント]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ProcessName": "C:\\Windows\\System32\\VSSVC.exe",
+                    "EnabledPrivilegeList": "SeRestorePrivilege",
+                    "DisabledPrivilegeList": "-"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "param1": "Volume Shadow Copy",
+                    "param2": "実行中",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS 配下の複数キー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 9,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\VSSVC.exe",
+                    "Device": "\\Device\\HarddiskVolume[ボリューム番号]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "param1": "Microsoft Software Shadow Copy Provider",
+                    "param2": "実行中"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\VolSnap 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Enum\\STORAGE\\VolumeSnapshot 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\DeviceContainers\\{00000000-0000-0000-FFFF-FFFFFFFFFFFF} 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\Class\\{533c5b84-ec70-11d2-9505-00c04f79deaf}\\0000 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Note": "「533c5b84-ec70-11d2-9505-00c04f79deaf」はVolumeSnapshotクラスのGUID。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\DeviceClasses\\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}\\##?#STORAGE#VolumeSnapshot#HarddiskVolumeSnapshot[スナップショット番号]#{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}\\DeviceInstance 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Note": "「53f5630d-b6bf-11d0-94f2-00a0c91efb8b」はリムーバルメディアクラスのGUID。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Kernel-PnP/Configuration",
+                    "EventID": 400,
+                    "Description": "デバイス STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号] が構成されました",
+                    "DriverName": "volsnap.inf",
+                    "ClassGuid": "{533C5B84-EC70-11D2-9505-00C04F79DEAF}",
+                    "DriverProvider": "Microsoft",
+                    "DriverSection": "volume_snapshot_install.NTamd64",
+                    "DriverRank": "0x00ff0000",
+                    "MatchingDeviceId": "STORAGE\\VolumeSnapshot",
+                    "DeviceUpdated": false,
+                    "Status": "0x0",
+                    "DriverInbox": true
+                },
+                {
+                    "Channel": "Microsoft-Windows-Kernel-PnP/Configuration",
+                    "EventID": 410,
+                    "Description": "デバイス STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号] が構成されました",
+                    "DriverName": "volsnap.inf",
+                    "ClassGuid": "{533C5B84-EC70-11D2-9505-00C04F79DEAF}",
+                    "Problem": "0x0",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Ntfs/Operational",
+                    "EventID": 4,
+                    "DeviceName": "\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]",
+                    "DeviceGuid": "{00000000-0000-0000-0000-000000000000}"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 8222,
+                    "Data1": "[ユーザーSID]",
+                    "Data2": "[ドメイン名]\\[ユーザー名]",
+                    "Data4": "C:\\Windows\\System32\\vssadmin.exe",
+                    "Data5": "[シャドウ セットID]",
+                    "Data6": "[シャドウ ID]",
+                    "Data7": "[プロバイダーID]",
+                    "Data8": "[作成元ホスト]",
+                    "Data9": "[作成元ボリューム]",
+                    "Data10": "\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetFilename": "C:\\System Volume Information\\RemoteVss",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetFilename": "C:\\System Volume Information\\RemoteVss\\{89300202-3cec-4981-9171-19f59559e0f2}-{F32554AF-9E70-418D-B16E-7F58170EA763}.PMS",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessName": "C:\\Windows\\System32\\cmd.exe",
+                    "CommandLine": "cmd /c copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]\\windows\\ntds\\ntds.dit [コピー先]",
+                    "Note": "ここからはシャドウコピーからのファイル抽出。コマンドプロンプトを用いて、ntds.ditをコピーする内容。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "CommandLine": "cmd /c copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]\\windows\\ntds\\ntds.dit [コピー先]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "param1": "Volume Shadow Copy",
+                    "param2": "停止",
+                    "Note": "ここからはシャドウコピーサービスの停止。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\VSSVC.exe",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessName": "C:\\Windows\\System32\\VSSVC.exe"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKLM\\SYSTEM\\ControlSet001\\Control\\Class\\{533c5b84-ec70-11d2-9505-00c04f79deaf}\\[インスタンス番号]",
+                    "Type": "Key",
+                    "Value": ""
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessName": "C:\\Windows\\System32\\vssadmin.exe",
+                    "CommandLine": "vssadmin create shadow /For=C:",
+                    "Note": "CommandLineに実行時のコマンドラインが記録される。ここから操作内容やシャドウコピーを操作されたボリュームが分かる。ここではドライブCのシャドウコピーを作成している。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\vssadmin.exe",
+                    "CommandLine": "vssadmin create shadow /For=C:",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": "CommandLineに実行時のコマンドラインが記録される。ここから操作内容やシャドウコピーを操作されたボリュームが分かる。ここではドライブCのシャドウコピーを作成している。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "\\Device\\ConDrv",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\vssadmin.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Mutant",
+                    "ObjectName": "\\BaseNamedObjects\\[文字列]",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\vssadmin.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Semaphore",
+                    "ObjectName": "\\BaseNamedObjects\\[文字列]",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\vssadmin.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessName": "C:\\Windows\\System32\\VSSVC.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "ParentProcessName": "C:\\Windows\\System32\\services.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\VSSVC.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "IntegrityLevel": "System",
+                    "ParentImage": "C:\\Windows\\System32\\services.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\services.exe",
+                    "ParentUser": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "[コンピューターアカウント]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ProcessName": "C:\\Windows\\System32\\VSSVC.exe",
+                    "EnabledPrivilegeList": "SeBackupPrivilege",
+                    "DisabledPrivilegeList": "-"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "[コンピューターアカウント]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ProcessName": "C:\\Windows\\System32\\VSSVC.exe",
+                    "EnabledPrivilegeList": "SeRestorePrivilege",
+                    "DisabledPrivilegeList": "-"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "param1": "Volume Shadow Copy",
+                    "param2": "実行中",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS 配下の複数キー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS 配下の複数キー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 9,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\VSSVC.exe",
+                    "Device": "\\Device\\HarddiskVolume[ボリューム番号]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5} 配下",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\SwProvider_{b5946137-7b9f-4925-af80-51abd60b20d5} 配下",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4661,
+                    "Category": "SAM",
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security Account Manager",
+                    "ObjectType": "SAM_DOMAIN",
+                    "ObjectName": "CN=Builtin DC=[ドメイン名]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, ReadPasswordParameters, WritePasswordParameters, ReadOtherParameters, WriteOtherParameters, CreateUser, CreateGlobalGroup, CreateLocalGroup, GetLocalGroupMembership, ListAccounts",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4661,
+                    "Category": "SAM",
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security Account Manager",
+                    "ObjectType": "SAM_ALIAS",
+                    "ObjectName": "S-1-5-32-544",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, AddMember, RemoveMember, ListMembers, ReadInformation, WriteAccount",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe",
+                    "Note": "「S-1-5-32-544」はAdministratorsグループのSID。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "SAM",
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security Account Manager",
+                    "HandleId": "[直前のイベント4661で使用されていたハンドルID]",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4799,
+                    "TargetUserName": "Administrators",
+                    "TargetDomainName": "Builtin",
+                    "TargetUserSid": "S-1-5-32-544",
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "CallerProcessName": "C:\\Windows\\System32\\VSSVC.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\lsass.exe",
+                    "TargetImage": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "GrantedAccess": "0x00001000"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4661,
+                    "Category": "SAM",
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security Account Manager",
+                    "ObjectType": "SAM_DOMAIN",
+                    "ObjectName": "CN=Builtin DC=[ドメイン名]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, ReadPasswordParameters, WritePasswordParameters, ReadOtherParameters, WriteOtherParameters, CreateUser, CreateGlobalGroup, CreateLocalGroup, GetLocalGroupMembership, ListAccounts",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "SAM",
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security Account Manager",
+                    "HandleId": "[直前のイベント4661で使用されていたハンドルID]",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4661,
+                    "Category": "SAM",
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security Account Manager",
+                    "ObjectType": "SAM_ALIAS",
+                    "ObjectName": "S-1-5-32-551",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, AddMember, RemoveMember, ListMembers, ReadInformation, WriteAccount",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe",
+                    "Note": "「S-1-5-32-551」はBackup OperatorsグループのSID。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "SAM",
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security Account Manager",
+                    "HandleId": "[直前のイベント4661で使用されていたハンドルID]",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4799,
+                    "TargetUserName": "Backup Operators",
+                    "TargetDomainName": "Builtin",
+                    "TargetUserSid": "S-1-5-32-551",
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "CallerProcessName": "C:\\Windows\\System32\\VSSVC.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "SAM",
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security Account Manager",
+                    "HandleId": "[直前のイベント4661で使用されていたハンドルID]",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS 配下の複数キー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS 配下の複数キー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 9,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\VSSVC.exe",
+                    "Device": "\\Device\\HarddiskVolume[ボリューム番号]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "param1": "Microsoft Software Shadow Copy Provider",
+                    "param2": "実行中"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "[コンピューターアカウント]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "EnabledPrivilegeList": "SeBackupPrivilege",
+                    "DisabledPrivilegeList": "-"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\VolSnap 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\VolSnap 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Enum\\STORAGE",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Enum\\STORAGE\\VolumeSnapshot 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Enum\\STORAGE\\VolumeSnapshot 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\DeviceContainers\\{00000000-0000-0000-FFFF-FFFFFFFFFFFF} 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\DeviceContainers\\{00000000-0000-0000-FFFF-FFFFFFFFFFFF} 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\DeviceContainers\\{00000000-0000-0000-FFFF-FFFFFFFFFFFF}\\BaseContainers\\{00000000-0000-0000-FFFF-FFFFFFFFFFFF}\\STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Details": "[バイナリデータ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\DeviceContainers\\{00000000-0000-0000-FFFF-FFFFFFFFFFFF}\\BaseContainers\\{00000000-0000-0000-FFFF-FFFFFFFFFFFF}\\STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号]",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Details": "[バイナリデータ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\Class\\{533c5b84-ec70-11d2-9505-00c04f79deaf}\\0000 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Note": "「533c5b84-ec70-11d2-9505-00c04f79deaf」はVolumeSnapshotクラスのGUID。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\Class\\{533c5b84-ec70-11d2-9505-00c04f79deaf}\\0000 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Note": "「533c5b84-ec70-11d2-9505-00c04f79deaf」はVolumeSnapshotクラスのGUID。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\DeviceClasses\\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}\\##?#STORAGE#VolumeSnapshot#HarddiskVolumeSnapshot[スナップショット番号]#{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}\\DeviceInstance 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Note": "「53f5630d-b6bf-11d0-94f2-00a0c91efb8b」はリムーバルメディアクラスのGUID。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "System",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\DeviceClasses\\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}\\##?#STORAGE#VolumeSnapshot#HarddiskVolumeSnapshot[スナップショット番号]#{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}\\DeviceInstance 配下のキー・値",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Note": "「53f5630d-b6bf-11d0-94f2-00a0c91efb8b」はリムーバルメディアクラスのGUID。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Kernel-PnP/Configuration",
+                    "EventID": 400,
+                    "Description": "デバイス STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号] が構成されました",
+                    "DriverName": "volsnap.inf",
+                    "ClassGuid": "{533C5B84-EC70-11D2-9505-00C04F79DEAF}",
+                    "DriverProvider": "Microsoft",
+                    "DriverSection": "volume_snapshot_install.NTamd64",
+                    "DriverRank": "0x00ff0000",
+                    "MatchingDeviceId": "STORAGE\\VolumeSnapshot",
+                    "DeviceUpdated": false,
+                    "Status": "0x0",
+                    "DriverInbox": true
+                },
+                {
+                    "Channel": "Microsoft-Windows-Kernel-PnP/Configuration",
+                    "EventID": 410,
+                    "Description": "デバイス STORAGE\\VolumeSnapshot\\HarddiskVolumeSnapshot[スナップショット番号] が構成されました",
+                    "DriverName": "volsnap.inf",
+                    "ClassGuid": "{533C5B84-EC70-11D2-9505-00C04F79DEAF}",
+                    "Problem": "0x0",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 9,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\VSSVC.exe",
+                    "Device": "\\Device\\HarddiskVolume[ボリューム番号]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Kernel-IO",
+                    "EventID": 1,
+                    "VolumeGuid": "{00000000-0000-0000-0000-000000000000}"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Ntfs/Operational",
+                    "EventID": 4,
+                    "DeviceName": "\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]",
+                    "DeviceGuid": "{00000000-0000-0000-0000-000000000000}"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 8222,
+                    "Data1": "[ユーザーSID]",
+                    "Data2": "[ドメイン名]\\[ユーザー名]",
+                    "Data4": "C:\\Windows\\System32\\vssadmin.exe",
+                    "Data5": "[シャドウ セットID]",
+                    "Data6": "[シャドウ ID]",
+                    "Data7": "[プロバイダーID]",
+                    "Data8": "[作成元ホスト]",
+                    "Data9": "[作成元ボリューム]",
+                    "Data10": "\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4904,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "AuditSourceName": "VSSAudit",
+                    "EventSourceId": "0x00000000001c589d",
+                    "ProcessName": "C:\\Windows\\System32\\VSSVC.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4905,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "AuditSourceName": "VSSAudit",
+                    "EventSourceId": "0x00000000001c589d",
+                    "ProcessName": "C:\\Windows\\System32\\VSSVC.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\vssadmin.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessName": "C:\\Windows\\System32\\vssadmin.exe",
+                    "Note": "ここまではシャドウコピーの作成。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessName": "C:\\Windows\\System32\\vssadmin.exe",
+                    "CommandLine": "vssadmin list shadows",
+                    "Note": "ここからはシャドウコピーの一覧確認。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\vssadmin.exe",
+                    "CommandLine": "vssadmin list shadows",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "\\Device\\ConDrv",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\vssadmin.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Mutant",
+                    "ObjectName": "\\BaseNamedObjects\\[文字列]",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\vssadmin.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Semaphore",
+                    "ObjectName": "\\BaseNamedObjects\\[文字列]",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\vssadmin.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\VSS\\Diag\\FSProvider_{89300202-3cec-4981-9171-19f59559e0f2}",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Note": "「89300202-3cec-4981-9171-19f59559e0f2」はMicrosoft File Share Shadow Copy ProviderのプロバイダID。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetFilename": "C:\\System Volume Information\\RemoteVss",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\vssvc.exe",
+                    "TargetFilename": "C:\\System Volume Information\\RemoteVss\\{89300202-3cec-4981-9171-19f59559e0f2}-{F32554AF-9E70-418D-B16E-7F58170EA763}.PMS",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\vssadmin.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessName": "C:\\Windows\\System32\\vssadmin.exe",
+                    "Note": "ここまではシャドウコピーの一覧取得。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessName": "C:\\Windows\\System32\\cmd.exe",
+                    "CommandLine": "cmd /c copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]\\windows\\ntds\\ntds.dit [コピー先]",
+                    "Note": "ここからはシャドウコピーからのファイル抽出。コマンドプロンプトを用いて、ntds.ditをコピーする内容。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "CommandLine": "cmd /c copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy[シャドウコピー番号]\\windows\\ntds\\ntds.dit [コピー先]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\cmd.exe",
+                    "TargetFilename": "[コピー先]\\ntds.dit",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "param1": "Volume Shadow Copy",
+                    "param2": "停止",
+                    "Note": "ここからはシャドウコピーサービスの停止。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\VSSVC.exe",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessName": "C:\\Windows\\System32\\VSSVC.exe"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKLM\\SYSTEM\\ControlSet001\\Control\\Class\\{533c5b84-ec70-11d2-9505-00c04f79deaf}\\[インスタンス番号]",
+                    "Type": "Key",
+                    "Value": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[コピーしたファイル]",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[コピーしたファイル]",
+                    "Operation": ["FileCreate"],
+                    "Note": ""
+                }
+            ]
+        }
+    },
+    "Note": [
+        "本検証ではシャドウコピーを新規に作成し、その作成を確認した後に、ファイルを抽出している。操作内容が異なる場合は内容が変動する。"
+    ]
+}

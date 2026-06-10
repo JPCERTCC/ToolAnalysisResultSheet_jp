@@ -1,0 +1,1066 @@
+{
+    "Summary": {
+        "ToolName": "wmic",
+        "Category": "コマンド実行",
+        "Description": "リモートホスト上でコマンドを実行する。",
+        "Usage": "WMIを用いてリモートシステムの情報取得や、コマンド実行を行う。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": true,
+            "Privilege": "Admin",
+            "Protocol": ["135/tcp", "ハイポート/tcp"]
+        },
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": true,
+            "Privilege": "Admin",
+            "Protocol": ["135/tcp", "ハイポート/tcp"]
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            },
+            "Target": {
+                "Prefetch": "実行履歴",
+                "Microsoft-Windows-WMI-Activity/Operational": "WMIが実行された記録"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴（コマンドライン中の、リモートホスト上で実行したコマンドを含む）、成否（コマンドの戻り値から判断できる）"
+            },
+            "Target": {
+                "監査ポリシー・Sysmon": "実行履歴"                
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "「セキュリティ」ログにWMIC.exeのイベント4689が記録され、戻り値が成功（\"0x0\"）となっている"
+        ],
+        "Target": [
+            "WmiPrvSE.exeが実行されたことが記録されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\wbem\\WMIC.exe",
+                    "TokenElevationType": "TokenElevationTypeFull(2)",
+                    "MandatoryLabel": "High Mandtory Level",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "wmic /NODE:\"[接続先ホスト]\" [実行コマンド]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wbem\\WMIC.exe"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "WMIC.EXE-[ハッシュ値].pf",
+                    "Process Name": "WMIC.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM32\\WBEM\\WMIC.EXE"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "MandatoryLabel": "Mandatory Label\\System Mandtory Level",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe -secured -Embedding"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WMI-Activity/Operational",
+                    "EventID": 5857,
+                    "ProviderName": "CIMWin32",
+                    "Code": "0x0",
+                    "HostProcess": "wmiprvse.exe",
+                    "ProcessID": "[プロセスID]",
+                    "ProviderPath": "%systemroot%\\system32\\wbem\\cimwin32.dll"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\wbem\\WMIC.exe",
+                    "TokenElevationType": "TokenElevationTypeFull(2)",
+                    "MandatoryLabel": "High Mandtory Level",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "wmic /NODE:\"[接続先ホスト]\" [実行コマンド]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\wbem\\WMIC.exe",
+                    "CommandLine": "wmic /NODE:\"[接続先ホスト]\" [実行コマンド]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentUser": "[親プロセスユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\wbem\\WMIC.exe",
+                    "ImageLoaded": "[ロードしたファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[ロードしたファイルのメタデータ]",
+                    "User": "[実行ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Mutant",
+                    "ObjectName": "\\Sesions\\1\\BaseNamedObjects\\SM0:5020:304:WilStaging_02 他",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Key",
+                    "ObjectName": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\Services\\WinSock2\\Parameters",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege"
+                },
+
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\wbem\\WMIC.exe",
+                    "TargetObject": "HKLM\\SOFTWARE\\Microsoft\\Wbem\\CIMOM",
+                    "User": "[実行ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\wbem\\WMIC.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                    "User": "[実行ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\wbem\\wmic.exe",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\System32\\Wbem\\WMIC.exe",
+                    "TargetObject": "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Notifications\\Data\\[文字列]",
+                    "Details": "Binary Data",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wbem\\WMIC.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\wbem\\WMIC.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\WMIC.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\WMIC.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\WMIC.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\WMIC.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "WMIC.EXE-[ハッシュ値].pf",
+                    "Process Name": "WMIC.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM32\\WBEM\\WMIC.EXE"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "WMIC.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ],
+                    "Note": "archive+not_indexed"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\svchost.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "135",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "135"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\svchost.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "0.0.0.0",
+                    "SourcePort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5154,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\svchost.exe",
+                    "SourceAddress": "0.0.0.0",
+                    "SourcePort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "LayerName": "リッスン"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\svchost.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "MandatoryLabel": "Mandatory Label\\System Mandtory Level",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe -secured -Embedding"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe -secured -Embedding",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "IntegrityLevel": "System",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\svchost.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\svchost.exe -k DcomLaunch -p"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WMI-Activity/Operational",
+                    "EventID": 5857,
+                    "ProviderName": "CIMWin32",
+                    "Code": "0x0",
+                    "HostProcess": "wmiprvse.exe",
+                    "ProcessID": "[プロセスID]",
+                    "ProviderPath": "%systemroot%\\system32\\wbem\\cimwin32.dll"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "TargetObject": "HKLM\\SOFTWARE\\Microsoft\\Wbem"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "TargetObject": "HKLM\\SOFTWARE\\Microsoft\\Wbem\\Tracing\\Providers\\CIMWin32 @ root/CIMV2\\[タイムスタンプ]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\WMIPRVSE.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\WMIPRVSE.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "WMIPRVSE-[ハッシュ値].pf",
+                    "Process Name": "WMIPRVSE.EXE",
+                    "Process Path": "\\VOLUME{[GUID]}\\WINDOWS\\SYSTEM32\\WBEM\\WMIPRVSE.EXE"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKLM\\SOFTWARE\\Microsoft\\Wbem\\Tracing\\Providers\\CIMWin32 @ root/CIMV2\\[タイムスタンプ]",
+                    "Type": "REG_SZ",
+                    "Value": "\"ProcessID: [プロセスID]\""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\WMIPRVSE.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "WMIPRVSE.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ],
+                    "Note": "archive+not_indexed"
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "Bind: call_id: [番号], Fragment: Single, 2 context items: IOXIDResolver V0.0 (32bit NDR), IOXIDResolver V0.0 (6cb71c2c-9812-4540-0300-000000000000)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "135",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Bind_ack: call_id: [番号], Fragment: Single, max_xmit: 5840 max_recv: 5840, 2 results: Acceptance, Negotiate ACK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "135",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "ServerAlive2 request IOXIDResolver V0",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "135",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "ServerAlive2 response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "135",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "TGS-REQ",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[ドメインコントローラーIPアドレス]",
+            "Destination Port": "88",
+            "Protocol": "tcp",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "TGS-REP",
+            "Source Host": "[ドメインコントローラーIPアドレス]",
+            "Source Port": "88",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "Bind: call_id: [番号], Fragment: Single, 1 context items: ISystemActivator V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "135",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Bind_ack: call_id: [番号], Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "135",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context: call_id: [番号], Fragment: Single, 1 context items: ISystemActivator V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "135",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: [番号], Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "135",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemoteCreateInstance request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "135",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemoteCreateInstance response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "135",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "TGS-REQ",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[ドメインコントローラーIPアドレス]",
+            "Destination Port": "88",
+            "Protocol": "tcp",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "TGS-REP",
+            "Source Host": "[ドメインコントローラーIPアドレス]",
+            "Source Port": "88",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "Bind: call_id: [番号], Fragment: Single, 3 context items: IRemUnknown2 V0.0 (32bit NDR), IRemUnknown2 V0.0 (64bit NDR), IRemUnknown2 V0.0 (6cb71c2c-9812-4540-0300-000000000000)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Bind_ack: call_id: [番号], Fragment: Single, max_xmit: 5840 max_recv: 5840, 3 results: Provider rejection, Acceptance, Negotiate ACK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context: call_id: [番号], Fragment: Single, 1 context items: IRemUnknown2 V0.0 (64bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: [番号], Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemQueryInterface request IID[1]=???[Long frame (4 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemQueryInterface response -> S_FALSE[Long frame (56 bytes)]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemQueryInterface request IID[1]=???[Long frame (4 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemQueryInterface response -> S_FALSE[Long frame (56 bytes)]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context: call_id: [番号], Fragment: Single, 1 context items: IWbemLoginClientID V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: [番号], Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Request: call_id: [番号], Fragment: Single, opnum: 3, Ctx: 2 IWbemLoginClientID V0",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: [番号], Fragment: Single, Ctx: 2 IWbemLoginClientID V0",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context: call_id: [番号], Fragment: Single, 1 context items: IWbemLoginClientIDEx V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: [番号], Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Request: call_id: [番号], Fragment: Single, opnum: 3, Ctx: 3 IWbemLoginClientIDEx V0",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: [番号], Fragment: Single, Ctx: 3 IWbemLoginClientIDEx V0",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context: call_id: [番号], Fragment: Single, 1 context items: IWbemLevel1Login V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: [番号], Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Request: call_id: [番号], Fragment: Single, opnum: 3, Ctx: 4 IWbemLevel1Login V0",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: [番号], Fragment: Single, Ctx: 4 IWbemLevel1Login V0",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Request: call_id: [番号], Fragment: Single, opnum: 6, Ctx: 4 IWbemLevel1Login V0",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: [番号], Fragment: Single, Ctx: 4 IWbemLevel1Login V0",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemRelease request Cnt=0[Long frame (80 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemRelease response -> S_OK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "TGS-REQ",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[ドメインコントローラーIPアドレス]",
+            "Destination Port": "88",
+            "Protocol": "tcp",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "TGS-REP",
+            "Source Host": "[ドメインコントローラーIPアドレス]",
+            "Source Port": "88",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "Alter_context: call_id: [番号], Fragment: Single, 1 context items: IWbemServices V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: [番号], Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context: call_id: [番号], Fragment: Single, 1 context items: IWbemServices V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: [番号], Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Request: call_id: [番号], Fragment: Single, opnum: 20, Ctx: 5 IWbemServices V0",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: [番号], Fragment: Single, Ctx: 5 IWbemServices V0",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemQueryInterface request IID[1]=???[Long frame (4 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemQueryInterface response -> S_FALSE[Long frame (56 bytes)]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context: call_id: [番号], Fragment: Single, 1 context items: IWbemFetchSmartEnum V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: [番号], Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Request: call_id: [番号], Fragment: Single, opnum: 3, Ctx: 6 IWbemFetchSmartEnum V0",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: [番号], Fragment: Single, Ctx: 6 IWbemFetchSmartEnum V0",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context: call_id: [番号], Fragment: Single, 1 context items: IWbemWCOSmartEnum V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: [番号], Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Request: call_id: [番号], Fragment: Single, opnum: 3, Ctx: 7 IWbemWCOSmartEnum V0",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: [番号], Fragment: Single, Ctx: 7 IWbemWCOSmartEnum V0",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemRelease request Cnt=0[Long frame (56 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemRelease response -> S_OK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemRelease request Cnt=0[Long frame (32 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemRelease response -> S_OK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemRelease request Cnt=0[Long frame (32 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemRelease response -> S_OK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        }
+    ]
+}

@@ -1,0 +1,598 @@
+{
+    "Summary": {
+        "ToolName": "Quarks PWDump",
+        "Category": "パスワード、ハッシュ入手",
+        "Description": "ドメインアカウントおよびローカルアカウントのパスワードハッシュや、キャッシュされたパスワードを取得する。NTDS.DITファイルを指定して解析することも可能。",
+        "Usage": "取得したパスワードを利用して、他のホストにログオンする。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴、レジストリアクセス、一時ファイル（SAM-[文字列].dmp）の作成"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "一時ファイル（SAM-[文字列].dmp）が作成され、削除されている。"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "0x0",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeFull(2)",
+                    "ProcessId": "[実行プロセスID]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "ParentProcessName": "[親プロセス名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\SAM-[文字列].dmp.LOG[数字]",
+                    "Flag": "FILE"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "SAM-[文字列].dmp",
+                    "Operation": [
+                        "CREATE|EXTEND|OVERWRITE|INFO|CLOSE",
+                        "CLOSE|DATA_EXTEND|DATA_OVERWRITE|FILE_CREATE"
+                    ]
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeFull(2)",
+                    "ProcessId": "[プロセスID]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": 1,
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[実行プロセスID]",
+                    "EnabledPrivilegeList": "SeRestorePrivilege, SeBackupPrivilege"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "ImageLoaded": "[読み取ったDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルなどのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": "関連するファイルごとに複数回発生する。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Control\\Lsa",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp.LOG1",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp.LOG2",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 16,
+                    "Category": "なし",
+                    "Description": "ハイブ \\??\\C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp のアクセス履歴がクリアされました。これにより、0 のキーが更新され、0 の変更されたページが作成されました。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp{[GUID]}.TM.blf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp{[GUID]}.TM.blf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp{[GUID]}.TMContainer00000000000000000001.regtrans-ms",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp{[GUID]}.TMContainer00000000000000000001.regtrans-ms",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp{[GUID]}.TMContainer00000000000000000002.regtrans-ms",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp{[GUID]}.TMContainer00000000000000000002.regtrans-ms",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKLM\\QUARKS-SAM\\Cache",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKLM\\QUARKS-SAM\\Policy\\PolEKList",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKLM\\QUARKS-SAM\\Policy\\Secrets\\NL$KM\\CurrVal",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, ReadAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4660,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名（8.3形式）]\\AppData\\Local\\Temp\\SAM-[文字列].dmp",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "IsExecutable": false,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\SAM-[文字列].dmp.LOG[数字]",
+                    "Flag": "FILE"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\SAM-[文字列].dmp{[GUID]}.TM.blf",
+                    "Flag": "FILE"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\SAM-[文字列].dmp{[GUID]}.TMContainer[数字].regtrans-ms",
+                    "Flag": "FILE"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]",
+                    "Operation": [
+                        "DataOverwrite|DataExtend|FileCreate|BasicInfoChange",
+                        "Close"
+                    ]
+                },
+                {
+                    "File": "SAM-[文字列].dmp",
+                    "Operation": [
+                        "CREATE|EXTEND|OVERWRITE|INFO|CLOSE",
+                        "CLOSE|DATA_EXTEND|DATA_OVERWRITE|FILE_CREATE"
+                    ]
+                },
+                {
+                    "File": "SAM-[文字列].dmp.LOG1",
+                    "Operation": [
+                        "CLOSE|DATA_EXTEND|DATA_OVERWRITE|FILE_CREATE"
+                    ],
+                    "Note": "hidden属性"
+                },
+                {
+                    "File": "SAM-[文字列].dmp.LOG2",
+                    "Operation": [
+                        "CLOSE|DATA_EXTEND|DATA_OVERWRITE|FILE_CREATE"
+                    ],
+                    "Note": "hidden属性"
+                },
+                {
+                    "File": "SAM-[文字列].dmp{[GUID]}.TM.blf",
+                    "Operation": [
+                        "DATA_EXTEND|DATA_OVERWRITE|FILE_CREATE",
+                        "DataOverwrite|DataExtend|FileCreate|Close"
+                    ],
+                    "Note": "hidden属性"
+                },
+                {
+                    "File": "SAM-[文字列].dmp{[GUID]}.TMContainer00000000000000000001.regtrans-ms",
+                    "Operation": [
+                        "DATA_EXTEND|DATA_OVERWRITE|FILE_CREATE"
+                    ],
+                    "Note": "hidden属性"
+                },
+                {
+                    "File": "SAM-[文字列].dmp{[GUID]}.TMContainer00000000000000000002.regtrans-ms",
+                    "Operation": [
+                        "DATA_EXTEND|DATA_OVERWRITE|FILE_CREATE",
+                        "DataExtend|FileCreate|Close"
+                    ],
+                    "Note": "hidden属性"
+                },
+                {
+                    "File": "[文字列].dmp",
+                    "Operation": [
+                        "RenameNewName|Close"
+                    ]
+                },
+                {
+                    "File": "SAM-[文字列].dmp",
+                    "Operation": [
+                        "BASIC_INFO_CHANGE|CLOSE|DATA_EXTEND|DATA_OVERWRITE",
+                        "RenameOldName"
+                    ]
+                },
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "CLOSE|DATA_EXTEND|FILE_CREATE"
+                    ]
+                }
+            ]
+        }
+    },
+    "Note": [
+        "SAM Hiveの規格差異により、ローカル端末のSAM Hive空の取得（-dhl）はWindows 11で実行不可。NTDS.DITの規格差異により、NTDS_FILE指定の解析（-dhd）もWindows 11で実行不可。Windows 11で実行可能なオプションはSecurity Hiveからの取得（-dhdc）のみ"
+    ]
+}

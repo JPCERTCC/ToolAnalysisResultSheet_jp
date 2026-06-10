@@ -1,0 +1,1191 @@
+{
+    "Summary": {
+        "ToolName": "NtlmRelayX",
+        "Category": "通信の不正中継",
+        "Description": "NTLM認証を窃取する中間サーバーとして動作し、被害者になりすまして、対象サーバへの認証を取得する。",
+        "Usage": "被害者の認証情報を用いた、認証サーバーへの侵入",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "none",
+            "Windows 10 + Windows Server 2012": "none",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": true,
+            "Privilege": "User",
+            "Protocol": ["445/tcp"],
+            "Note": "NTLMリレーサーバー（ntlmrelayx.py実行端末）"
+        },
+        "Target": {
+            "OS": "Windows Server 2025",
+            "DomainMember": true,
+            "Privilege": "Admin",
+            "Protocol": ["445/tcp"],
+            "Note": "NTLM認証先のWindows Server"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            },
+            "Target": {
+                "監査ポリシー": "NTLMによるログオン履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴"
+            },
+            "Target": {
+                "監査ポリシー・Sysmon": "実行履歴、NTLM認証履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+                "ntlmrelayx.py の対話モード（-i）で SMBのNTLMリレーが成功した際、「セキュリティ」ログ イベント5154・5158の「送信元アドレス」に「127.0.0.1」が記録される。"
+        ],
+        "Target": [
+                "NTLMリレー成功時に、「セキュリティ」ログのログイン成功（イベント4624）の「ソース ネットワーク アドレス」にNTLMリレーサーバーのIPアドレスが記録される。"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[Python実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[Python実行ファイルのパス] [ntlmrelayx.pyのパス] [コマンドライン]",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセスのパス]",
+                    "Note": "実行コマンドはntlmrelayx.py -t smb://[接続先IPアドレス] -smb2support --no-rpc-server -i"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5154,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[Python実行ファイルのパス]",
+                    "SourcePort": "80, 445, 5985, 5986, 6666, 9389",
+                    "Protocol": "6 (TCP)",
+                    "Note": "ntlmrelayxの待ち受けポート番号であり、ポート毎にイベントが記録される。本検証ではWindowsのRPCポートとの競合回避のため、--no-rpc-serverオプションを実行しており、135の待ち受けは発生しない。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[Python実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[NTLMリレーサーバーIPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[Python実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[NTLMリレーサーバーIPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5154,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[Python実行ファイルのパス]",
+                    "SourceAddress": "127.0.0.1",
+                    "SourcePort": "[バインドされたローカルポート]",
+                    "Protocol": "6 (TCP)",
+                    "Note": "対話用のShellのリッスン"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\telnet.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\telnet.exe 127.0.0.1 11000",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": "NTLMリレー成功後、telnetで対話用のShellへのアクセスした際のログ。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\telnet.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "127.0.0.1",
+                    "SourceHostname": "[NTLMリレーサーバーホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "127.0.0.1",
+                    "DestinationHostname": "[NTLMリレーサーバーホスト名]",
+                    "DestinationPort": "11000"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[Python実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "127.0.0.1",
+                    "SourceHostname": "[NTLMリレーサーバーホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "127.0.0.1",
+                    "DestinationHostname": "[NTLMリレーサーバーホスト名]",
+                    "DestinationPort": "11000"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[Python実行ファイル名]-[文字列].pf",
+                    "Process Name": "[Python実行ファイル名]",
+                    "Process Path": "[Python実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\[Python実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[Python実行ファイル名]-[文字列].pf",
+                    "Operation": ["DataExtend+FileCreate+Close"],
+                    "Note": "Archive|NotContentIndexed"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[NTLMリレーサーバーIPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4776,
+                    "PackageName": "MICROSOFT_AUTHENTICATION_PACKAGE_V1_0",
+                    "TargetUserName": "[ユーザー名]",
+                    "Workstation": "[接続元ホスト名]",
+                    "Status": "0x0",
+                    "Note": "接続元ホスト名はNTLM認証元のホスト名。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "",
+                    "LogonType": 3,
+                    "LogonProcessName": "NtLmSsp",
+                    "AuthenticationPackageName": "NTLM",
+                    "WorkstationName": "[接続元ホスト名]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "IpAddress": "[NTLMリレーサーバーIPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ImpersonationLevel": "偽装",
+                    "ElevatedToken": true,
+                    "Note": "接続元ホスト名はNTLM認証元のホスト名。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": "false",
+                    "SourceIp": "[NTLMリレーサーバーIPアドレス]",
+                    "SourceHostname": "[NTLMリレーサーバーホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[NTLMリレーサーバーIPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "ShareLocalPath": "-",
+                    "AccessList": "ReadDataまたはListDirectory"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[Python実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "[Python実行ファイルのパス] [ntlmrelayx.pyのパス] [コマンドライン]",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセスのパス]",
+                    "Note": "実行コマンドはntlmrelayx.py -t smb://[接続先IPアドレス] -smb2support --no-rpc-server -i"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[Python実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[Pythonの実行ファイルのメタデータ]",
+                    "CommandLine": "[Python実行ファイルのパス]  [ntlmrelayx.pyのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "system",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": "実行コマンドはntlmrelayx.py -t smb://[接続先IPアドレス] -smb2support --no-rpc-server -i"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 17,
+                    "EventType": "CreatePipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "PipeName": "<Anonymous Pipe>",
+                    "Image": "[Python実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "<Anonymous Pipe>",
+                    "Image": "[Python実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[Python実行ファイルのパス]",
+                    "SourceAddress": "127.0.0.1",
+                    "SourcePort": "80, 445, 5985, 5986, 6666, 9389",
+                    "Protocol": "6 (TCP)",
+                    "Note": "ntlmrelayxの待ち受けポート番号であり、ポート毎にイベントが記録される。本検証ではWindowsのRPCポートとの競合回避のため、--no-rpc-serverオプションを実行しており、135の待ち受けは発生しない。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5154,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[Python実行ファイルのパス]",
+                    "SourceAddress": "0.0.0.0",
+                    "SourcePort": "80, 445, 5985, 5986, 6666, 9389",
+                    "Protocol": "6 (TCP)",
+                    "Note": "ntlmrelayxの待ち受けポート番号であり、ポート毎にイベントが記録される。本検証ではWindowsのRPCポートとの競合回避のため、--no-rpc-serverオプションを実行しており、135の待ち受けは発生しない。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[Python実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\[文字列]",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\domuser\\AppData\\Local\\Temp\\[文字列]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\domuser\\AppData\\Local\\Temp\\[文字列]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "[ドメイン名\\ユーザー名]",
+                    "Image": "[Python実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\[文字列]",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "IsExecutable": false,
+                    "Archived": false
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\domuser\\AppData\\Local\\Temp\\[文字列]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, ReadAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\domuser\\AppData\\Local\\Temp\\[文字列]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4660,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[Python実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\[文字列]",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\domuser\\AppData\\Local\\Temp\\[文字列]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\domuser\\AppData\\Local\\Temp\\[文字列]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[Python実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\[文字列]",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\domuser\\AppData\\Local\\Temp\\[文字列]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\domuser\\AppData\\Local\\Temp\\[文字列]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[Python実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[Python実行ファイル名]-[文字列].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[Python実行ファイル名]-[文字列].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[Python実行ファイル名]-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },                
+               {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[Python実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[NTLMリレーサーバーIPアドレス]",
+                    "DestinationHostname": "[NTLMリレーサーバーホスト]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[Python実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[NTLMリレーサーバーIPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[Python実行ファイルのパス]",
+                    "SourceAddress": "0.0.0.0",
+                    "SourcePort": "[バインドされたローカルポート]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[Python実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[NTLMリレーサーバーIPアドレス]",
+                    "SourceHostname": "[NTLMリレーサーバーホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[Python実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[NTLMリレーサーバーIPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[Python実行ファイルのパス]",
+                    "SourceAddress": "127.0.0.1",
+                    "SourcePort": "[バインドするローカルポート]",
+                    "Protocol": "6 (TCP)",
+                    "Note": "対話用のShellがバインドされる。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5154,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[Python実行ファイルのパス]",
+                    "SourceAddress": "127.0.0.1",
+                    "SourcePort": "[バインドされたローカルポート]",
+                    "Protocol": "6 (TCP)",
+                    "Note": "対話用のShellのリッスン。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\telnet.exe",
+                    "CommandLine": "\"C:\\WINDOWS\\system32\\telnet.exe\" 127.0.0.1 [バインドされたローカルポート]",
+                    "Note": "NTLMリレー成功後、telnetで対話用のShellへのアクセスした際のログ。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\telnet.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\telnet.exe 127.0.0.1 [バインドされたローカルポート]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": "NTLMリレー成功後、telnetで対話用のShellへのアクセスした際のログ。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\telnet.exe",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\telnet.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "127.0.0.1",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "127.0.0.1",
+                    "DestPort": "[バインドされたローカルポート]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\telnet.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "127.0.0.1",
+                    "SourceHostname": "[NTLMリレーサーバーホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "127.0.0.1",
+                    "DestinationHostname": "[NTLMリレーサーバーホスト名]",
+                    "DestinationPort": "[バインドされたローカルポート]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[Python実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "127.0.0.1",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "127.0.0.1",
+                    "DestPort": "[バインドされたローカルポート]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[Python実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "127.0.0.1",
+                    "SourceHostname": "[NTLMリレーサーバーホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "127.0.0.1",
+                    "DestinationHostname": "[NTLMリレーサーバーホスト名]",
+                    "DestinationPort": "[バインドされたローカルポート]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[Python実行ファイル名]-[文字列].pf",
+                    "Process Name": "[Python実行ファイル名]",
+                    "Process Path": "[Python実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\[Python実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[Python実行ファイル名]-[文字列].pf",
+                    "Operation": ["DataExtend+FileCreate+Close"],
+                    "Note": "Archive|NotContentIndexed"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[NTLMリレーサーバーIPアドレス",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4776,
+                    "PackageName": "MICROSOFT_AUTHENTICATION_PACKAGE_V1_0",
+                    "TargetUserName": "[ユーザー名]",
+                    "Workstation": "[接続元ホスト名]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege, SeEnableDelegationPrivileg"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "LogonType": 3,
+                    "LogonProcessName": "NtLmSsp",
+                    "AuthenticationPackageName": "NTLM",
+                    "WorkstationName": "[接続元ホスト名]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "IpAddress": "[NTLMリレーサーバーIPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ImpersonationLevel": "偽装",
+                    "ElevatedToken": true,
+                    "Note": "本ログにおいては、接続元IPアドレスとしてはNTLMリレーサーバーのIPアドレスが記録されるが、ワークステーション名はNTLM認証を発生させた元のホスト名が記録される。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": "false",
+                    "SourceIp": "[NTLMリレーサーバーIPアドレス]",
+                    "SourceHostname": "[NTLMリレーサーバーホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "",
+                    "ObjectType": "File",
+                    "IpAddress": "[NTLMリレーサーバーIPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "ShareLocalPath": "-",
+                    "AccessList": "ReadDataまたはListDirectory"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[NTLMリレーサーバーIPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "RelativeTargetName": "srvsvc",
+                    "AccessList": "ReadData (または ListDirectory), WriteData (または AddFile)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[NTLMリレーサーバーIPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "RelativeTargetName": "srvsvc",
+                    "AccessList": "ReadData (または ListDirectory), WriteData (または AddFile)"
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Request, NTLMSSP_NEGOTIATE",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Request, NTLMSSP_NEGOTIATE",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Response, Error: STATUS_MORE_PROCESSING_REQUIRED, NTLMSSP_CHALLENGE",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Response, Error: STATUS_MORE_PROCESSING_REQUIRED, NTLMSSP_CHALLENGE",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Request, NTLMSSP_AUTH, User: [ドメイン\\ユーザー名]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Request, NTLMSSP_AUTH, User: [ドメイン\\ユーザー名]",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Response",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Response, Error: STATUS_BAD_NETWORK_NAME",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request Tree: \\\\[接続先IPアドレス]\\IPC$",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: srvsvc",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: srvsvc",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request Len:[Size] Off:0 File: srvsvc",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request Len:[Size] Off:0 File: srvsvc",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: srvsvc",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: srvsvc",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request Len:[Size] Off:0 File: srvsvc",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[NTLMリレーサーバーIPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request Len:[Size] Off:0 File: srvsvc",
+            "Source Host": "[NTLMリレーサーバーIPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        }
+    ],
+    "Note": [
+        "本ツールの動作確認においては、WindowsのLanmanServerの無効やツール側（ntlmrelayx.py）のオプション（--no-server）により、Windowsとツールが利用するポートの競合によるツールの実行エラーを回避している",
+        "本ツールの動作確認においては、SMBのNTLM Relayを発生させて確認している。SMB証明が有効である場合、SMBのNTLM Relayは失敗する",
+        "本ツールの動作確認においては、リレーされるNTLM認証自体は別端末で発生させている"
+    ]
+}

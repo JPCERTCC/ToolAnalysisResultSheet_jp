@@ -1,0 +1,1666 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <title>AzureHound</title>
+        <link rel="stylesheet" type="text/css" href="common/style.css" />
+        <script type="text/javascript" src="common/script.js"></script>
+    </head>
+    <body>
+        <h1 class="title">AzureHound</h1>
+            <h2 class="toc" id="toc"><a href="#toc" class="collapse" id="a-toc" onclick="showhide('toc');">-</a> 目次</h2>
+                <div class="section" id="div-ToC">
+                    <ul>
+                        <li><a href="#Summary">ツール概要</a></li>
+                        <li><a href="#ExecCondition">ツール動作概要</a></li>
+                        <li><a href="#Findings">ログから得られる情報</a></li>
+                        <li><a href="#SuccessCondition">実行成功時に確認できる痕跡</a></li>
+                        <li><a href="#KeyEvents">実行時に記録される主要な情報</a></li>
+                        <li><a href="#Details-Source">詳細情報: 接続元</a></li>
+                        <li><a href="#Packets">パケット</a></li>
+                    </ul>
+                    <p class="toc_command"><a href="#" onclick="collapseall('s');">全てのセクションを開く</a> | <a href="#" onclick="collapseall('h');">全てのセクションを閉じる</a></p>
+                    <hr class="section_divider" />
+                </div><!-- End of div-ToC -->
+            <h2 class="section" id="Summary"><a href="#Summary" class="collapse" id="a-Summary" onclick="showhide('Summary');">-</a> ツール概要</h2>
+                <div class="section" id="div-Summary">
+                    <dl class="table">
+                        <dt class="table">カテゴリ</dt>
+                            <dd class="table">情報収集</dd>
+                        <dt class="table">説明</dt>
+                            <dd class="table">BloodHoundで攻撃対象調査をする際にAzure用のデータコレクタとして使用される。オプションで指定するとJSONファイルが1つ生成される。SharpHoundと組み合わせてハイブリット構成の分析ができる。</dd>
+                        <dt class="table">攻撃時における想定利用例</dt>
+                            <dd class="table">Entra IDの情報を収集し、攻撃対象候補の調査を行う。侵害済みのアカウントからより高位のアカウントへの権限昇格経路を調査する。Entra ID設定に悪用可能な脆弱性が存在するか調査する。</dd>
+                    </dl>
+                </div><!-- End of div-Summary -->
+            <h2 class="section" id="ExecCondition"><a href="#ExecCondition" class="collapse" id="a-ExecCondition" onclick="showhide('ExecCondition');">-</a> ツール動作概要</h2>
+                <div class="section" id="div-ExecCondition">
+                    <h3 class="subsection" id="ExecCondition-Overview"><a href="#ExecCondition-Overview" class="collapse" id="a-ExecCondition-Overview" onclick="showhide('ExecCondition-Overview');">-</a> 概要</h3>
+                        <div class="section" id="div-ExecCondition-Overview">
+                            <table class="border">
+                                <thead>
+                                    <tr class="border">
+                                        <th class="border_header">項目</th>
+                                        <th class="border_header">接続元</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border">
+                                        <td class="border_header">通信プロトコル</td>
+                                        <td class="border"><ul>
+                                    <li>53/udp</li>
+                                    <li>80/tcp</li>
+                                    <li>443/tcp</li>
+                                        </ul></td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">権限</td>
+                                        <td class="border">標準ユーザー</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">ドメインへの所属</td>
+                                        <td class="border">要</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">サービス</td>
+                                        <td class="border">-</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">OS</td>
+                                        <td class="border">Windows</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">備考</td>
+                                        <td class="border">HTTPSによる443/tcpのため、環境によっては443/udpも発生し得る。</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div><!-- End of div-ExecCondition-Overview -->
+                    <h3 class="subsection" id="ExecCondition-Tested"><a href="#ExecCondition-Tested" class="collapse" id="a-ExecCondition-Tested" onclick="showhide('ExecCondition-Tested');">-</a> 動作確認環境</h3>
+                        <div class="section" id="div-ExecCondition-Tested">
+                            <table class="border">
+                                <thead>
+                                    <tr class="border">
+                                        <th class="border_header">環境</th>
+                                        <th class="border_header">動作可否</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border">
+                                        <td class="border_header">Windows 7 + Windows Server 2012</td>
+                                        <td class="border">未確認</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">Windows 10 + Windows Server 2012</td>
+                                        <td class="border">未確認</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">Windows 11 + Windows Server 2025</td>
+                                        <td class="border">動作する</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div><!-- end of div-ExecCondition-Tested -->
+                </div><!-- end of div-ExecCondition -->
+            <h2 class="section" id="Findings"><a href="#Findings" class="collapse" id="a-Findings" onclick="showhide('Findings');">-</a> ログから得られる情報</h2>
+                <div class="section" id="div-Findings">
+                    <dl class="table">
+                        <dt class="table">標準設定</dt>
+                            <dd class="table"><ul>
+                                <li>接続元<ul>
+                                    <li>Prefetch: 実行履歴</li>
+                                    </ul></li>
+                                        </ul></dd>
+                        <dt class="table">追加設定</dt>
+                            <dd class="table"><ul>
+                                <li>接続元<ul>
+                                    <li>監査ポリシー・Sysmon: BloodHoundにデータ投入するJSONファイルの作成が記録される。Azure関連の通信があったことが記録される</li>
+                                    <li>パケットキャプチャ: 次のドメインへのHTTP(S)通信が発生する：wdcp.microsoft.com, cp601.prod.do.dsp.mp.microsoft.com, login.microsoftonline.com, graph.microsoft.com, management.azure.com。また、Microsoft Azure宛の通信が記録される。</li>
+                                    </ul></li>
+                                        </ul></dd>
+                    </dl>
+                </div><!-- End of div-Findings -->
+            <h2 class="section" id="SuccessCondition"><a href="#SuccessCondition" class="collapse" id="a-SuccessCondition" onclick="showhide('SuccessCondition');">-</a> 実行成功時に確認できる痕跡</h2>
+                <div class="section" id="div-SuccessCondition">
+                    <ul>
+                        <li>接続元<ul>
+                            <li>Microsoft Azure、Microsoft Sign-in、Microsoft Graph APIの通信が記録されている</li>
+                            <li>BloodHoundに投入するJSONファイルが作成される（オプションで出力先をファイルにした場合。オプションで指定しない場合は標準出力される）</li>
+                                </ul></li>
+                    </ul>
+                </div><!-- End of div-SuccessCondition -->
+            <h2 class="section" id="KeyEvents"><a href="#KeyEvents" class="collapse" id="a-KeyEvents" onclick="showhide('KeyEvents');">-</a> 実行時に記録される主要な情報</h2>
+                <div class="section" id="div-KeyEvents">
+                    <h3 class="subsection" id="KeyEvents-Source"><a href="#KeyEvents-Source" class="collapse" id="a-KeyEvents-Source" onclick="showhide('KeyEvents-Source');">-</a> 接続元</h3>
+                        <div class="section" id="div-KeyEvents-Source">
+                            <h4>イベントログ</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ログ</th>
+                                            <th class="border_header">イベントID</th>
+                                            <th class="border_header">タスクのカテゴリ</th>
+                                            <th class="border_header">イベント内容</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Microsoft Azure]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 80</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Microsoft Sign-in]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Microsoft Graph API]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">4</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Azure Resource Manager Provider API]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">5</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4663</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトへのアクセスが試行されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト サーバー</span>: Security</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: File</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: [実行ファイルのフォルダパス]\[出力先ファイル名]</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベントID: 4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                </ul></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>MFT</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">パス</th>
+                                            <th class="border_header">ヘッダフラグ</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">.\Windows\Prefetch\[実行ファイル名]-[ハッシュ値].pf</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">ALLOCATE</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>USNジャーナル</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ファイル名</th>
+                                            <th class="border_header">処理</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">[実行ファイル名]-[ハッシュ値].pf</td>
+                                            <td class="border"><ul>
+                                                <li>CREATE</li>
+                                                <li>EXTEND</li>
+                                                <li>CLOSE</li>
+                                                    </ul></td>
+                                            <td class="border">ARCHIVE|NOINDEX</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                        </div><!-- End of div-KeyEvents-Source -->
+                </div><!-- End of div-KeyEvents -->
+            <h2 class="section" id="Details"><a href="#Details" class="collapse" id="a-Details" onclick="showhide('Details');">-</a> 詳細情報</h2>
+                <div class="section" id="div-Details">
+                    <h3 class="subsection" id="Details-Source"><a href="#Details-Source" class="collapse" id="a-Details-Source" onclick="showhide('Details-Source');">-</a> 接続元</h3>
+                        <div class="section" id="div-Details-Source">
+                            <h4>イベントログ</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ログ</th>
+                                            <th class="border_header">イベントID</th>
+                                            <th class="border_header">タスクのカテゴリ</th>
+                                            <th class="border_header">イベント内容</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4688</td>
+                                            <td class="border">Process Creation</td>
+                                            <td class="border">新しいプロセスが作成されました。
+                                                <ul>
+                                                    <li><span class="strong">作成元サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス ID</span>: [新しく実行されたプロセスのプロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセスのコマンド ライン</span>: &quot;[実行ファイルのパス]&quot; list -u [ユーザープリンシパル名 (UPN)] -p [ユーザーパスワード] -t [EntraID プライマリドメイン] -o [出力先ファイル名]</li>
+                                                    <li><span class="strong">プロセス情報 > 作成元プロセス ID</span>: [親プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: [実行ファイルのパス]</li>
+                                                </ul>
+                                            <p>Community版はパスワードを指定するが、Enterprise版は不要。</p></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">1</td>
+                                            <td class="border">Process Create</td>
+                                            <td class="border">Process Create
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">FileVersion・Description・Product・Company・OriginalFileName</span>: [実行ファイルのメタデータ]</li>
+                                                    <li><span class="strong">CommandLine</span>: [実行ファイルのパス]&quot; list -u [ユーザープリンシパル名 (UPN)] -p [ユーザーパスワード] -t [EntraID プライマリドメイン] -o [出力先ファイル名]</li>
+                                                    <li><span class="strong">CurrentDirectory</span>: [実行ファイルのフォルダパス]\</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">LogonId</span>: [ログオンID]</li>
+                                                    <li><span class="strong">Hashes</span>: [ファイルのハッシュ値]</li>
+                                                    <li><span class="strong">ParentProcessId</span>: [親プロセスID]</li>
+                                                    <li><span class="strong">ParentUser</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4673</td>
+                                            <td class="border">Sensitive Privilege Use</td>
+                                            <td class="border">特権のあるサービスが呼び出されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">サービス > サーバー</span>: Security</li>
+                                                    <li><span class="strong">サービス要求情報 > 特権</span>: SeProfileSingleProcessPrivilege</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">4</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">7</td>
+                                            <td class="border">Image loaded</td>
+                                            <td class="border">Image loaded.
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ImageLoaded</span>: [実行ファイルが読み込んだDLLファイルなど]</li>
+                                                    <li><span class="strong">FileVersion・Description・Product・Company・OriginalFileName</span>: [読み込んだファイルのメタデータ]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">5</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">12</td>
+                                            <td class="border">Registry object added or deleted</td>
+                                            <td class="border">Registry object added or deleted
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: CreateKey</li>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">TargetObject</span>: HKLM\System\CurrentControlSet\Services\Tcpip\Parameters</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul>
+                                            <p>複数回発生。</p></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">6</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">7</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Microsoft Sign-in]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">8</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">9</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Microsoft Graph API]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">10</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">7</td>
+                                            <td class="border">Image loaded</td>
+                                            <td class="border">Image loaded.
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ImageLoaded</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">FileVersion・Description・Product・Company・OriginalFileName</span>: [実行ファイルのメタデータ]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">11</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">12</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Azure Resource Manager Provider API]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">13</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: System</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">14</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Microsoft Sign-in]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">15</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4703</td>
+                                            <td class="border">Token Right Adjusted Events</td>
+                                            <td class="border">ユーザー権限が調整されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: S-1-5-18</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [接続元コンピューターアカウント名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">ターゲット アカウント > セキュリティ ID</span>: S-1-5-18</li>
+                                                    <li><span class="strong">ターゲット アカウント > アカウント名</span>: [接続元コンピューターアカウント名]</li>
+                                                    <li><span class="strong">ターゲット アカウント > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">ターゲット アカウント > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">有効にされた特権</span>: SeAssignPrimaryTokenPrivilege, SeIncreaseQuotaPrivilege, SeSecurityPrivilege, SeTakeOwnershipPrivilege, SeLoadDriverPrivilege, SeSystemtimePrivilege, SeBackupPrivilege, SeRestorePrivilege, SeShutdownPrivilege, SeSystemEnvironmentPrivilege, SeUndockPrivilege, SeManageVolumePrivilege</li>
+                                                </ul>
+                                            <p>複数回発生。</p></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">16</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">22</td>
+                                            <td class="border">Dns query</td>
+                                            <td class="border">Dns query
+                                                <ul>
+                                                    <li><span class="strong">QueryName</span>: login.microsoftonline.com</li>
+                                                    <li><span class="strong">QueryResults</span>: type: 5 login.mso.msidentity.com;type: 5 ak.privatelink.msidentity.com;type: 5 www.tm.a.prd.aadg.akadns.net;::ffff:[Microsoft Sign-in];::ffff:[IPアドレス];</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">17</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">18</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Microsoft Azure]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 80</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">19</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">Initiated</span>: true</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">DestinationIp</span>: [Microsoft Sign-in]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: -</li>
+                                                    <li><span class="strong">DestinationPort</span>: 443</li>
+                                                </ul>
+                                            <p>複数回発生。</p></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">20</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">Initiated</span>: true</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">DestinationIp</span>: [Azure Resource Manager Provider API]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: -</li>
+                                                    <li><span class="strong">DestinationPort</span>: 443</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">21</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">22</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">22</td>
+                                            <td class="border">Dns query</td>
+                                            <td class="border">Dns query
+                                                <ul>
+                                                    <li><span class="strong">QueryName</span>: graph.microsoft.com</li>
+                                                    <li><span class="strong">QueryResults</span>: type: 5 ags.privatelink.msidentity.com;type: 5 www.tm.prd.ags.trafficmanager.net;::ffff:[Microsoft Graph API];::ffff:[IPアドレス];</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">23</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">22</td>
+                                            <td class="border">Dns query</td>
+                                            <td class="border">Dns query
+                                                <ul>
+                                                    <li><span class="strong">QueryName</span>: management.azure.com</li>
+                                                    <li><span class="strong">QueryResults</span>: type: 5 management.privatelink.azure.com;type: 5 arm-frontdoor-edge-geo.trafficmanager.net;type: 5 edge-management-azure-com.arm-0001.arm-msedge.net;type: 5 arm-0001.arm-msedge.net;::ffff:[Azure Resource Manager Provider API];</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">24</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [直前のイベントID: 5158でバインドしたポート]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Microsoft Graph API]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">25</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">Initiated</span>: true</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">DestinationIp</span>: [Microsoft Graph API]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: -</li>
+                                                    <li><span class="strong">DestinationPort</span>: 443</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">26</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\Windows\System32\svchost.exe</li>
+                                                    <li><span class="strong">User</span>: NT AUTHORITY\NETWORK SERVICE</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">Initiated</span>: true</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">DestinationIp</span>: [Microsoft Azure]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: -</li>
+                                                    <li><span class="strong">DestinationPort</span>: 80</li>
+                                                </ul>
+                                            <p>複数回発生。</p></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">27</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">28</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Microsoft Sign-in]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">29</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">30</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Microsoft Sign-in]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">31</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">32</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Microsoft Sign-in]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">33</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4656</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが要求されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト サーバー</span>: Security</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: File</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: [実行ファイルのフォルダパス]\[出力先ファイル名]</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [ハンドルID]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">34</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">11</td>
+                                            <td class="border">File created</td>
+                                            <td class="border">File created
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">TargetFilename</span>: [実行ファイルのフォルダパス]\[出力先ファイル名]</li>
+                                                    <li><span class="strong">CreationUtcTime</span>: [ファイル作成日時（UTC）]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">35</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4663</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトへのアクセスが試行されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト サーバー</span>: Security</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: File</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: [実行ファイルのフォルダパス]\[出力先ファイル名]</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベントID: 4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">36</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">22</td>
+                                            <td class="border">Dns query</td>
+                                            <td class="border">Dns query
+                                                <ul>
+                                                    <li><span class="strong">QueryName</span>: login.microsoftonline.com</li>
+                                                    <li><span class="strong">QueryResults</span>: type: 5 login.mso.msidentity.com;type: 5 ak.privatelink.msidentity.com;type: 5 www.tm.a.prd.aadg.akadns.net;::ffff:[Microsoft Sign-in];::ffff:[IPアドレス];</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">37</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">Initiated</span>: true</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">DestinationIp</span>: [Microsoft Graph API]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: -</li>
+                                                    <li><span class="strong">DestinationPort</span>: 443</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">38</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">39</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Azure Resource Manager Provider API]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">40</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">41</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [Azure Resource Manager Provider API]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 443</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">42</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">22</td>
+                                            <td class="border">Dns query</td>
+                                            <td class="border">Dns query
+                                                <ul>
+                                                    <li><span class="strong">QueryName</span>: graph.microsoft.com</li>
+                                                    <li><span class="strong">QueryResults</span>: type: 5 ags.privatelink.msidentity.com;type: 5 www.tm.prd.ags.trafficmanager.net;::ffff:[Microsoft Graph API];::ffff:[IPアドレス];</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">43</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">Initiated</span>: true</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">DestinationIp</span>: [Microsoft Sign-in]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: -</li>
+                                                    <li><span class="strong">DestinationPort</span>: 443</li>
+                                                </ul>
+                                            <p>複数回発生。</p></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">44</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">22</td>
+                                            <td class="border">Dns query</td>
+                                            <td class="border">Dns query
+                                                <ul>
+                                                    <li><span class="strong">QueryName</span>: management.azure.com</li>
+                                                    <li><span class="strong">QueryResults</span>: type: 5 management.privatelink.azure.com;type: 5 arm-frontdoor-edge-geo.trafficmanager.net;type: 5 edge-management-azure-com.arm-0001.arm-msedge.net;type: 5 arm-0001.arm-msedge.net;::ffff:[Azure Resource Manager Provider API];</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">45</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4689</td>
+                                            <td class="border">Process Termination</td>
+                                            <td class="border">プロセスが終了しました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">プロセス情報 > 終了状態</span>: 0x0</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">46</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">5</td>
+                                            <td class="border">Process terminated</td>
+                                            <td class="border">Process terminated.
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">47</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">11</td>
+                                            <td class="border">File created</td>
+                                            <td class="border">File created
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時（UTC）]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\WINDOWS\system32\svchost.exe</li>
+                                                    <li><span class="strong">TargetFilename</span>: C:\Windows\Prefetch\[実行ファイル名]-[ハッシュ値].pf</li>
+                                                    <li><span class="strong">CreationUtcTime</span>: [ファイル作成日時（UTC）]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">48</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4656</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが要求されました。
+                                                <ul>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: C:\Windows\Prefetch\[実行ファイル名]-[ハッシュ値].pf</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベントID: 4690で複製したハンドル]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">49</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4663</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトへのアクセスが試行されました。
+                                                <ul>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: C:\Windows\Prefetch\[実行ファイル名]-[ハッシュ値].pf</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベントID: 4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">50</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4658</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが閉じました。
+                                                <ul>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベントID: 4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>Prefetch</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">Prefetchファイル</th>
+                                            <th class="border_header">プロセス名</th>
+                                            <th class="border_header">プロセスパス</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">[実行ファイル名]-[ハッシュ値].pf</td>
+                                            <td class="border">AZUREHOUND.EXE</td>
+                                            <td class="border">\VOLUME{[ボリュームID]}\[実行ファイル名]</td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>MFT</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">パス</th>
+                                            <th class="border_header">ヘッダフラグ</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">.[実行ファイルのパス]</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">ALLOCATE</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">.[実行ファイルのフォルダパス]\[出力先ファイル名]</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">ALLOCATE</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">.\Windows\Prefetch\[実行ファイル名]-[ハッシュ値].pf</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">ALLOCATE</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>USNジャーナル</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ファイル名</th>
+                                            <th class="border_header">処理</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">[実行ファイル名]</td>
+                                            <td class="border"><ul>
+                                                <li>CLOSE</li>
+                                                    </ul></td>
+                                            <td class="border">NORMAL</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">[出力先ファイル名]</td>
+                                            <td class="border"><ul>
+                                                <li>CREATE</li>
+                                                <li>EXTEND</li>
+                                                <li>CLOSE</li>
+                                                    </ul></td>
+                                            <td class="border">ARCHIVE</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">[実行ファイル名]-[ハッシュ値].pf</td>
+                                            <td class="border"><ul>
+                                                <li>CREATE</li>
+                                                <li>EXTEND</li>
+                                                <li>CLOSE</li>
+                                                    </ul></td>
+                                            <td class="border">ARCHIVE|NOINDEX</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                        </div><!-- End of div-Details-Source -->
+                </div><!-- End of div-Details -->
+            <h2 class="section" id="Packets"><a href="#Packets" class="collapse" id="a-Packets" onclick="showhide('Packets');">-</a> パケット</h2>
+                <div class="section" id="div-Packets">
+                        <table class="border">
+                            <thead>
+                                <tr class="border">
+                                    <th class="border_header">#</th>
+                                    <th class="border_header">オペレーション</th>
+                                    <th class="border_header">接続元ホスト</th>
+                                    <th class="border_header">接続元ポート番号</th>
+                                    <th class="border_header">接続先ホスト</th>
+                                    <th class="border_header">接続先ポート</th>
+                                    <th class="border_header">プロトコル</th>
+                                    <th class="border_header">アプリケーション</th>
+                                    <th class="border_header">備考</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border">
+                                    <td class="border_header">1</td>
+                                    <td class="border">Standard query 0xeaba A login.microsoftonline.com</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[DNSサーバー]</td>
+                                    <td class="border">53</td>
+                                    <td class="border">udp</td>
+                                    <td class="border">DNS</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">2</td>
+                                    <td class="border">Standard query response 0xeaba A login.microsoftonline.com CNAME login.mso.msidentity.com CNAME ak.privatelink.msidentity.com CNAME www.tm.a.prd.aadg.akadns.net A [Microsoft Account Sign-in] A [IPアドレス]</td>
+                                    <td class="border">[DNSサーバー]</td>
+                                    <td class="border">53</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">udp</td>
+                                    <td class="border">DNS</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">3</td>
+                                    <td class="border">Standard query 0xd06d A management.azure.com</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[DNSサーバー]</td>
+                                    <td class="border">53</td>
+                                    <td class="border">udp</td>
+                                    <td class="border">DNS</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">4</td>
+                                    <td class="border">Standard query response 0xd06d A management.azure.com CNAME management.privatelink.azure.com CNAME arm-frontdoor-edge-geo.trafficmanager.net CNAME edge-management-azure-com.arm-0001.arm-msedge.net CNAME arm-0001.arm-msedge.net A [Azure Resource Manager Provider API]</td>
+                                    <td class="border">[DNSサーバー]</td>
+                                    <td class="border">53</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">udp</td>
+                                    <td class="border">DNS</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">5</td>
+                                    <td class="border">Client Hello (SNI=login.microsoftonline.com)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">6</td>
+                                    <td class="border">Hello Retry Request, Change Cipher Spec</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">7</td>
+                                    <td class="border">Change Cipher Spec</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">8</td>
+                                    <td class="border">Client Hello (SNI=login.microsoftonline.com)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">9</td>
+                                    <td class="border">Server Hello</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">10</td>
+                                    <td class="border">Application Data</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">11</td>
+                                    <td class="border">Client Hello (SNI=graph.microsoft.com)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Graph API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">12</td>
+                                    <td class="border">Hello Retry Request, Change Cipher Spec</td>
+                                    <td class="border">[Microsoft Graph API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">13</td>
+                                    <td class="border">Change Cipher Spec</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Graph API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">14</td>
+                                    <td class="border">Client Hello (SNI=graph.microsoft.com)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Graph API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">15</td>
+                                    <td class="border">Server Hello, Application Data</td>
+                                    <td class="border">[Microsoft Graph API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">16</td>
+                                    <td class="border">Application Data</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Graph API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">17</td>
+                                    <td class="border">Application Data</td>
+                                    <td class="border">[Microsoft Graph API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">18</td>
+                                    <td class="border">Client Hello (SNI=login.microsoftonline.com)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">19</td>
+                                    <td class="border">Hello Retry Request, Change Cipher Spec</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">20</td>
+                                    <td class="border">Change Cipher Spec</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">21</td>
+                                    <td class="border">Client Hello (SNI=login.microsoftonline.com)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">22</td>
+                                    <td class="border">Hello Retry Request, Change Cipher Spec</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">23</td>
+                                    <td class="border">Change Cipher Spec</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">24</td>
+                                    <td class="border">Client Hello (SNI=login.microsoftonline.com)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">25</td>
+                                    <td class="border">Hello Retry Request, Change Cipher Spec</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">26</td>
+                                    <td class="border">Change Cipher Spec</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">27</td>
+                                    <td class="border">Client Hello (SNI=login.microsoftonline.com)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">28</td>
+                                    <td class="border">Server Hello</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">29</td>
+                                    <td class="border">Application Data</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">30</td>
+                                    <td class="border">Application Data</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">31</td>
+                                    <td class="border">Server Hello</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">32</td>
+                                    <td class="border">Application Data</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">33</td>
+                                    <td class="border">Application Data</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">34</td>
+                                    <td class="border">Application Data</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Microsoft Account Sign-in]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">35</td>
+                                    <td class="border">Client Hello (SNI=management.azure.com)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Azure Resource Manager Provider API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">36</td>
+                                    <td class="border">Hello Retry Request, Change Cipher Spec</td>
+                                    <td class="border">[Azure Resource Manager Provider API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">37</td>
+                                    <td class="border">Change Cipher Spec</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Azure Resource Manager Provider API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">38</td>
+                                    <td class="border">Server Hello</td>
+                                    <td class="border">[Azure Resource Manager Provider API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">39</td>
+                                    <td class="border">Application Data</td>
+                                    <td class="border">[Azure Resource Manager Provider API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">40</td>
+                                    <td class="border">Application Data</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[Azure Resource Manager Provider API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">41</td>
+                                    <td class="border">Application Data</td>
+                                    <td class="border">[Azure Resource Manager Provider API]</td>
+                                    <td class="border">443</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">TLSv1.3</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+    </body>
+</html>

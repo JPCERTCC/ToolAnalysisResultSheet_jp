@@ -1,0 +1,246 @@
+{
+    "Summary": {
+        "ToolName": "Out-Minidump (PowerSploit)",
+        "Category": "パスワード、ハッシュの入手",
+        "Description": "メモリ上のプロセスをダンプする。",
+        "Usage": "ユーザーのパスワードを取得し、不正ログインに使用する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "Admin"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴",
+                "PowerShellログ": "スクリプトの実行内容。「Microsoft-Windows-PowerShell/Operational」および「C:\\Users\\[ユーザー名]\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadline\\ConsoleHost_history.txt」に記録される"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴, プロセスメモリからの読み取りの記録",
+                "監査ポリシー・Sysmon・MFT・USNジャーナル": "lsassのダンプファイルの作成"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "lsassのダンプファイル(lsass_[lsassのプロセスID].dmp)が作成される。"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 4104,
+                    "ScriptBlockText": "[実行されたスクリプトの内容]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "Kernel Object",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "Process",
+                    "ObjectName": "\\Device\\HarddiskVolume[ボリューム番号]\\Windows\\System32\\lsass.exe",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "[PowerSploitのパス]\\lsass_[lsassのプロセスID].dmp",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[PowerSploitのパス]\\lsass_[lsassのプロセスID].dmp",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "lsass_[lsassのプロセスID].dmp",
+                    "Operation": [
+                        "DataOverwrite",
+                        "DataExtend",
+                        "FileCreate",
+                        "Close"
+                    ],
+                    "Note": "Archive"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 4104,
+                    "ScriptBlockText": "[実行されたスクリプトの内容]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "TargetFilename": "[PowerSploitのパス]\\lsass_[lsassのプロセスID].dmp",
+                    "CreationUtcTime": "[変更後のタイムスタンプ(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "Kernel Object",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "Process",
+                    "ObjectName": "\\Device\\HarddiskVolume[ボリューム番号]\\Windows\\System32\\lsass.exe",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, SYNCHRONIZE, プロセスの強制終了, プロセス内の新しいスレッドの作成, プロセス セッション ID の設定, 仮想メモリ操作の実行, プロセス メモリからの読み取り, プロセス メモリへの書き込み, プロセスとの間のハンドルの複製, プロセスのサブプロセスの作成, プロセス クォータの設定, プロセス情報の設定, プロセス情報の照会, プロセス終了ポートの設定, 未定義のアクセス (影響なし) ビット 12, 未定義のアクセス (影響なし) ビット 13",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "[PowerSploitのパス]\\lsass_[lsassのプロセスID].dmp",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Process",
+                    "ObjectName": "\\Device\\HarddiskVolume[ボリューム番号]\\Windows\\System32\\lsass.exe",
+                    "HandleId": "[イベント4656で取得されたProcessに対するハンドル]",
+                    "AccessList": "プロセス メモリからの読み取り",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "Kernel Object",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[イベント4656で取得されたProcessに対するハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "[PowerSploitのパス]\\lsass_[lsassのプロセスID].dmp",
+                    "HandleId": "[イベント4656で取得されたFileに対するハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[イベント4656で取得されたFileに対するハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Users\\[ユーザー名]\\Desktop\\PowerSploit\\PowerSploit\\lsass_[lsassのプロセスID].dmp",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "lsass_[lsassのプロセスID].dmp",
+                    "Operation": [
+                        "DataOverwrite",
+                        "DataExtend",
+                        "FileCreate",
+                        "Close"
+                    ],
+                    "Note": "Archive"
+                }
+            ]
+        }
+    }
+}

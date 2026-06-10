@@ -1,0 +1,986 @@
+{
+    "Summary": {
+        "ToolName": "Fake wpad",
+        "Category": "通信の不正中継",
+        "Description": "wpadサーバーとして動作し、クライアントからの通信内容を取得・変更する。",
+        "Usage": "クライアントから外部Webサイトへの通信を不正中継することでレスポンスを改変し、攻撃者のサイトに誘導する不正なURLを埋め込む。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "false"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": [
+                "80/tcp",
+                "8888/tcp"
+            ]
+        },
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "Admin",
+            "Protocol": [
+                "80/tcp",
+                "8888/tcp"
+            ],
+            "Note": "Windowsファイアウォールで受信を許可する変更が必要なため、管理者権限が必要"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "レジストリ": "最後に取得されたプロキシ設定（レジストリ）が記録される ※通常時からwpadを使用している場合は区別出来ない"
+            },
+            "Target": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "検体を実行しているホストに対して、80/tcp及び8888/tcpで通信していることが記録される",
+                "監査ポリシー": "wpad.datのキャッシュが作成されたことが記録される"
+            },
+            "Target": {
+                "監査ポリシー": "80/tcp及び8888/tcpをリッスンしたことが記録される。wpad.datや、プロキシのログであるproxy.logに対するハンドルの要求が記録される"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "本来プロキシやHTTPサーバーで無いはずのホストと、80/tcp及び8888/tcpによる通信を行っている。"
+        ],
+        "Target": [
+            "本来プロキシやHTTPサーバーで無いはずのホストが、80/tcp及び8888/tcpをリッスンしている。wpad.dat・proxy.logが作成されている。"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "Protocol": "udp",
+                    "SourceIp": "[送信元IPアドレス]",
+                    "SourceHostname": "[送信元ホスト名]",
+                    "SourcePort": "137",
+                    "DestinationIp": "[送信先IPアドレス]",
+                    "DestinationHostname": "[送信先ホスト名]",
+                    "DestinationPort": "137"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "[処理の種類]",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\{[GUID]} 配下にWPADの設定が保存される"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Windows\\Temporary Internet Files\\Content.IE5\\[文字列]\\wpad[1].htm",
+                    "ProcessName": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "AccessList": "WriteDataまたはAddFile"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "Protocol": "tcp",
+                    "SourceIp": "[送信元IPアドレス]",
+                    "SourceHostname": "[送信元ホスト名]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "DestinationIp": "[送信先IPアドレス]",
+                    "DestinationHostname": "[送信先ホスト名]",
+                    "DestinationPort": "8888"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Windows\\Temporary Internet Files\\Content.IE5\\[文字列]\\wpad[1].htm",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\WpadLastNetwork",
+                    "Value": "{[GUID]}"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad 配下",
+                    "Value": "(複数データ)"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "wpad[1].htm",
+                    "Operation": [
+                        "BASIC_INFO_CHANGE",
+                        "CLOSE",
+                        "DATA_EXTEND",
+                        "FILE_CREATE"
+                    ]
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時 (UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "CommandLine": "[実行コマンドのコマンドライン]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続先IPアドレス]",
+                    "SourcePort": "137",
+                    "DestAddress": "[ブロードキャストアドレス]",
+                    "DestPort": "137",
+                    "Protocol": "17 (UDP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "udp",
+                    "SourceIp": "[送信元IPアドレス]",
+                    "SourceHostname": "[送信元ホスト名]",
+                    "SourcePort": "137",
+                    "DestinationIp": "[送信先IPアドレス]",
+                    "DestinationHostname": "[送信先ホスト名]",
+                    "DestinationPort": "137"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "SourceIp": "[送信元IPアドレス]",
+                    "SourceHostname": "[送信元ホスト名]",
+                    "SourcePort": "80",
+                    "DestinationIp": "[送信先IPアドレス]",
+                    "DestinationHostname": "[送信先ホスト名]",
+                    "DestinationPort": "[送信先ポート番号]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "SourceIp": "[送信元IPアドレス]",
+                    "SourceHostname": "[送信元ホスト名]",
+                    "SourcePort": "8888",
+                    "DestinationIp": "[送信先IPアドレス]",
+                    "DestinationHostname": "[送信先ホスト名]",
+                    "DestinationPort": "[送信先ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "[実行ファイルのフォルダー]\\proxy.log",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "AccessList": "WriteData, AppendData"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\[実行ファイルのパス]\\proxy.log",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "proxy.log",
+                    "Operation": [
+                        "DataExtend",
+                        "Close"
+                    ]
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "udp",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "137",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "137"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[送信元IPアドレス]",
+                    "SourcePort": "137",
+                    "DestAddress": "[送信先IPアドレス]",
+                    "DestPort": "137",
+                    "Protocol": "17 (UDP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "CommandLine": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親プロセスの実行ファイル]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく作成されたプロセスID]",
+                    "NewProcessName": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "[処理の種類]",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\{[GUID]}"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\{[GUID}\\WpadDecisionReason",
+                    "Details": "DWORD:0x00000000"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\{[GUID]}\\WpadDecisionTime",
+                    "Details": "Binary Data"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\{[GUID]}\\WpadDecision",
+                    "Details": "DWORD:0x00000001"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\{[GUID]}\\WpadNetworkName",
+                    "Details": "ネットワーク"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\{[GUID]}\\[MACアドレス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\[MACアドレス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\[MACアドレス]\\WpadDecisionReason",
+                    "Details": "DWORD:0x00000000"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\[MACアドレス]\\WpadDecisionTime",
+                    "Details": "Binary Data"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\[MACアドレス]\\WpadDecision",
+                    "Details": "DWORD:0x00000001"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "80"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume2\\program files\\internet explorer\\iexplore.exe",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume2\\program files\\internet explorer\\iexplore.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "80",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Windows\\Temporary Internet Files\\Content.IE5\\[文字列]\\wpad[1].htm",
+                    "CreationUtcTime": "[ファイル作成日時 (UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Windows\\Temporary Internet Files\\Content.IE5\\[文字列]\\wpad[1].htm",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "AccessList": "WriteDataまたはAddFileを含む"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Windows\\Temporary Internet Files\\Content.IE5\\[文字列]\\wpad[1].htm",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[プロセス名] ハンドルを閉じたプロセス名 (C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "AccessList": "WriteDataまたはAddFile"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Program Files\\Internet Explorer\\iexplore.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Program Files\\Internet Explorer\\iexplore.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "8888"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume2\\program files\\internet explorer\\iexplore.exe",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume2\\program files\\internet explorer\\iexplore.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "8888",
+                    "Protocol": "6 (TCP)"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Users\\[ユーザー名]\\AppData\\Local\\Microsoft\\Windows\\Temporary Internet Files\\Content.IE5\\[文字列]\\wpad[1].htm",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\WpadLastNetwork",
+                    "Type": "String",
+                    "Value": "{[GUID]}"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\[MACアドレス]\\WpadDecisionReason",
+                    "Type": "DWORD",
+                    "Value": "0x00000000"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\[MACアドレス]\\WpadDecisionTime",
+                    "Type": "String",
+                    "Value": "([バイナリ値])"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\[MACアドレス]\\WpadDecision",
+                    "Type": "DWORD",
+                    "Value": "0x00000001"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\{[GUID]}\\[MACアドレス]",
+                    "Type": "Key",
+                    "Value": "(値の設定無し)"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\{[GUID]}\\WpadDecisionReason",
+                    "Type": "DWORD",
+                    "Value": "0x00000000"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\{[GUID]}\\WpadDecisionTime",
+                    "Type": "String",
+                    "Value": "([バイナリ値])"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\{[GUID]}\\WpadDecision",
+                    "Type": "DWORD",
+                    "Value": "0x00000001"
+                },
+                {
+                    "Path": "HKEY_USERS\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Wpad\\{[GUID]}\\WpadNetworkName",
+                    "Type": "String",
+                    "Value": "ネットワーク"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "wpad[1].htm",
+                    "Operation": [
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive|not_indexed"
+                },
+                {
+                    "File": "wpad[1].htm",
+                    "Operation": [
+                        "BASIC_INFO_CHANGE",
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive|not_indexed"
+                },
+                {
+                    "File": "wpad[1].htm",
+                    "Operation": [
+                        "BASIC_INFO_CHANGE",
+                        "DATA_EXTEND",
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive|not_indexed"
+                },
+                {
+                    "File": "wpad[1].htm",
+                    "Operation": [
+                        "BASIC_INFO_CHANGE",
+                        "CLOSE",
+                        "DATA_EXTEND",
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive|not_indexed"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "CommandLine": "[実行コマンドのコマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親プロセスの実行ファイル]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく作成されたプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[親プロセス名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続先IPアドレス]",
+                    "SourcePort": "137",
+                    "DestAddress": "ブロードキャストアドレス",
+                    "DestPort": "137",
+                    "Protocol": "17 (UDP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "ブロードキャストアドレス",
+                    "SourcePort": "137",
+                    "DestAddress": "[接続元IPアドレス]",
+                    "DestPort": "137",
+                    "Protocol": "17 (UDP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "udp",
+                    "SourceIp": "[接続先IPアドレス]",
+                    "SourceHostname": "[接続先ホスト名]",
+                    "SourcePort": "137",
+                    "DestinationIp": "[接続元IPアドレス]",
+                    "DestinationHostname": "[接続元ホスト名]",
+                    "DestinationPort": "137"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続先IPアドレス]",
+                    "SourcePort": "137",
+                    "DestAddress": "[接続元IPアドレス]",
+                    "DestPort": "137",
+                    "Protocol": "17 (UDP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "SourceIp": "[接続先IPアドレス]",
+                    "SourceHostname": "[接続先ホスト名]",
+                    "SourcePort": "80",
+                    "DestinationIp": "[接続元IPアドレス]",
+                    "DestinationHostname": "[接続元ホスト名]",
+                    "DestinationPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続先IPアドレス]",
+                    "SourcePort": "80",
+                    "DestAddress": "[接続元IPアドレス]",
+                    "DestPort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "ObjectName": "[wpad.datプロキシ設定ファイルのパス]",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "AccessList": "[要求された権限]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "Image": "[実行ファイルのパス]",
+                    "ProcessId": "[プロセスID]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\services\\Tcpip\\Parameters"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "80"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "実行ファイルのパス",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続先IPアドレス]",
+                    "SourcePort": "80",
+                    "DestAddress": "[接続元IPアドレス]",
+                    "DestPort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "SourceIp": "[接続先IPアドレス]",
+                    "SourceHostname": "[接続先ホスト名]",
+                    "SourcePort": "8888",
+                    "DestinationIp": "[接続元IPアドレス]",
+                    "DestinationHostname": "[接続元ホスト名]",
+                    "DestinationPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "実行ファイルのパス",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続先IPアドレス]",
+                    "SourcePort": "8888",
+                    "DestAddress": "[接続元IPアドレス]",
+                    "DestPort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "[実行ファイルのフォルダ]\\proxy.log",
+                    "CreationUtcTime": "[ファイル作成日時 (UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "ObjectName": "[実行ファイルのフォルダー]\\proxy.log",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "AccessList": "WriteDataまたはAddFile、AppendDataを含む"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "[対象の区分]",
+                    "ObjectName": "[実行ファイルのフォルダー]\\proxy.log",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "AccessList": "WriteData, AppendData"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザのSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時 (UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "AccessList": "WriteDataまたはAddFile、AppendDataを含む"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "AccessList": "WriteDataまたはAddFile, AppendData"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": "5",
+                    "UtcTime": "[終了日時 (UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                },
+                {
+                    "Path": "[ドライブ名]:\\[実行ファイルのパス]\\proxy.log",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]",
+                    "Note": "Last run(最終実行日時)"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": [
+                        "FILE_CREATE"
+                    ],
+                    "Note": [
+                        "archive|not_indexed"
+                    ]
+                },
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": [
+                        "DATA_EXTEND",
+                        "FILE_CREATE"
+                    ],
+                    "Note": [
+                        "archive|not_indexed"
+                    ]
+                },
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": [
+                        "CLOSE",
+                        "DATA_EXTEND",
+                        "FILE_CREATE"
+                    ],
+                    "Note": [
+                        "archive|not_indexed"
+                    ]
+                },
+                {
+                    "File": "proxy.log",
+                    "Operation": [
+                        "FILE_CREATE"
+                    ],
+                    "Note": [
+                        "archive"
+                    ]
+                },
+                {
+                    "File": "proxy.log",
+                    "Operation": [
+                        "DATA_EXTEND",
+                        "FILE_CREATE"
+                    ],
+                    "Note": [
+                        "archive"
+                    ]
+                },
+                {
+                    "File": "proxy.log",
+                    "Operation": [
+                        "CLOSE",
+                        "DATA_EXTEND",
+                        "FILE_CREATE"
+                    ],
+                    "Note": [
+                        "archive"
+                    ]
+                },
+                {
+                    "File": "proxy.log",
+                    "Operation": [
+                        "DATA_EXTEND"
+                    ],
+                    "Note": [
+                        "archive"
+                    ]
+                },
+                {
+                    "File": "proxy.log",
+                    "Operation": [
+                        "CLOSE",
+                        "DATA_EXTEND"
+                    ],
+                    "Note": [
+                        "archive"
+                    ]
+                }
+            ]
+        }
+    },
+    "Note": []
+}

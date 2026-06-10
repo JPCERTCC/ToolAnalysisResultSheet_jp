@@ -1,0 +1,924 @@
+{
+    "Summary": {
+        "ToolName": "Mimikatz (Golden Ticket)",
+        "Category": "管理者権限/アカウントの奪取",
+        "Description": "不正にKerberosの認証チケットを作成し、リモートホストに接続する。",
+        "Usage": "不正に作成した認証チケットを使用してリモートホストにログオンする。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": true,
+            "Privilege": "Admin",
+            "Protocol": ["88/tcp", "445/tcp"]
+        },
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": true,
+            "Privilege": "Admin",
+            "Protocol": ["88/tcp", "445/tcp"]
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴、チケット作成ログ（/ticketオプションを利用した場合）"
+            },
+            "Target": {
+                "監査ポリシー": "Kerberos認証を用いたログオン履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "チケット情報である.kirbi拡張子のファイルが作成されている"
+        ],
+        "Target": [
+            "「セキュリティ」ログのイベント4624・4769に、接続ユーザー名でログオンやKerberos サービス チケット要求が記録される。しかしながら、通常の認証とGolden Ticket攻撃を区別することは困難。一方で、Golden Ticket攻撃ではTGT発行に対応するイベント4768が記録されないため、前後のログ発生状況などからGolden Ticket攻撃が用いられたことを判断できる可能性はある"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "[実行ファイルのパス]",
+                    "ParentProcessName": "[親プロセスのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectName": "[カレントディレクトリ]\\[チケットのユーザー名].kirbi",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile)、AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "TargetUserName": "[チケットを要求したユーザー名]@[ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[ServiceのユーザーSID]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "NULL SID",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "LogonType": 3,
+                    "LogonProcessName": "Kerberos",
+                    "AuthenticationPackageName": "Kerberos",
+                    "WorkstationName": "-",
+                    "ProcessName": "-",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ImpersonationLevel": "委任",
+                    "ElevatedToken": true
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "[実行ファイルのパス]",
+                    "ParentProcessName": "[親プロセスのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentUser": "[親プロセスの実行ユーザー]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege, SeTcbPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL、SYNCHRONIZE、ReadData (または ListDirectory)、WriteData (または AddFile)、AppendData (または AddSubdirectory または CreatePipeInstance)、ReadEA、WriteEA、ReadAttributes、WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile)、AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectName": "[カレントディレクトリ]\\[チケットのユーザー名].kirbi",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL、SYNCHRONIZE、WriteData (または AddFile)、AppendData (または AddSubdirectory または CreatePipeInstance)、WriteEA、ReadAttributes、WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectName": "[カレントディレクトリ]\\[チケットのユーザー名].kirbi",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile)、AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "[カレントディレクトリ]\\[チケットのユーザー名].kirbi",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\cmd.exe",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "cmd.exe",
+                    "TargetUserSid": "S-1-0-0",
+                    "TargetUserName": "-",
+                    "TargetDomainName": "-",
+                    "TargetLogonId": "0x0",
+                    "ParentProcessName": "[実行ファイルのパス]",
+                    "Note": "Mimikatzからmisc::cmdコマンドを用いて起動したプロセス。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "cmd.exe",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[実行ファイルのパス]",
+                    "ParentUser": "[親プロセスの実行ユーザー]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "ImageLoaded": "[読み取ったイメージ]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "88",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "88"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[カレントディレクトリ]\\[チケットのユーザー名].kiribi",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": ["Close+DataExtend+FileCreate"],
+                    "Note": "Archive+NotContentIndexed"
+                },
+                {
+                    "File": "[チケットのユーザー名].kiribi",
+                    "Operation": ["Close+DataExtend+FileCreate"],
+                    "Note": "Archive"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "88",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "88"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 37,
+                    "Source": "Microsoft-Windows-Kerberos-Key-Distribution-Center",
+                    "ClientRealm": "[ドメイン名]",
+                    "ClientName": "[ユーザー名]",
+                    "ServerName": "krbtgt"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 35,
+                    "Source": "Microsoft-Windows-Kerberos-Key-Distribution-Center"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "TargetUserName": "[チケットを要求したユーザー名]@[ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "[コンピューターアカウント]",
+                    "ServiceSid": "[ServiceのユーザーSID]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "TargetUserName": "[チケットを要求したユーザー名]@[ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[ServiceのユーザーSID]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "PrivilegeList": "SeSecurityPrivilege、BackupPrivilege、RestorePrivilege、TakeOwnershipPrivilege、DebugPrivilege、SystemEnvironmentPrivilege、LoadDriverPrivilege、ImpersonatePrivilege、DelegateSessionUserImpersonatePrivilege、EnableDelegationPrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "NULL SID",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "",
+                    "LogonType": 3,
+                    "LogonProcessName": "Kerberos",
+                    "AuthenticationPackageName": "Kerberos",
+                    "WorkstationName": "-",
+                    "ProcessName": "-",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ImpersonationLevel": "委任",
+                    "ElevatedToken": true
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\C$",
+                    "ShareLocalPath": "\\??\\C:\\",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\C$",
+                    "ShareLocalPath": "\\??\\C:\\",
+                    "RelativeTargetName": "\\",
+                    "AccessList": "SYNCHRONIZE、ReadAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\C$",
+                    "ShareLocalPath": "\\??\\C:\\",
+                    "RelativeTargetName": "\\",
+                    "AccessList": "SYNCHRONIZE、ReadData (または ListDirectory)、ReadAttributes"
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "TGS-REQ",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "88",
+            "Protocol": "tcp",
+            "Application": "Kerberos5"
+        },
+        {
+            "Operation": "TGS-REP",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "88",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "Kerberos5"
+        },
+        {
+            "Operation": "TGS-REQ",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "88",
+            "Protocol": "tcp",
+            "Application": "Kerberos5"
+        },
+        {
+            "Operation": "TGS-REP",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "88",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "Kerberos5"
+        },
+        {
+            "Operation": "Session Setup Request",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Response",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request, Tree: \\\\[接続先ホスト]\\IPC$",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Response, Tree: \\\\[接続先ホスト]\\IPC$",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_DFS_GET_REFERRALS",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Response FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Response Error: STATUS_PENDING",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Response Error: STATUS_NOT_FOUND",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request, Tree: \\\\[接続先ホスト]\\C$",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Response, Tree: \\\\[接続先ホスト]\\C$",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: <share>",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: <share>",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FS_INFO/FileFsVolumeInformation, File: <share>; GetInfo Request FS_INFO/FileFsAttributeInformation, File: <share>",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response, File: <share>; GetInfo Response, File: <share>",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: <share>",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response, File: <share>",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: <share>",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: <share>",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Find Request, File: <share>, Pattern: *; Find Request, File: <share>, Pattern: *",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Find Response, File: <share>, Pattern: *, 0 matches; Find Response, Error: STATUS_NO_MORE_FILES, File: <share>, Pattern: *",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: <share>; GetInfo Request FS_INFO/FileFsFullSizeInformation",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: <share>; GetInfo Response",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: <share>",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response, File: <share>",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Disconnect Request, Tree: \\\\[接続先ホスト]\\IPC$",
+            "Source Host": "[接続元ホスト]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先ホスト]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Disconnect Response, Tree: \\\\[接続先ホスト]\\IPC$",
+            "Source Host": "[接続先ホスト]",
+            "Source Port": "445",
+            "Destination Host": "[接続元ホスト]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        }
+    ],
+    "Note": [
+        "hXXps://github[.]com/LDAx2012/mimikatz/tree/feature/windows-24h2-support からソースコードを取得し、ビルドしたもので検証（最終コミット：2025/10/16）。古いバージョンでは動作しない",
+        "Credential Guardが無効化された状態で検証。有効である場合は、Windows 11 24H2 + Windows Server 2025の環境では動作しない"
+    ]
+}

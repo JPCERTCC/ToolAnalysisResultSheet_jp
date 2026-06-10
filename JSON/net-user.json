@@ -1,0 +1,2479 @@
+{
+    "Summary": {
+        "ToolName": "net user",
+        "Category": "アカウント情報の取得",
+        "Description": "ホストまたはドメイン上の、アカウント情報を取得したり新規に作成したりする。",
+        "Usage": "アカウント情報を収集したり、アカウントを作成して利用したりする。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User/Admin",
+            "Protocol": [
+                "135/tcp",
+                "445/tcp",
+                "ハイポート/tcp"
+            ],
+            "Note": "ローカルで利用することも、ドメイン環境で利用することもできる。"
+        },
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User/Admin",
+            "Protocol": [
+                "135/tcp",
+                "445/tcp",
+                "ハイポート/tcp"
+            ],
+            "Note": "ローカルで利用することも、ドメイン環境で利用することもできる。"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴"
+            },
+            "Target": {
+                "監査ポリシー・Sysmon": "実行履歴",
+                "監査ポリシー": "アカウントの作成・削除履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Target": [
+            "イベント4720や4726など、アカウントの操作に関連するログが記録されている。"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "CommandLine": "net user [ユーザー名] [パスワード] /add /domain",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": "ドメイン上にユーザーアカウントを作成するもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\net.exe",
+                    "CommandLine": "net user [ユーザー名] [パスワード] /add /domain"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net1.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\net1 user [ユーザー名] [パスワード] /add /domain",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "ParentProcessId": "[net.exeのプロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\net.exe",
+                    "ParentCommandLine": "net user [ユーザー名] [パスワード] /add /domain",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\net1.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\net1 user [ユーザー名] [パスワード] /add /domain",
+                    "ProcessId": "[net.exeのプロセスID]",
+                    "ParentProcessName": "C:\\Windows\\System32\\net.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net1.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\net1.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "CommandLine": "net user [ユーザー名] /delete /domain",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": "ここからはドメイン上からユーザーを削除するもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\net.exe",
+                    "CommandLine": "net user [ユーザー名] /delete /domain",
+                    "Note": "ドメイン上からユーザーを削除するもの。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net1.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\net1 user [ユーザー名] /delete /domain",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "ParentProcessId": "[net.exeのプロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\net.exe",
+                    "ParentCommandLine": "net user [ユーザー名] /delete /domain",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\net1.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\net1 user [ユーザー名] /delete /domain",
+                    "ProcessId": "[プロセスID]",
+                    "ParentProcessName": "C:\\Windows\\System32\\net.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net1.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\net1.exe"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "NET.EXE-[ハッシュ値].pf",
+                    "Process Name": "NET.EXE",
+                    "Process Path": "\\VOLUME{[ボリュームGUID]}\\WINDOWS\\SYSTEM32\\NET.EXE"
+                },
+                {
+                    "File": "NET1.EXE-[ハッシュ値].pf",
+                    "Process Name": "NET1.EXE",
+                    "Process Path": "\\VOLUME{[ボリュームGUID]}\\WINDOWS\\SYSTEM32\\NET1.EXE"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\NET1.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "NET.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend|FileCreate"
+                    ]
+                },
+                {
+                    "File": "NET1.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend|FileCreate"
+                    ]
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445",
+                    "Note": "ドメイン上にユーザーアカウントを作成するもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "0x0",
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "LogonType": 3,
+                    "LogonProcessName": "Kerberos",
+                    "AuthenticationPackageName": "Kerberos",
+                    "ProcessName": "-",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4720,
+                    "TargetUserName": "[新規作成アカウントのユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetSid": "[新規作成アカウントのユーザーSID]",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SamAccountName": "[新規作成アカウントのユーザー名]",
+                    "DisplayName": "[新規作成アカウントの表示名]",
+                    "UserPrincipalName": "[新規作成アカウントのユーザー名]@[ドメイン名FQDN]",
+                    "SidHistory": "[SIDHistory]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445",
+                    "Note": "ここからはドメイン上からユーザーアカウントを削除するもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "0x0",
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "LogonType": 3,
+                    "LogonProcessName": "Kerberos",
+                    "AuthenticationPackageName": "Kerberos",
+                    "ProcessName": "-",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4661,
+                    "Category": "SAM",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security Account Manager",
+                    "ObjectType": "SAM_DOMAIN",
+                    "ObjectName": "[ドメイン]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, ReadPasswordParameters, ReadOtherParameters, WriteOtherParameters, CreateUser, CreateGlobalGroup, GetLocalGroupMembership, ListAccounts",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4726,
+                    "TargetUserName": "[削除アカウントのユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetSid": "[削除アカウントのユーザーSID]",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\net.exe",
+                    "CommandLine": "net user [ユーザー名] [パスワード] /add /domain",
+                    "Note": "ドメイン上にユーザーアカウントを作成するもの。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "CommandLine": "net user [ユーザー名] [パスワード] /add /domain",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "ImageLoaded": "[読み取ったDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルなどのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\net1.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\net1 user [ユーザー名] [パスワード] /add /domain",
+                    "ParentProcessId": "[プロセスID]",
+                    "ParentProcessName": "C:\\Windows\\System32\\net.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net1.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\net1 user [ユーザー名] [パスワード] /add /domain",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "ParentProcessId": "[net.exeのプロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\net.exe",
+                    "ParentCommandLine": "net user [ユーザー名] [パスワード] /add /domain",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net1.exe",
+                    "ImageLoaded": "[読み取ったDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルなどのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Application": "C:\\Windows\\System32\\lsass.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "88",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "88"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\net1.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net1.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\NET1.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData, (または, ListDirectory), WriteData, (または, AddFile), AppendData, (または, AddSubdirectory, または, CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\NET1.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\NET1.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\net.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData, (または, ListDirectory), WriteData, (または, AddFile), AppendData, (または, AddSubdirectory, または, CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\net.exe",
+                    "CommandLine": "net user [ユーザー名] /delete /domain",
+                    "Note": "ドメイン上からユーザーを削除するもの。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "CommandLine": "net user [ユーザー名] /delete /domain",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "ImageLoaded": "[読み取ったDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルなどのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\net1.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\net1 user [ユーザー名] /delete /domain",
+                    "ProcessId": "[プロセスID]",
+                    "ParentProcessName": "C:\\Windows\\System32\\net.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net1.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\net1 user [ユーザー名] /delete /domain",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "ParentProcessId": "[net.exeのプロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\net.exe",
+                    "ParentCommandLine": "net user [ユーザー名] /delete /domain",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net1.exe",
+                    "ImageLoaded": "[読み取ったDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルなどのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\net1.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net1.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\NET1.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData, (または, ListDirectory), WriteData, (または, AddFile), AppendData, (または, AddSubdirectory, または, CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\NET1.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\NET1.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\net.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData, (または, ListDirectory), WriteData, (または, AddFile), AppendData, (または, AddSubdirectory, または, CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "NET.EXE-[ハッシュ値].pf",
+                    "Process Name": "NET.EXE",
+                    "Process Path": "\\VOLUME{[ボリュームGUID]}\\WINDOWS\\SYSTEM32\\NET.EXE"
+                },
+                {
+                    "File": "NET1.EXE-[ハッシュ値].pf",
+                    "Process Name": "NET1.EXE",
+                    "Process Path": "\\VOLUME{[ボリュームGUID]}\\WINDOWS\\SYSTEM32\\NET1.EXE"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\NET1.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "NET.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend|FileCreate"
+                    ]
+                },
+                {
+                    "File": "NET1.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend|FileCreate"
+                    ]
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)",
+                    "Note": "ドメイン上にユーザーアカウントを作成するもの。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "88",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\lsass.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "88"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4769,
+                    "TargetUserName": "[ログオンユーザー名@ドメイン名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "ServiceName": "krbtgt",
+                    "ServiceSid": "[ログオンユーザーSID]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege, SeEnableDelegationPrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "0x0",
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "LogonType": 3,
+                    "LogonProcessName": "Kerberos",
+                    "AuthenticationPackageName": "Kerberos",
+                    "ProcessName": "-",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "ShareLocalPath": "",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "ShareLocalPath": "",
+                    "RelativeTargetName": "samr",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData, (または, ListDirectory), WriteData, (または, AddFile), AppendData, (または, AddSubdirectory, または, CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4661,
+                    "Category": "SAM",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security Account Manager",
+                    "ObjectType": "SAM_DOMAIN",
+                    "ObjectName": "[ドメイン]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, ReadPasswordParameters, ReadOtherParameters, WriteOtherParameters, CreateUser, CreateGlobalGroup, GetLocalGroupMembership, ListAccounts",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4661,
+                    "Category": "SAM",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security Account Manager",
+                    "ObjectType": "SAM_DOMAIN",
+                    "ObjectName": "[ドメイン]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "{bf967a90-0de6-11d0-a285-00aa003049e2}, ListAccounts, {280f369c-67c7-438e-ae98-1d46f3c6f541}",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4720,
+                    "TargetUserName": "[新規作成アカウントのユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetSid": "[新規作成アカウントのユーザーSID]",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SamAccountName": "[新規作成アカウントのユーザー名]",
+                    "DisplayName": "[新規作成アカウントの表示名]",
+                    "UserPrincipalName": "[新規作成アカウントのユーザー名]@[ドメイン名FQDN]",
+                    "SidHistory": "[SIDHistory]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4722,
+                    "TargetUserName": "[新規作成アカウントのユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetSid": "[新規作成アカウントのユーザーSID]",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4724,
+                    "TargetUserName": "[新規作成アカウントのユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetSid": "[新規作成アカウントのユーザーSID]",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4738,
+                    "TargetUserName": "[新規作成アカウントのユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetSid": "[新規作成アカウントのユーザーSID]",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "OldUacValue": "0x15",
+                    "NewUacValue": "0x10",
+                    "UserAccountControl": "アカウントは有効です, 'Password Not Required' - 無効"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege, SeEnableDelegationPrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetLogonId": "[イベント4624で記録されたログオンID]",
+                    "LogonType": 3
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)",
+                    "Note": "ここからはドメイン上からユーザーアカウントを削除するもの。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "4",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege, SeEnableDelegationPrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "0x0",
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "LogonType": 3,
+                    "LogonProcessName": "Kerberos",
+                    "AuthenticationPackageName": "Kerberos",
+                    "ProcessName": "-",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "ShareLocalPath": "",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "ShareLocalPath": "",
+                    "RelativeTargetName": "samr",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData, (または, ListDirectory), WriteData, (または, AddFile), AppendData, (または, AddSubdirectory, または, CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4661,
+                    "Category": "SAM",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectServer": "Security Account Manager",
+                    "ObjectType": "SAM_DOMAIN",
+                    "ObjectName": "[ドメイン]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, ReadPasswordParameters, ReadOtherParameters, WriteOtherParameters, CreateUser, CreateGlobalGroup, GetLocalGroupMembership, ListAccounts",
+                    "ProcessName": "C:\\Windows\\System32\\lsass.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4726,
+                    "TargetUserName": "[削除アカウントのユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetSid": "[削除アカウントのユーザーSID]",
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetLogonId": "[イベント4624で記録されたログオンID]",
+                    "LogonType": 3
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "TGS-REQ",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "88",
+            "Protocol": "tcp",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "TGS-REP",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "88",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "TGS-REQ",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "88",
+            "Protocol": "tcp",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "TGS-REP",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "88",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "KRB5"
+        },
+        {
+            "Operation": "Session Setup Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request Tree: \\\\[ドメインコントローラー]\\IPC$",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: samr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Response FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: samr",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FILE_INFO/SMB2_FILE_STANDARD_INFO File: samr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Bind: call_id: 2, Fragment: Single, 3 context items: SAMR V1.0 (32bit NDR), SAMR V1.0 (64bit NDR), SAMR V1.0 (6cb71c2c-9812-4540-0300-000000000000)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Write Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request Len:1024 Off:0 File: samr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Bind_ack: call_id: 2, Fragment: Single, max_xmit: 4280 max_recv: 4280, 3 results: Provider rejection, Acceptance, Negotiate ACK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Connect5 request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Connect5 response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "EnumDomains request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "EnumDomains response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "LookupDomain request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "LookupDomain response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenDomain request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenDomain response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "CreateUser2 request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Ioctl Response, Error: STATUS_PENDING",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "CreateUser2 response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "QueryUserInfo request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "QueryUserInfo response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "GetUserPwInfo request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "GetUserPwInfo response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "SetUserInfo2 request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Ioctl Response, Error: STATUS_PENDING",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetUserInfo2 response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close Request File: samr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Disconnect Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Disconnect Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Logoff Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Logoff Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request Tree: \\\\[ドメインコントローラー]\\IPC$",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: samr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Response FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: samr",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FILE_INFO/SMB2_FILE_STANDARD_INFO File: samr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Bind: call_id: 2, Fragment: Single, 3 context items: SAMR V1.0 (32bit NDR), SAMR V1.0 (64bit NDR), SAMR V1.0 (6cb71c2c-9812-4540-0300-000000000000)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Write Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request Len:1024 Off:0 File: samr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Bind_ack: call_id: 2, Fragment: Single, max_xmit: 4280 max_recv: 4280, 3 results: Provider rejection, Acceptance, Negotiate ACK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Connect5 request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Connect5 response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "EnumDomains request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "EnumDomains response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "LookupDomain request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "LookupDomain response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenDomain request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenDomain response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenDomain request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenDomain response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "LookupNames request[Long frame (74 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "LookupNames response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenUser request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenUser response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "QueryUserInfo request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "QueryUserInfo response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "QuerySecurity request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "QuerySecurity response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "GetGroupsForUser request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "GetGroupsForUser response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "GetAliasMembership request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "GetAliasMembership response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close Request File: samr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: samr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: samr",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FILE_INFO/SMB2_FILE_STANDARD_INFO File: samr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Bind: call_id: 2, Fragment: Single, 3 context items: SAMR V1.0 (32bit NDR), SAMR V1.0 (64bit NDR), SAMR V1.0 (6cb71c2c-9812-4540-0300-000000000000)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Write Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request Len:1024 Off:0 File: samr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Bind_ack: call_id: 2, Fragment: Single, max_xmit: 4280 max_recv: 4280, 3 results: Provider rejection, Acceptance, Negotiate ACK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Connect5 request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Connect5 response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "EnumDomains request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "EnumDomains response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "LookupDomain request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "LookupDomain response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenDomain request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenDomain response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenDomain request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenDomain response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "LookupNames request[Long frame (74 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "LookupNames response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenUser request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "OpenUser response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "RemoveMemberFromForeignDomain request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "RemoveMemberFromForeignDomain response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "DeleteUser request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Ioctl Response, Error: STATUS_PENDING",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "DeleteUser response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SAMR"
+        },
+        {
+            "Operation": "Close Request File: samr",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Disconnect Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Disconnect Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Logoff Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Logoff Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        }
+    ],
+    "Note": [
+        "ユーザーアカウントの追加及び削除を試行したもの。"
+    ]
+}

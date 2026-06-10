@@ -1,0 +1,1454 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <title>WinRS</title>
+        <link rel="stylesheet" type="text/css" href="common/style.css" />
+        <script type="text/javascript" src="common/script.js"></script>
+    </head>
+    <body>
+        <h1 class="title">WinRS</h1>
+            <h2 class="toc" id="toc"><a href="#toc" class="collapse" id="a-toc" onclick="showhide('toc');">-</a> 目次</h2>
+                <div class="section" id="div-ToC">
+                    <ul>
+                        <li><a href="#Summary">ツール概要</a></li>
+                        <li><a href="#ExecCondition">ツール動作概要</a></li>
+                        <li><a href="#Findings">ログから得られる情報</a></li>
+                        <li><a href="#SuccessCondition">実行成功時に確認できる痕跡</a></li>
+                        <li><a href="#KeyEvents">実行時に記録される主要な情報</a></li>
+                        <li><a href="#Details-Source">詳細情報: 接続元</a></li>
+                        <li><a href="#Details-Target">詳細情報: 接続先</a></li>
+                        <li><a href="#Packets">パケット</a></li>
+                    </ul>
+                    <p class="toc_command"><a href="#" onclick="collapseall('s');">全てのセクションを開く</a> | <a href="#" onclick="collapseall('h');">全てのセクションを閉じる</a></p>
+                    <hr class="section_divider" />
+                </div><!-- End of div-ToC -->
+            <h2 class="section" id="Summary"><a href="#Summary" class="collapse" id="a-Summary" onclick="showhide('Summary');">-</a> ツール概要</h2>
+                <div class="section" id="div-Summary">
+                    <dl class="table">
+                        <dt class="table">カテゴリ</dt>
+                            <dd class="table">コマンド実行</dd>
+                        <dt class="table">説明</dt>
+                            <dd class="table">リモートホスト上でコマンドを実行する。</dd>
+                        <dt class="table">攻撃時における想定利用例</dt>
+                            <dd class="table">BITSなどによりツールを送り込み、WinRSを用いてツールをリモートから実行する。</dd>
+                    </dl>
+                </div><!-- End of div-Summary -->
+            <h2 class="section" id="ExecCondition"><a href="#ExecCondition" class="collapse" id="a-ExecCondition" onclick="showhide('ExecCondition');">-</a> ツール動作概要</h2>
+                <div class="section" id="div-ExecCondition">
+                    <h3 class="subsection" id="ExecCondition-Overview"><a href="#ExecCondition-Overview" class="collapse" id="a-ExecCondition-Overview" onclick="showhide('ExecCondition-Overview');">-</a> 概要</h3>
+                        <div class="section" id="div-ExecCondition-Overview">
+                            <table class="border">
+                                <thead>
+                                    <tr class="border">
+                                        <th class="border_header">項目</th>
+                                        <th class="border_header">接続元</th>
+                                        <th class="border_header">接続先</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border">
+                                        <td class="border_header">通信プロトコル</td>
+                                        <td class="border">-</td>
+                                        <td class="border"><ul>
+                                    <li>5985/tcp</li>
+                                        </ul></td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">権限</td>
+                                        <td class="border">Admin</td>
+                                        <td class="border">Admin</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">ドメインへの所属</td>
+                                        <td class="border">不要</td>
+                                        <td class="border">不要</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">サービス</td>
+                                        <td class="border">-</td>
+                                        <td class="border">Windows remote Management (WS-Management)</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">OS</td>
+                                        <td class="border">Windows</td>
+                                        <td class="border">Windows</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">備考</td>
+                                        <td class="border">-</td>
+                                        <td class="border">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div><!-- End of div-ExecCondition-Overview -->
+                    <h3 class="subsection" id="ExecCondition-Tested"><a href="#ExecCondition-Tested" class="collapse" id="a-ExecCondition-Tested" onclick="showhide('ExecCondition-Tested');">-</a> 動作確認環境</h3>
+                        <div class="section" id="div-ExecCondition-Tested">
+                            <table class="border">
+                                <thead>
+                                    <tr class="border">
+                                        <th class="border_header">環境</th>
+                                        <th class="border_header">動作可否</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border">
+                                        <td class="border_header">Windows 7 + Windows Server 2012</td>
+                                        <td class="border">動作する</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">Windows 10 + Windows Server 2012</td>
+                                        <td class="border">動作する</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">Windows 11 + Windows Server 2025</td>
+                                        <td class="border">動作する</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div><!-- end of div-ExecCondition-Tested -->
+                </div><!-- end of div-ExecCondition -->
+            <h2 class="section" id="Findings"><a href="#Findings" class="collapse" id="a-Findings" onclick="showhide('Findings');">-</a> ログから得られる情報</h2>
+                <div class="section" id="div-Findings">
+                    <dl class="table">
+                        <dt class="table">標準設定</dt>
+                            <dd class="table"><ul>
+                                <li>接続元<ul>
+                                    <li>Prefetch: 実行履歴</li>
+                                    <li>Microsoft-Windows-WinRM/Operational: 実行履歴</li>
+                                    </ul></li>
+                                <li>接続先<ul>
+                                    <li>Prefetch: 実行履歴</li>
+                                    <li>Microsoft-Windows-WinRM/Operational: 実行履歴</li>
+                                    </ul></li>
+                                        </ul></dd>
+                        <dt class="table">追加設定</dt>
+                            <dd class="table"><ul>
+                                <li>接続元<ul>
+                                    <li>監査ポリシー・Sysmon: 実行履歴、5985/tcpによる通信</li>
+                                    </ul></li>
+                                <li>接続先<ul>
+                                    <li>監査ポリシー・Sysmon: 実行履歴、5985/tcpによる通信</li>
+                                    </ul></li>
+                                        </ul></dd>
+                    </dl>
+                </div><!-- End of div-Findings -->
+            <h2 class="section" id="SuccessCondition"><a href="#SuccessCondition" class="collapse" id="a-SuccessCondition" onclick="showhide('SuccessCondition');">-</a> 実行成功時に確認できる痕跡</h2>
+                <div class="section" id="div-SuccessCondition">
+                    <ul>
+                        <li>接続元<ul>
+                            <li>Microsoft-Windows-WinRM/Operationalログにおいて、イベント6・31が記録されており、セッションが確立している。</li>
+                                </ul></li>
+                        <li>接続先<ul>
+                            <li>winrshost.exeを親プロセスとする実行ファイルが実行されている。</li>
+                                </ul></li>
+                    </ul>
+                </div><!-- End of div-SuccessCondition -->
+            <h2 class="section" id="KeyEvents"><a href="#KeyEvents" class="collapse" id="a-KeyEvents" onclick="showhide('KeyEvents');">-</a> 実行時に記録される主要な情報</h2>
+                <div class="section" id="div-KeyEvents">
+                    <h3 class="subsection" id="KeyEvents-Source"><a href="#KeyEvents-Source" class="collapse" id="a-KeyEvents-Source" onclick="showhide('KeyEvents-Source');">-</a> 接続元</h3>
+                        <div class="section" id="div-KeyEvents-Source">
+                            <h4>イベントログ</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ログ</th>
+                                            <th class="border_header">イベントID</th>
+                                            <th class="border_header">タスクのカテゴリ</th>
+                                            <th class="border_header">イベント内容</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4688</td>
+                                            <td class="border">Process Creation</td>
+                                            <td class="border">新しいプロセスが作成されました。
+                                                <ul>
+                                                    <li><span class="strong">作成元サブジェクト > セキュリティ ID</span>: [実行ユーザーSID]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント名</span>: [実行ユーザー名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: C:\Windows\System32\winrs.exe</li>
+                                                    <li><span class="strong">プロセス情報 > プロセスのコマンド ライン</span>: winrs -r:[接続先ホスト] [実行コマンド]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">6</td>
+                                            <td class="border">WSMan Session Initialize</td>
+                                            <td class="border">WSMan セッションを作成しています。 接続文字列は [接続先ホスト] です</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">31</td>
+                                            <td class="border">WSMan Session initialize</td>
+                                            <td class="border">WSMan セッションの作成操作が正常に完了しました</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">4</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: \device\harddiskvolume[ボリューム番号]\windows\system32\winrs.exe</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [直前のイベント5158でバインドしたポート]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 5985</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">5</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">13</td>
+                                            <td class="border">WSMan API call</td>
+                                            <td class="border">CommandId Unspecified の WSMan コマンドを実行しています</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>Prefetch</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">Prefetchファイル</th>
+                                            <th class="border_header">プロセス名</th>
+                                            <th class="border_header">プロセスパス</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">C:\Windows\Prefetch\WINRS.EXE-[ハッシュ値].pf</td>
+                                            <td class="border">WINRS.EXE</td>
+                                            <td class="border">C:\WINDOWS\SYSTEM#@\WINRSHOST.EXE</td>
+                                            <td class="border"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>MFT</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">パス</th>
+                                            <th class="border_header">ヘッダフラグ</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">C:\Windows\Prefetch\WINRS.EXE-[ハッシュ値].pf</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">ALLOCATED</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>USNジャーナル</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ファイル名</th>
+                                            <th class="border_header">処理</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">WINRS.EXE-[ハッシュ値].pf</td>
+                                            <td class="border"><ul>
+                                                <li>DataExtend|FileCreate|Close</li>
+                                                    </ul></td>
+                                            <td class="border"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                        </div><!-- End of div-KeyEvents-Source -->
+                    <h3 class="subsection" id="KeyEvents-Target"><a href="#KeyEvents-Target" class="collapse" id="a-KeyEvents-Target" onclick="showhide('KeyEvents-Target');">-</a> 接続先</h3>
+                        <div class="section" id="div-KeyEvents-Target">
+                            <h4>イベントログ</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ログ</th>
+                                            <th class="border_header">イベントID</th>
+                                            <th class="border_header">タスクのカテゴリ</th>
+                                            <th class="border_header">イベント内容</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: 4</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: System</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 着信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 5985</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">91</td>
+                                            <td class="border">Request handling</td>
+                                            <td class="border">ResourceUri http://schemas.microsoft.com/wbem/wsman/1/windows/shell/cmd ([ドメイン名]\[ログオンユーザー名] clientIP: [接続元IPアドレス]) を使用してサーバーで WSMan シェルを作成しています</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4688</td>
+                                            <td class="border">Process Creation</td>
+                                            <td class="border">新しいプロセスが作成されました。
+                                                <ul>
+                                                    <li><span class="strong">作成元サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス ID</span>: [新しく実行されたプロセスのプロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">プロセス情報 > 作成元プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセスのコマンド ライン</span>: [実行ファイルのパス] [コマンドライン]</li>
+                                                    <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: C:\Windows\System32\winrshost.exe</li>
+                                                </ul>
+                                            <p>winrshost.exeより、指定された実行ファイルが呼び出される。実行ファイルのパスや、この後の動作はWinRSに指定されたコマンドラインにより異なる。</p></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>Prefetch</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">Prefetchファイル</th>
+                                            <th class="border_header">プロセス名</th>
+                                            <th class="border_header">プロセスパス</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">C:\Windows\Prefetch\WINRSHOST.EXE-[ハッシュ値].pf</td>
+                                            <td class="border">WINRSHOST.EXE</td>
+                                            <td class="border">C:\WINDOWS\SYSTEM32\WINRSHOST.EXE</td>
+                                            <td class="border"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>MFT</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">パス</th>
+                                            <th class="border_header">ヘッダフラグ</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">C:\Windows\Prefetch\WINRSHOST.EXE-[ハッシュ値].pf</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">ALLOCATED</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>USNジャーナル</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ファイル名</th>
+                                            <th class="border_header">処理</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">WINRSHOST.EXE-[ハッシュ値].pf</td>
+                                            <td class="border"><ul>
+                                                <li>DataExtend|FileCreate|Close</li>
+                                                    </ul></td>
+                                            <td class="border"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                        </div><!-- End of div-KeyEvents-Target -->
+                </div><!-- End of div-KeyEvents -->
+            <h2 class="section" id="Details"><a href="#Details" class="collapse" id="a-Details" onclick="showhide('Details');">-</a> 詳細情報</h2>
+                <div class="section" id="div-Details">
+                    <h3 class="subsection" id="Details-Source"><a href="#Details-Source" class="collapse" id="a-Details-Source" onclick="showhide('Details-Source');">-</a> 接続元</h3>
+                        <div class="section" id="div-Details-Source">
+                            <h4>イベントログ</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ログ</th>
+                                            <th class="border_header">イベントID</th>
+                                            <th class="border_header">タスクのカテゴリ</th>
+                                            <th class="border_header">イベント内容</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4688</td>
+                                            <td class="border">Process Creation</td>
+                                            <td class="border">新しいプロセスが作成されました。
+                                                <ul>
+                                                    <li><span class="strong">作成元サブジェクト > セキュリティ ID</span>: [実行ユーザーSID]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント名</span>: [実行ユーザー名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: C:\Windows\System32\winrs.exe</li>
+                                                    <li><span class="strong">プロセス情報 > プロセスのコマンド ライン</span>: winrs -r:[接続先ホスト] [実行コマンド]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">1</td>
+                                            <td class="border">Process Create</td>
+                                            <td class="border">Process Create
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\Windows\System32\winrs.exe</li>
+                                                    <li><span class="strong">FileVersion・Description・Product・Company・OriginalFileName</span>: [実行ファイルのメタデータ]</li>
+                                                    <li><span class="strong">CommandLine</span>: winrs -r:[接続先ホスト] [実行コマンド]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">7</td>
+                                            <td class="border">Image loaded</td>
+                                            <td class="border">Image loaded.
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ImageLoaded</span>: [読み取ったDLLファイルなど]</li>
+                                                    <li><span class="strong">FileVersion・Description・Product・Company・OriginalFileName</span>: [DLLファイルなどのメタデータ]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">4</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">18</td>
+                                            <td class="border">Pipe Connected</td>
+                                            <td class="border">Pipe Connected
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">PipeName</span>: \lsass</li>
+                                                    <li><span class="strong">Image</span>: C:\WINDOWS\system32\winrs.exe</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">5</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">18</td>
+                                            <td class="border">Pipe Connected</td>
+                                            <td class="border">Pipe Connected
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">PipeName</span>: \wkssvc</li>
+                                                    <li><span class="strong">Image</span>: C:\WINDOWS\system32\winrs.exe</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">6</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">2</td>
+                                            <td class="border">WSMan API Initialize</td>
+                                            <td class="border">WSMan API の初期化解除が正常に完了しました</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">7</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">29</td>
+                                            <td class="border">WSMan API Initialize</td>
+                                            <td class="border">WSMan API の初期化が正常に完了しました</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">8</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">6</td>
+                                            <td class="border">WSMan Session Initialize</td>
+                                            <td class="border">WSMan セッションを作成しています。 接続文字列は [接続先ホスト] です</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">9</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">31</td>
+                                            <td class="border">WSMan Session initialize</td>
+                                            <td class="border">WSMan セッションの作成操作が正常に完了しました</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">10</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">11</td>
+                                            <td class="border">WSMan API call</td>
+                                            <td class="border">WSMan シェルをリソース URI http://schemas.microsoft.com/wbem/wsman/1/windows/shell/cmd および ShellId Unspecified で作成しています</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">11</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">12</td>
+                                            <td class="border">Registry object added or deleted</td>
+                                            <td class="border">Registry object added or deleted
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: CreateKey</li>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\WINDOWS\system32\winrs.exe</li>
+                                                    <li><span class="strong">TargetObject</span>: HKLM\System\CurrentControlSet\Services\Tcpip\Parameters</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">12</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: \device\harddiskvolume[ボリューム番号]\windows\system32\winrs.exe</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [送信元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">13</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: \device\harddiskvolume[ボリューム番号]\windows\system32\winrs.exe</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [直前のイベント5158でバインドしたポート]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 5985</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">14</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\WINDOWS\system32\winrs.exe</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">Initiated</span>: True</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">DestinationIp</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [接続先ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: 5985</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">15</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">13</td>
+                                            <td class="border">WSMan API call</td>
+                                            <td class="border">CommandId Unspecified の WSMan コマンドを実行しています</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">16</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">15</td>
+                                            <td class="border">WSMan API call</td>
+                                            <td class="border">WSMan コマンドを閉じています</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">17</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">16</td>
+                                            <td class="border">WSMan API call</td>
+                                            <td class="border">WSMan シェルを閉じています</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">18</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">8</td>
+                                            <td class="border">WSMan Session deinitialize</td>
+                                            <td class="border">WSMan セッションを閉じています</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">19</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">33</td>
+                                            <td class="border">WSMan Session deinitialize</td>
+                                            <td class="border">WSMan セッションを閉じる操作が正常に完了しました</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">20</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">4</td>
+                                            <td class="border">WSMan API Deinitialize</td>
+                                            <td class="border">WSMan API を初期化解除しています</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">21</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">30</td>
+                                            <td class="border">WSMan API Deinitialize</td>
+                                            <td class="border">WSMan API の初期化解除が正常に完了しました</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">22</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4689</td>
+                                            <td class="border">Process Termination</td>
+                                            <td class="border">プロセスが終了しました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [実行ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [実行ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">プロセス情報 > 終了状態</span>: 0x0</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\winrs.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">23</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">5</td>
+                                            <td class="border">Process terminated</td>
+                                            <td class="border">Process terminated.
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\Windows\System32\winrs.exe</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">24</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4656</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが要求されました。
+                                                <ul>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: C:\Windows\Prefetch\WINRS.EXE-[ハッシュ値].pf</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [ハンドルID]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">25</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4663</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトへのアクセスが試行されました。
+                                                <ul>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: C:\Windows\Prefetch\WINRS.EXE-[ハッシュ値].pf</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベント4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">26</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4658</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが閉じました。
+                                                <ul>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベント4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">27</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">11</td>
+                                            <td class="border">File created</td>
+                                            <td class="border">File created
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\WINDOWS\system32\svchost.exe</li>
+                                                    <li><span class="strong">TargetFilename</span>: C:\Windows\Prefetch\WINRS.EXE-[文字列].pf</li>
+                                                    <li><span class="strong">CreationUtcTime</span>: [ファイル作成日時(UTC)]</li>
+                                                </ul></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>Prefetch</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">Prefetchファイル</th>
+                                            <th class="border_header">プロセス名</th>
+                                            <th class="border_header">プロセスパス</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">C:\Windows\Prefetch\WINRS.EXE-[ハッシュ値].pf</td>
+                                            <td class="border">WINRS.EXE</td>
+                                            <td class="border">C:\WINDOWS\SYSTEM#@\WINRSHOST.EXE</td>
+                                            <td class="border"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>MFT</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">パス</th>
+                                            <th class="border_header">ヘッダフラグ</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">C:\Windows\Prefetch\WINRS.EXE-[ハッシュ値].pf</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">ALLOCATED</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>USNジャーナル</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ファイル名</th>
+                                            <th class="border_header">処理</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">WINRS.EXE-[ハッシュ値].pf</td>
+                                            <td class="border"><ul>
+                                                <li>DataExtend|FileCreate|Close</li>
+                                                    </ul></td>
+                                            <td class="border"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                        </div><!-- End of div-Details-Source -->
+                    <h3 class="subsection" id="Details-Target"><a href="#Details-Target" class="collapse" id="a-Details-Target" onclick="showhide('Details-Target');">-</a> 接続先</h3>
+                        <div class="section" id="div-Details-Target">
+                            <h4>イベントログ</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ログ</th>
+                                            <th class="border_header">イベントID</th>
+                                            <th class="border_header">タスクのカテゴリ</th>
+                                            <th class="border_header">イベント内容</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: 4</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: System</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 着信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 5985</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: System</li>
+                                                    <li><span class="strong">User</span>: NT AUTHORITY\SYSTEM</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">Initiated</span>: False</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">DestinationIp</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [接続先ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: 5985</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4672</td>
+                                            <td class="border">Special Logon</td>
+                                            <td class="border">新しいログオンに特権が割り当てられました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">特権</span>: SeSecurityPrivilege-, SeBackupPrivilege-, SeRestorePrivilege-, SeTakeOwnershipPrivilege-, SeDebugPrivilege-, SeSystemEnvironmentPrivilege-, SeLoadDriverPrivilege-, SeImpersonatePrivilege-, SeDelegateSessionUserImpersonatePrivilege</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">4</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4624</td>
+                                            <td class="border">Logon</td>
+                                            <td class="border">アカウントが正常にログオンしました。
+                                                <ul>
+                                                    <li><span class="strong">新しいログオン > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">新しいログオン > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">新しいログオン > アカウント名</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">新しいログオン > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">ログオン情報 > ログオン タイプ</span>: 3</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソースワークステーション名</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: -</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ネットワーク アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">5</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4656</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが要求されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト サーバー</span>: WS-ManagementListener</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: Unknown</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: Unknown</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [ハンドルID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">6</td>
+                                            <td class="border">Microsoft-Windows-WinRM/Operational</td>
+                                            <td class="border">91</td>
+                                            <td class="border">Request handling</td>
+                                            <td class="border">ResourceUri http://schemas.microsoft.com/wbem/wsman/1/windows/shell/cmd ([ドメイン名]\[ログオンユーザー名] clientIP: [接続元IPアドレス]) を使用してサーバーで WSMan シェルを作成しています</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">7</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4688</td>
+                                            <td class="border">Process Creation</td>
+                                            <td class="border">新しいプロセスが作成されました。
+                                                <ul>
+                                                    <li><span class="strong">作成元サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス ID</span>: [新しく実行されたプロセスのプロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: C:\Windows\System32\winrshost.exe</li>
+                                                    <li><span class="strong">プロセス情報 > プロセスのコマンド ライン</span>: C:\WINDOWS\system32\WinrsHost.exe -Embedding</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">8</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">1</td>
+                                            <td class="border">Process Create</td>
+                                            <td class="border">Process Create
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\Windows\System32\winrshost.exe</li>
+                                                    <li><span class="strong">CommandLine</span>: C:\WINDOWS\system32\WinrsHost.exe -Embedding</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ログオンユーザー名]</li>
+                                                    <li><span class="strong">LogonId</span>: [ログオンID]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">9</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4674</td>
+                                            <td class="border">Sensitive Privilege Use</td>
+                                            <td class="border">特権のあるオブジェクトで操作が試行されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト サーバー</span>: Security</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: Mutant</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: \BaseNamedObjects\[文字列]</li>
+                                                    <li><span class="strong">要求された操作 > 特権</span>: DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, SYNCHRONIZE, ミュータント状態の照会</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\winrshost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">10</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4674</td>
+                                            <td class="border">Sensitive Privilege Use</td>
+                                            <td class="border">特権のあるオブジェクトで操作が試行されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト サーバー</span>: Security</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: -</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: -</li>
+                                                    <li><span class="strong">要求された操作 > 特権</span>: SeTakeOwnershipPrivilege</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\winrshost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">11</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4674</td>
+                                            <td class="border">Sensitive Privilege Use</td>
+                                            <td class="border">特権のあるオブジェクトで操作が試行されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト サーバー</span>: Security</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: Semaphore</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: \BaseNamedObjects\[文字列]</li>
+                                                    <li><span class="strong">要求された操作 > 特権</span>: DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, SYNCHRONIZE, セマフォ状態の照会, セマフォ状態の変更</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\winrshost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">12</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: 4</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: System</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 着信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 5985</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">13</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4672</td>
+                                            <td class="border">Special Logon</td>
+                                            <td class="border">新しいログオンに特権が割り当てられました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">特権</span>: SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">14</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4624</td>
+                                            <td class="border">Logon</td>
+                                            <td class="border">アカウントが正常にログオンしました。
+                                                <ul>
+                                                    <li><span class="strong">新しいログオン > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">新しいログオン > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">新しいログオン > アカウント名</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">新しいログオン > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">ログオン情報 > ログオン タイプ</span>: 3</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソースワークステーション名</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ネットワーク アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">15</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4656</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが要求されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト サーバー</span>: WS-ManagementListener</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: Unknown</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: Unknown</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [ハンドルID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">16</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4688</td>
+                                            <td class="border">Process Creation</td>
+                                            <td class="border">新しいプロセスが作成されました。
+                                                <ul>
+                                                    <li><span class="strong">作成元サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス ID</span>: [新しく実行されたプロセスのプロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">プロセス情報 > 作成元プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセスのコマンド ライン</span>: [実行ファイルのパス] [コマンドライン]</li>
+                                                    <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: C:\Windows\System32\winrshost.exe</li>
+                                                </ul>
+                                            <p>winrshost.exeより、指定された実行ファイルが呼び出される。実行ファイルのパスや、この後の動作はWinRSに指定されたコマンドラインにより異なる。</p></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">17</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">1</td>
+                                            <td class="border">Process Create</td>
+                                            <td class="border">Process Create
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">FileVersion・Description・Product・Company・OriginalFileName</span>: [実行ファイルのメタデータ]</li>
+                                                    <li><span class="strong">CommandLine</span>: [実行ファイルのパス] [コマンドライン]</li>
+                                                    <li><span class="strong">CurrentDirectory</span>: [作業ディレクトリ]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ログオンユーザー名]</li>
+                                                    <li><span class="strong">LogonId</span>: [ログオンID]</li>
+                                                    <li><span class="strong">Hashes</span>: [実行ファイルのハッシュ値]</li>
+                                                    <li><span class="strong">ParentProcessId</span>: [親プロセスID]</li>
+                                                    <li><span class="strong">ParentImage</span>: C:\Windows\System32\winrshost.exe</li>
+                                                    <li><span class="strong">ParentCommandLine</span>: C:\WINDOWS\system32\WinrsHost.exe -Embedding</li>
+                                                    <li><span class="strong">ParentUser</span>: [親プロセスの実行ユーザ]</li>
+                                                </ul>
+                                            <p>winrshost.exeより、指定された実行ファイルが呼び出される。実行ファイルのパスや、この後の動作はWinRSに指定されたコマンドラインにより異なる。</p></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">18</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4689</td>
+                                            <td class="border">Process Termination</td>
+                                            <td class="border">プロセスが終了しました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">プロセス情報 > 終了状態</span>: [戻り値]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                </ul>
+                                            <p>winrshost.exeより呼び出された実行ファイルの終了。</p></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">19</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">5</td>
+                                            <td class="border">Process terminated</td>
+                                            <td class="border">Process terminated.
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [実行プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ログオンユーザー名]</li>
+                                                </ul>
+                                            <p>winrshost.exeより呼び出された実行ファイルの終了。</p></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">20</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4689</td>
+                                            <td class="border">Process Termination</td>
+                                            <td class="border">プロセスが終了しました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">プロセス情報 > 終了状態</span>: 0x0</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\winrshost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">21</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">5</td>
+                                            <td class="border">Process terminated</td>
+                                            <td class="border">Process terminated.
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">Image</span>: C:\Windows\System32\winrshost.exe</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ログオンユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">22</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4656</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが要求されました。
+                                                <ul>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: C:\Windows\Prefetch\WINRSHOST.EXE-[ハッシュ値].pf</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [ハンドルID]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C::\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">23</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4663</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトへのアクセスが試行されました。
+                                                <ul>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: C:\Windows\Prefetch\WINRSHOST.EXE-[ハッシュ値].pf</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベント4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C::\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">24</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4658</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが閉じました。
+                                                <ul>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベント4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C::\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">25</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">11</td>
+                                            <td class="border">File created</td>
+                                            <td class="border">File created
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時(UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\WINDOWS\system32\svchost.exe</li>
+                                                    <li><span class="strong">TargetFilename</span>: C:\Windows\Prefetch\WINRSHOST.EXE-[文字列].pf</li>
+                                                    <li><span class="strong">CreationUtcTime</span>: [ファイル作成日時(UTC)]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">26</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4634</td>
+                                            <td class="border">Logoff</td>
+                                            <td class="border">アカウントがログオフしました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ログオンユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ログオンユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [イベント4624で記録されたログオンID]</li>
+                                                    <li><span class="strong">ログオン タイプ</span>: 3</li>
+                                                </ul></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>Prefetch</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">Prefetchファイル</th>
+                                            <th class="border_header">プロセス名</th>
+                                            <th class="border_header">プロセスパス</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">C:\Windows\Prefetch\WINRSHOST.EXE-[ハッシュ値].pf</td>
+                                            <td class="border">WINRSHOST.EXE</td>
+                                            <td class="border">C:\WINDOWS\SYSTEM32\WINRSHOST.EXE</td>
+                                            <td class="border"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>MFT</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">パス</th>
+                                            <th class="border_header">ヘッダフラグ</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">C:\Windows\Prefetch\WINRSHOST.EXE-[ハッシュ値].pf</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">ALLOCATED</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>USNジャーナル</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ファイル名</th>
+                                            <th class="border_header">処理</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">WINRSHOST.EXE-[ハッシュ値].pf</td>
+                                            <td class="border"><ul>
+                                                <li>DataExtend|FileCreate|Close</li>
+                                                    </ul></td>
+                                            <td class="border"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                        </div><!-- End of div-Details-Target -->
+                </div><!-- End of div-Details -->
+            <h2 class="section" id="Packets"><a href="#Packets" class="collapse" id="a-Packets" onclick="showhide('Packets');">-</a> パケット</h2>
+                <div class="section" id="div-Packets">
+                        <table class="border">
+                            <thead>
+                                <tr class="border">
+                                    <th class="border_header">#</th>
+                                    <th class="border_header">オペレーション</th>
+                                    <th class="border_header">接続元ホスト</th>
+                                    <th class="border_header">接続元ポート番号</th>
+                                    <th class="border_header">接続先ホスト</th>
+                                    <th class="border_header">接続先ポート</th>
+                                    <th class="border_header">プロトコル</th>
+                                    <th class="border_header">アプリケーション</th>
+                                    <th class="border_header">備考</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border">
+                                    <td class="border_header">1</td>
+                                    <td class="border">POST /wsman HTTP/1.1</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">2</td>
+                                    <td class="border">HTTP/1.1 200</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">3</td>
+                                    <td class="border">POST /wsman HTTP/1.1 (application/http-kerberos-session-encrypted)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">4</td>
+                                    <td class="border">HTTP/1.1 200 (application/http-kerberos-session-encrypted)</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">5</td>
+                                    <td class="border">POST /wsman HTTP/1.1 (application/http-kerberos-session-encrypted)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">6</td>
+                                    <td class="border">HTTP/1.1 200 (application/http-kerberos-session-encrypted)</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">7</td>
+                                    <td class="border">POST /wsman HTTP/1.1 (application/http-kerberos-session-encrypted)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">8</td>
+                                    <td class="border">HTTP/1.1 200 (application/http-kerberos-session-encrypted)</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">9</td>
+                                    <td class="border">POST /wsman HTTP/1.1 (application/http-kerberos-session-encrypted)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">10</td>
+                                    <td class="border">HTTP/1.1 200 (application/http-kerberos-session-encrypted)</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">11</td>
+                                    <td class="border">POST /wsman HTTP/1.1 (application/http-kerberos-session-encrypted)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">12</td>
+                                    <td class="border">HTTP/1.1 200 (application/http-kerberos-session-encrypted)</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">13</td>
+                                    <td class="border">POST /wsman HTTP/1.1 (application/http-kerberos-session-encrypted)</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                                <tr class="border">
+                                    <td class="border_header">14</td>
+                                    <td class="border">HTTP/1.1 204</td>
+                                    <td class="border">[接続先IPアドレス]</td>
+                                    <td class="border">5985</td>
+                                    <td class="border">[接続元IPアドレス]</td>
+                                    <td class="border">[接続元ポート番号]</td>
+                                    <td class="border">tcp</td>
+                                    <td class="border">HTTP</td>
+                                    <td class="border"><br /></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+    </body>
+</html>

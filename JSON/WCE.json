@@ -1,0 +1,378 @@
+{
+    "Summary": {
+        "ToolName": "WCE",
+        "Category": "パスワード、ハッシュ入手",
+        "Description": "ホストのメモリ内に存在する、パスワードハッシュを取得する。",
+        "Usage": "取得したパスワードハッシュを用いて、pass-the-hashなどの攻撃を行う。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "false"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows 7 32ビット版",
+            "DomainMember": false,
+            "Privilege": "Admin"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴",
+                "監査ポリシー・USNジャーナル": "一時ファイル(wceaux.dll)の作成" 
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴",
+                "Sysmon": "WCEによるlsass.exeの参照",
+                "監査ポリシー": "ファイルの作成・削除"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\wceaux.dllファイルが作成、削除されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス] -w",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[実行ユーザー]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\wceaux.dll",
+                    "AccessList": "WriteData (or AddFile)",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "Category": "Process accessed",
+                    "Description": "Process accessed.",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\Windows\\system32\\lsass.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 8,
+                    "Category": "CreateRemoteThread detected",
+                    "Description": "CreateRemoteThread detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[作成元プロセスID]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargeProcessId": "[作成先プロセスID]",
+                    "TargetImage": "C:\\Windows\\System32\\lsass.exe",
+                    "NewThreadId": "[新規スレッドのスレッドID]"
+                },{
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\wceaux.dll",
+                    "HandleId": "[直前のイベント4656で取得されたハンドルID]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "wceaux.dll",
+                    "Operation": [
+                        "CLOSE+FILE_DELETE"
+                    ]
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス] -w",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[実行ユーザー]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親プロセスの実行ファイル]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                     "Category": "プロセス作成",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "NewProcessId": "[実行プロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[新プロセスを作成した親プロセスのプロセスID]",
+                    "ParentProcessName": "[新プロセスを作成した親プロセスのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\wceaux.dll",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム / その他のオブジェクト アクセス イベント",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\wceaux.dll",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\wceaux.dll",
+                    "HandleId": "[直前のイベント4656で取得されたハンドルID]",
+                    "AccessList": "WriteData (or AddFile)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドルID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "Category": "Process accessed",
+                    "Description": "Process accessed.",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\Windows\\system32\\lsass.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 8,
+                    "Category": "CreateRemoteThread detected",
+                    "Description": "CreateRemoteThread detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[作成元プロセスID]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargeProcessId": "[作成先プロセスID]",
+                    "TargetImage": "C:\\Windows\\System32\\lsass.exe",
+                    "NewThreadId": "[新規スレッドのスレッドID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "Category": "Process accessed",
+                    "Description": "Process accessed.",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\Windows\\system32\\lsass.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム / その他のオブジェクト アクセス イベント",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\wceaux.dll",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETEを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\wceaux.dll",
+                    "HandleId": "[直前のイベント4656で取得されたハンドルID]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4660,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトが削除されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectName": "[対象のファイル名]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドルID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドルID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[プロセス終了日時 (UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "プロセス終了",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x1",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "wceaux.dll",
+                    "Operation": [
+                        "FILE_CREATE",
+                        "DATA_EXTEND+FILE_CREATE",
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "wceaux.dll",
+                    "Operation": [
+                        "DATA_OVERWRITE",
+                        "CLOSE+DATA_OVERWRITE",
+                        "CLOSE+FILE_DELETE"
+                    ],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "FILE_CREATE",
+                        "DATA_EXTEND+FILE_CREATE",
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ],
+                    "Note": "archive+not_indexed"
+                }
+            ]
+        }
+    },
+    "Note": [
+        "Windows 10で異常終了した場合、イベントログ「アプリケーション」にイベントID: 1001 (APPCRASH) が記録される。また、クラッシュレポートが \"C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportQueue\\AppCrash_[検体名]_[文字列]\"配下に作成される。このファイルが残されている場合、状況を調査出来る可能性がある。また、クラッシュレポートは一覧がレジストリ内にて管理されているため、\"HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\Windows Error Reporting\\Debug\\StoreLocation\"及び\"HKEY_USERS\\[ユーザーSID]\\Software\\Microsoft\\Windows\\Windows Error Reporting\\Debug\\StoreLocation\"配下に\"AppCrash_[検体名]_[文字列]\"の記録が残る可能性がある",
+        "Windows 10上で異常終了した場合、\"C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\wceaux.dll\"が削除されずに残る可能性がある。また、削除された場合も、イベントログやUSNジャーナル上には記録が残る"
+    ]
+}

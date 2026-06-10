@@ -1,0 +1,247 @@
+{
+    "Summary": {
+        "ToolName": "MS15-078 Exploit",
+        "Category": "権限昇格",
+        "Description": "指定した実行ファイルを、SYSTEM権限で実行する。",
+        "Usage": "管理者権限が必要な実行ファイルを、標準ユーザーで実行する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "false"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows 7",
+            "DomainMember": false,
+            "Privilege": "User"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー, Sysmon": "実行履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "イベントログ「セキュリティ」のイベントID: 4688および、イベントログ「Sysmon」のイベントID: 1においてSYSTEM権限で実行されているプロセスの、親プロセスがそのプロセスの親となり得ないものとなっている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス] [権限昇格して実行するプロセス]",
+                    "User": "[実行ユーザー]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[権限昇格して実行されるファイルのパス]",
+                    "CommandLine": "[権限昇格して実行されたファイルのコマンドライン]",
+                    "User": "[実行ユーザー]",
+                    "ParentProcessId": "[親プロセスのプロセスID]",
+                    "ParentImage": "[親プロセスの実行ファイル]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Status": "0x0"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ]
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス]  [権限昇格して実行するプロセス]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[実行ユーザー]",
+                    "LogonId": "[ログオンセッションのID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスのプロセスID]",
+                    "ParentImage": "[親プロセスの実行ファイル]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "NewProcessId": "[プロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[新プロセスを作成した親プロセスのプロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[権限昇格して実行されるファイルのパス]",
+                    "CommandLine": "[権限昇格して実行されたファイルのコマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[実行ユーザー]",
+                    "LogonId": "[ログオンセッションのID]",
+                    "IntegrityLevel": "System",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスのプロセスID]",
+                    "ParentImage": "[実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "NewProcessId": "[プロセスID]",
+                    "NewProcessName": "[権限昇格して実行されたファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[新プロセスを作成した親プロセスのプロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[実行ファイルのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "[権限昇格して実行されたファイルのパス]",
+                    "GrantedAccess": "0x1FFFFF"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteDataまたはAddFile、AppendData",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\WINDOWS\\system32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile、AppendData",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\WINDOWS\\system32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\WINDOWS\\system32\\svchost.exe"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "FILE_CREATE",
+                        "DATA_EXTEND+FILE_CREATE",
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ]
+                }
+            ]
+        }
+    },
+    "Note": [
+        "権限昇格して実行されたプロセスの終了を待たず、検体は終了する。"
+    ]
+}

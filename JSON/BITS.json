@@ -1,0 +1,878 @@
+{
+    "Summary": {
+        "ToolName": "BITS",
+        "Category": "ファイル共有・転送",
+        "Description": "バックグラウンドでファイルを送受信する。送受信の際、優先度などを設定することが可能。",
+        "Usage": "他の通信と比較して目立たない程度の帯域で、ファイルを送受信する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": [
+                "445/tcp"
+            ]
+        },
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": [
+                "445/tcp"
+            ]
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Systemイベントログ": "Background Intelligent Transfer Serviceの実行状態が変わることで、判断出来る可能性がある。ただし、BITSが既に動作している場合は判断できない"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "BITSにより作成される一時ファイル\"BITS[ランダム数字].tmp\"に対する書き込み",
+                "USNジャーナル": "一時ファイル\"BITS[ランダム数字].tmp\"のリネーム発生"
+            },
+            "Target": {
+                "監査ポリシー": "共有\"\\\\*\\BITS\"に対するアクセスの発生"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "一時ファイル\"BITS[ランダム数字].tmp\"に対する書き込みが成功している"
+        ],
+        "Target": [
+            "Microsoft-Windows-Bits-Client/Operationalログにイベント60が記録されており、状態コードが\"0x0\"となっている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 4103,
+                    "ContextInfo": "コマンド名 = Add-Type, スクリプト名 = C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules\\BitsTransfer\\BitsTransfer.psm1, ユーザー = [ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel" :"Windows PowerShell",
+                    "EventID": 800,
+                    "EventData": "コンテキスト情報 > UserId = [ドメイン名]\\[ユーザー名], コンテキスト情報 > ScriptName = C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules\\BitsTransfer\\BitsTransfer.psm1"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": "C:\\Windows\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\BITS\\Start",
+                    "Details": "DWORD=0x00000003"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Bits-Client/Operational",
+                    "EventID": 3,
+                    "jobTitle": "BITS Transfer",
+                    "jobOwner": "[ユーザー名]",
+                    "processPath": "[BITSを呼び出した実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Bits-Client/Operational",
+                    "EventID": 59,
+                    "url": "[対象ファイルのUNCパス（\\\\接続先\\BITS\\ファイル名）]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "CreationUtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\system32\\svchost.exe",
+                    "TargetFilename": "[一時ファイル（[実行パス]\\BIT[ランダム英数字].tmp）]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "[一時ファイル（[実行パス]\\BIT[ランダム英数字].tmp）]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData, WriteAttributesを含む",
+                    "ProcessName": "C:\\Windows\\system32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "[一時ファイル（[実行パス]\\BIT[ランダム英数字].tmp）]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData, AppendData, WriteAttributes",
+                    "ProcessName": "C:\\Windows\\system32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Bits-Client/Operational",
+                    "EventID": 60,
+                    "url": "[対象ファイルのUNCパス（\\\\接続先\\BITS\\ファイル名）]",
+                    "hr": "0x0"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Bits-Client/Operational",
+                    "EventID": 4,
+                    "jobTitle": "BITS Transfer",
+                    "jobOwner": "[ドメイン名]\\[ユーザー名]",
+                    "fileCount": "[転送したファイルの数]"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKLM\\SYSTEM\\ControlSet001\\Services\\BITS\\Start",
+                    "Type": "REG_DWORD",
+                    "Value": "3"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[転送されたファイル]",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "BIT[ランダム英数字].tmp",
+                    "Operation": [
+                        "FileCreate",
+                        "FileCreate|Close",
+                        "RenameOldName",
+                        "DataExtend|FileCreate",
+                        "DataOverwrite|DataExtend|FileCreate",
+                        "DataOverwrite|DataExtend|FileCreate|BasicInfoChange",
+                        "DataOverwrite|DataExtend|FileCreate|BasicInfoChange|Close",
+                        "BasicInfoChange",
+                        "BasicInfoChange|Close",
+                        "FileCreate",
+                        "FileCreate|Close",
+                        "RenameOldName"
+                    ]
+                },
+                {
+                    "File": "[受信したファイル名]",
+                    "Operation": [
+                        "RenameNewName",
+                        "RenameNewName|Close"
+                    ],
+                    "Note": "BIT[ランダム英数字].tmpにダウンロード中のデータを保存し、その後にファイル名を変更する。そのためBIT[ランダム英数字].tmpの作成後に、Renameが発生する。"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\BITS",
+                    "ShareLocalPath": "\\??\\C:\\BITS",
+                    "AccessList": "ReadDataまたはListDirectory"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\BITS",
+                    "ShareLocalPath": "\\??\\C:\\BITS"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 4103,
+                    "ContextInfo": "コマンド名 = Add-Type, スクリプト名 = C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules\\BitsTransfer\\BitsTransfer.psm1, ユーザー = [ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Windows PowerShell",
+                    "EventID": 400,
+                    "EventData": "エンジンの状態が None から Available に変更されました。"
+                },
+                {
+                    "Channel" :"Windows PowerShell",
+                    "EventID": 800,
+                    "EventData": "コンテキスト情報 > UserId = [ドメイン名]\\[ユーザー名], コンテキスト情報 > ScriptName = C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules\\BitsTransfer\\BitsTransfer.psm1"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "Image": "C:\\Windows\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\BITS"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": "C:\\Windows\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\BITS\\PerfMMFileName"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": "C:\\Windows\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\BITS"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "Image": "C:\\Windows\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\BITS\\Start",
+                    "Details": "DWORD=0x00000003"
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7040,
+                    "param1": "Background Intelligent Transfer Service",
+                    "param2": "要求による開始",
+                    "param3": "自動的な開始"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Image": "System",
+                    "Protocol": "tcp",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "Application": "System",
+                    "Protocol": "6 (TCP)",
+                    "SourcePort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Application": "System",
+                    "Protocol": "6 (TCP)",
+                    "SourcePort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-SmbClient/Connectivity",
+                    "EventID": 30830,
+                    "Server name": "[接続先ホスト]",
+                    "Server socket address": "[接続先IPアドレス]:[接続先ポート番号]",
+                    "Transport": "TCPIP",
+                    "Instance Name": "\\Device\\LanmanRedirector"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Bits-Client/Operational",
+                    "EventID": 3,
+                    "jobTitle": "BITS Transfer",
+                    "jobOwner": "[ユーザー名]",
+                    "processPath": "[BITSを呼び出した実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Bits-Client/Operational",
+                    "EventID": 59,
+                    "url": "[対象ファイルのUNCパス（\\\\接続先\\BITS\\ファイル名）]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Image": "C:\\Windows\\system32\\svchost.exe",
+                    "TargetFilename": "[一時ファイル（[実行パス]\\BIT[ランダム英数字].tmp）]",
+                    "CreationUtcTime": "[発生日時(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "HandleId": "[ハンドルID]",
+                    "ObjectType": "File",
+                    "ObjectName": "[一時ファイル（[実行パス]\\BIT[ランダム英数字].tmp）]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData, WriteAttributesを含む",
+                    "ProcessName": "C:\\Windows\\system32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "一時ファイル（[実行パス]\\BIT[ランダム英数字].tmp）",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData, AppendData, WriteAttributes",
+                    "ProcessName": "C:\\Windows\\system32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessName": "C:\\Windows\\system32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Bits-Client/Operational",
+                    "EventID": 60,
+                    "url": "[対象ファイルのUNCパス（\\\\接続先\\BITS\\ファイル名）]",
+                    "hr": "0x0"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Bits-Client/Operational",
+                    "EventID": 4,
+                    "jobTitle": "BITS Transfer",
+                    "jobOwner": "[ユーザー名]",
+                    "fileCount": "[転送したファイルの数]"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKLM\\SYSTEM\\ControlSet001\\Services\\BITS\\Start",
+                    "Type": "REG_DWORD",
+                    "Value": "3"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[転送されたファイル]",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "BIT[ランダム英数字].tmp",
+                    "Operation": [
+                        "FileCreate",
+                        "FileCreate|Close",
+                        "RenameOldName",
+                        "DataExtend|FileCreate",
+                        "DataOverwrite|DataExtend|FileCreate",
+                        "DataOverwrite|DataExtend|FileCreate|BasicInfoChange",
+                        "DataOverwrite|DataExtend|FileCreate|BasicInfoChange|Close",
+                        "BasicInfoChange",
+                        "BasicInfoChange|Close",
+                        "FileCreate",
+                        "FileCreate|Close",
+                        "RenameOldName"
+                    ]
+                },
+                {
+                    "File": "[受信したファイル名]",
+                    "Operation": [
+                        "RenameNewName",
+                        "RenameNewName|Close"
+                    ],
+                    "Note": "BIT[ランダム英数字].tmpにダウンロード中のデータを保存し、その後にファイル名を変更する。そのためBIT[ランダム英数字].tmpの作成後に、Renameが発生する。"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[送信元IPアドレス]",
+                    "SourcePort": "[送信元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "LogonType": 3,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "WorkstationName": "[接続元ホスト]",
+                    "IpAddress": "[送信元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "AccessList": "ReadDataまたはListDirectory"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\BITS",
+                    "ShareLocalPath": "\\??\\C:\\BITS",
+                    "AccessList": "ReadDataまたはListDirectory"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\BITS",
+                    "ShareLocalPath": "\\??\\C:\\BITS"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "LogonType": 3,
+                    "LogonId": "[イベント4624で記録されたログオンID]"
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "Session message; Negotiate Protocol",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Session Setup Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request, Tree: \\\\[接続先のNetBIOS名]\\IPC$",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Tree Connect Response, Tree: \\\\[接続先のNetBIOS名]\\IPC$",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Ioctl Response FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_DFS_GET_REFERRALS",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Ioctl Response, Error: STATUS_FS_DRIVER_REQUIRED",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request, Tree: \\\\[接続先のNetBIOS名]\\BITS",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Tree Connect Response, Tree: \\\\[接続先のNetBIOS名]\\BITS",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: [ファイル名]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Create Response File: [ファイル名]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request File: [ファイル名]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Close Response, File: [ファイル名]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: <share>",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Create Response, File: <share>",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FS_INFO/FileFsSizeInformation, File: <share>",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "GetInfo Response, File: <share>",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: <share>",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Close Response, File: <share>",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: <share>; GetInfo Request FS_INFO/FileFsSizeInformation",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Create Response, File: <share>; GetInfo Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: <share>",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Close Response, File: <share>",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: [ファイル名]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Create Response File: [ファイル名]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request Len:[長さ] Off:0, File: [ファイル名]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Read Response, File: [ファイル名]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request File: [ファイル名]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Close Response, File: [ファイル名]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Disconnect Request, Tree: \\\\[接続先のNetBIOS名]\\IPC$",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Tree Disconnect Response, Tree: \\\\[接続先のNetBIOS名]\\IPC$",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Ioctl Response FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Disconnect Request, Tree: \\\\[接続先のNetBIOS名]\\BITS",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Tree Disconnect Response, Tree: \\\\[接続先のNetBIOS名]\\BITS",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Logoff Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Session Logoff Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        }
+    ],
+    "Note": [
+        "本調査ではPowerShell上から呼び出したBITSにおいて、SMBを用いてファイルを受信している。BITSはSMBの他にHTTP・HTTPSを利用可能であり、使用したプロトコルによりポート番号が異なる。"
+    ]
+}

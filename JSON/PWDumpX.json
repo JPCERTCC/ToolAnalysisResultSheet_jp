@@ -1,0 +1,3393 @@
+{
+    "Summary": {
+        "ToolName": "PWDumpX",
+        "Category": "パスワード、ハッシュ入手",
+        "Description": "リモートホストからパスワードハッシュを取得する。",
+        "Usage": "取得したハッシュ情報を利用して、他のホストにログオンする。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "false"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "標準ユーザー",
+            "Protocol": [
+                "135/tcp", 
+                "445/tcp"
+            ]
+        },
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "管理者ユーザー",
+            "Protocol": [
+                "135/tcp", 
+                "445/tcp"
+            ]
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch":"実行履歴"
+            },
+            "Target": {
+                "Prefetch":"実行履歴",
+                "システム ログ":"PWDumpXサービスのインストールおよび実行"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー, Sysmon":"実行履歴",
+                "監査ポリシー":"結果が記録されるファイル [宛先アドレス]-PWHashes.txt の作成"
+            },
+            "Target": {
+                "監査ポリシー, Sysmon":"実行履歴",
+                "監査ポリシー":"接続元から接続先への、PWDumpXサービスの送信および実行およびハッシュ情報を保存するファイルの作成"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "[実行ファイルのパス]\\[宛先アドレス]-PWHashes.txtが作成されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "\\VOLUME{[GUID]}\\[実行ファイルのパス]",
+                    "Note": "Last Run Time (最終実行日時)"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\[実行時のパス]\\[接続先]-PWHashes.txt",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[接続先]-PWHashes.txt",
+                    "Operation": [
+                        "BASIC_INFO_CHANGE",
+                        "DATA_EXTEND",
+                        "DATA_OVERWRITE"],
+                    "Note": ""
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "445",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "135",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元IPポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "Category": "詳細なファイル共有",
+                    "Description": "クライアントに必要なアクセスを付与できるかどうかについて、ネットワーク共有オブジェクトがチェックされました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\Windows",
+                    "RelativeTargetName": "system32\\DumpSvc.exe",
+                    "AccessList": "WriteDataまたはAddFile, DELETEを含む",
+                    "AccessReason": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "Category": "Service Control Manager",
+                    "Description": "[param1] サービスは [param2] 状態に移行しました。",
+                    "param1": "PWDumpX Service",
+                    "param2": "実行中",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "Category": "Process accessed",
+                    "Description": "Process accessed.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[アクセス元プロセスのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "[アクセス先プロセスのパス]",
+                    "GrantedAccess": "[許可されたアクセスの内容]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\PWHashes.txt",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "WriteDataまたはAddFile, AppendData",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\PWHashes.txt.Obfuscated",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "WriteDataまたはAddFile, AppendData",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\PWHashes.txt.Obfuscated",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "DELETE",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "Category": "Service Control Manager",
+                    "Description": "[param1] サービスは [param2] 状態に移行しました。",
+                    "param1": "PWDumpX Service",
+                    "param2": "停止",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "Category": "詳細なファイル共有",
+                    "Description": "クライアントに必要なアクセスを付与できるかどうかについて、ネットワーク共有オブジェクトがチェックされました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\Windows",
+                    "RelativeTargetName": "System32\\PWHashes.txt",
+                    "AccessList": "ReadDataまたはListDirectory、ReadEA、ReadAttributesを含む",
+                    "AccessReason": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\PWHashes.txt",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\DumpExt.dll",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\DumpSvc.exe",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                }                
+            ],
+            "USNJournal": [
+                {
+                    "File": "PWHashes.txt.Obfuscated",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_DELETE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_DELETE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpExt.dll",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_DELETE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpSvc.exe",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_DELETE"
+                    ],
+                    "Note": "archive"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "Category": "Process Creation",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeFull(2)",
+                    "CommandLine": "[コマンドライン]",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[プロセス名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元IPポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4648,
+                    "Category": "ログオン",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "LogonGuid": "[ユーザーのセッションID]",
+                    "TargetUserName": "[アカウント名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonGuid": "[Guid]",
+                    "TargetServerName": "[サーバー名]",
+                    "TargetInfo": "-",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "[プロセス名]",
+                    "IpAddress": "[IPアドレス]",
+                    "IpPort": "[ポート番号]"
+
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元IPポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "135",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元IPポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteDataまたはAddFile, AppendDataを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[プロセスID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteAttributesを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[プロセスID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteDataまたはAddFile, AppendDataを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[プロセスID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WRITE_DACを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WRITE_DAC",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4670,
+                    "Category": "Authorization Policy Change",
+                    "Description": "オブジェクトのアクセス許可が変更されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "OldSd": "[旧セキュリティディスクリプタ]",
+                    "NewSd": "A;;FA;;;BA)(A;;FA;;;SY)(A;;0x1200a9;;;[別ユーザーSID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[プロセスID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETEを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[接続先]-PWHashes.txt",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Security-Auditing",
+                    "EventID": 4660,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトが削除されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルの識別ID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[プロセスID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "Category": "Sensitive Privilege Use",
+                    "Description": "特権のあるサービスが呼び出されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "Service": "-",
+                    "PrivilegeList": "SeTcbPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETEを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[プロセスID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "Category": "Service Control Manager",
+                    "Description": "[param1] サービスは [param2] 状態に移行しました。",
+                    "param1": "PWDumpX Service",
+                    "param2": "停止",
+                    "Note": ""
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "\\VOLUME{[GUID]}\\[実行ファイルのパス]",
+                    "Note": "Last Run Time (最終実行日時)"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\[実行時のパス]\\[接続先]-PWHashes.txt",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[接続先]-PWHashes.txt",
+                    "Operation": ["FILE_CREATE"],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt",
+                    "Operation": ["DATA_EXTEND"],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt",
+                    "Operation": [
+                        "DATA_EXTEND+DATA",
+                        "OVERWRITE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt",
+                    "Operation": [
+                        "BASIC_INFO_CHANGE",
+                        "DATA_EXTEND",
+                        "DATA_OVERWRITE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt.Obfuscated",
+                    "Operation": ["FILE_CREATE"],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt.Obfuscated",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt.Obfuscated",
+                    "Operation": ["DATA_EXTEND"],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt.Obfuscated",
+                    "Operation": [
+                        "CLOSE+DATA",
+                        "EXTEND"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt",
+                    "Operation": ["DATA_TRUNCATION"],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt",
+                    "Operation": [
+                        "DATA_TRUNCATION",
+                        "SECURITY_CHANGE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt",
+                    "Operation": [
+                        "DATA_EXTEND",
+                        "DATA_TRUNCATION",
+                        "SECURITY_CHANGE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt",
+                    "Operation": [
+                        "DATA_EXTEND",
+                        "DATA_OVERWRITE",
+                        "DATA_TRUNCATION",
+                        "SECURITY_CHANGE"],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt",
+                    "Operation": [
+                        "CLOSE",
+                        "DATA_EXTEND",
+                        "DATA_OVERWRITE",
+                        "DATA_TRUNCATION",
+                        "SECURITY_CHANGE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[接続先]-PWHashes.txt.Obfuscated",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_DELETE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": ["FILE_CREATE"],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "DATA_EXTEND",
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": [
+                        "CLOSE",
+                        "DATA_EXTEND",
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive+not_indexed"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "445",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4776,
+                    "Category": "格情報の検証",                    
+                    "PackageName": "MICROSOFT_AUTHENTICATION_PACKAGE_V1_0",
+                    "TargetUserName": "[アカウント名]",
+                    "Workstation": "[接続元ホスト名]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "Category": "Special Logon",
+                    "Description": "新しいログオンに特権が割り当てられました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "[割り当てられた特権]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "Category": "Logon",
+                    "Description": "アカウントが正常にログオンしました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "LogonType": 3,
+                    "LogonProcessName": "-",
+                    "AuthenticationPackageName": "NTLM",
+                    "WorkstationName": "[接続元ホスト名]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ImpersonationLevel": "偽装",
+                    "ElevatedToken": true,
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "Category": "ファイルの共有",
+                    "Description": "ネットワーク共有オブジェクトにアクセスしました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\Windows",
+                    "AccessList": "ReadDataまたはListDirectory",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "System",
+                    "TargetFilename": "C:\\Windows\\System32\\DumpSvc.exe",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "Category": "詳細なファイル共有",
+                    "Description": "クライアントに必要なアクセスを付与できるかどうかについて、ネットワーク共有オブジェクトがチェックされました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\Windows",
+                    "RelativeTargetName": "system32\\DumpSvc.exe",
+                    "AccessList": "WriteDataまたはAddFile, DELETEを含む",
+                    "AccessReason": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\DumpSvc.exe",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteDataまたはAddFile, WriteAttributesを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\DumpSvc.exe",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "直前のイベントID: 4656で取得されたハンドル",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "System",
+                    "TargetFilename": "C:\\Windows\\System32\\DumpExt.dll",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "Category": "詳細なファイル共有",
+                    "Description": "クライアントに必要なアクセスを付与できるかどうかについて、ネットワーク共有オブジェクトがチェックされました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\Windows",
+                    "RelativeTargetName": "system32\\DumpExt.dll",
+                    "AccessList": "WriteDataまたはAddFile、DELETEを含む",
+                    "AccessReason": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "(ファイル システム|Kernel Object)",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\DumpExt.dll",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteDataまたはAddFile, WriteAttributesを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "(ファイル システム|Kernel Object)",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\DumpExt.dll",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, WriteAttributes",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "(ファイル システム|Kernel Object)",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "直前のイベントID: 4656で取得されたハンドル",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "135",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元IPポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": ""
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7045,
+                    "Category": "サービスインストール",
+                    "Description": "サービスがインストールされました。",                    
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ServiceName": "PWDumpX Service",
+                    "ServiceFileName": "%windir%\\system32\\DumpSvc.exe",
+                    "ServiceType": "ユーザー モード サービス",
+                    "StartType": "要求による開始",
+                    "ServiceAccount": "LocalSystem",
+                    "Reason": "",
+                    "ReturnCode": ""
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "Category": "Service Control Manager",
+                    "Description": "[param1] サービスは [param2] 状態に移行しました。",
+                    "param1": "PWDumpX Service",
+                    "param2": "実行中",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "Category": "Registry object added or deleted",
+                    "Description": "Registry object added or deleted",
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\services\\PWDumpX",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\system32\\services.exe",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\services\\PWDumpX\\Type",
+                    "Details": "DWORD:0x00000010",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\system32\\services.exe",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\services\\PWDumpX\\Start",
+                    "Details": "DWORD:0x00000003",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\system32\\services.exe",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\services\\PWDumpX\\ErrorControl",
+                    "Details": "DWORD:0x00000000",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\system32\\services.exe",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\services\\PWDumpX\\ImagePath",
+                    "Details": "%windir%\\system32\\DumpSvc.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\system32\\services.exe",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\services\\PWDumpX\\DisplayName",
+                    "Details": "PWDumpX Service",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\system32\\services.exe",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\services\\PWDumpX\\ObjectName",
+                    "Details": "LocalSystem",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "Category": "重要な特権の使用",
+                    "Description": "特権のあるオブジェクトで操作が試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "SC_MANAGER_OBJECT",
+                    "ObjectName": "ServicesActive",
+                    "PrivilegeList": "新しいサービスの作成 を含む",
+                    "ProcessName": "[実行ファイル名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "System",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "[親実行ファイルのパス]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "Category": "Process Creation",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "C:\\Windows\\System32\\DumpSvc.exe",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "Category": "Process accessed",
+                    "Description": "Process accessed.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[アクセス元プロセスのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "[アクセス先プロセスのパス]",
+                    "GrantedAccess": "[許可されたアクセスの内容]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "Category": "Process accessed",
+                    "Description": "Process accessed.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[アクセス元プロセスのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "[アクセス先プロセスのパス]",
+                    "GrantedAccess": "[許可されたアクセスの内容]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "Category": "Process accessed",
+                    "Description": "Process accessed.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[アクセス元プロセスのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "[アクセス先プロセスのパス]",
+                    "GrantedAccess": "[許可されたアクセスの内容]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "Category": "Process accessed",
+                    "Description": "Process accessed.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[アクセス元プロセスのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "[アクセス先プロセスのパス]",
+                    "GrantedAccess": "[許可されたアクセスの内容]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "Category": "Process accessed",
+                    "Description": "Process accessed.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[アクセス元プロセスのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "[アクセス先プロセスのパス]",
+                    "GrantedAccess": "[許可されたアクセスの内容]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "Category": "Process accessed",
+                    "Description": "Process accessed.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[アクセス元プロセスのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "[アクセス先プロセスのパス]",
+                    "GrantedAccess": "[許可されたアクセスの内容]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "Category": "Process accessed",
+                    "Description": "Process accessed.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "[アクセス元プロセスのパス]",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "[アクセス先プロセスのパス]",
+                    "GrantedAccess": "[許可されたアクセスの内容]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 8,
+                    "Category": "CreateRemoteThread detected",
+                    "Description": "CreateRemoteThread detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceImage": "C:\\Windows\\System32\\DumpSvc.exe",
+                    "TargetImage": "C:\\Windows\\System32\\lsass.exe",
+                    "SourceUser": "[ユーザ名]",
+                    "TargetUser": "[ユーザ名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\system32\\lsass.exe",
+                    "TargetFilename": "C:\\Windows\\System32\\PWHashes.txt",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\PWHashes.txt",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteDataまたはAddFile, AppendDataを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\PWHashes.txt",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile, AppendData",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "WriteDataまたはAddFile, AppendData",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "直前のイベントID: 4656で取得されたハンドル",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\system32\\lsass.exe",
+                    "TargetFilename": "C:\\Windows\\System32\\PWHashes.txt.Obfuscated",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\PWHashes.txt.Obfuscated",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteDataまたはAddFile, AppendDataを含む",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\PWHashes.txt.Obfuscated",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "WriteDataまたはAddFile, AppendData",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "直前のイベントID: 4656で取得されたハンドル",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\PWHashes.txt.Obfuscated",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\PWHashes.txt.Obfuscated",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Security-Auditing",
+                    "EventID": 4660,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトが削除されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "直前のイベントID: 4656で取得されたハンドル",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "直前のイベントID: 4656で取得されたハンドル",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "Category": "Process Termination",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "System",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "System",
+                    "EventID": 7036,
+                    "Category": "Service Control Manager",
+                    "Description": "[param1] サービスは [param2] 状態に移行しました。",
+                    "param1": "PWDumpX Service",
+                    "param2": "停止",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\system32\\services.exe",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\services\\PWDumpX\\DeleteFlag",
+                    "Details": "DWORD:0x00000001",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\system32\\services.exe",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\services\\PWDumpX\\Start",
+                    "Details": "DWORD:0x00000004",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "Category": "Registry object added or deleted",
+                    "Description": "Registry object added or deleted",
+                    "EventType": "DeleteKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "\\REGISTRY\\MACHINE\\SYSTEM\\ControlSet001\\services\\PWDumpX",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "Category": "詳細なファイル共有",
+                    "Description": "クライアントに必要なアクセスを付与できるかどうかについて、ネットワーク共有オブジェクトがチェックされました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\Windows",
+                    "RelativeTargetName": "System32\\PWHashes.txt",
+                    "AccessList": "ReadDataまたはListDirectory、ReadEA、ReadAttributesを含む",
+                    "AccessReason": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "Category": "詳細なファイル共有",
+                    "Description": "クライアントに必要なアクセスを付与できるかどうかについて、ネットワーク共有オブジェクトがチェックされました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\Windows",
+                    "RelativeTargetName": "System32\\PWHashes.txt",
+                    "AccessList": "DELETEを含む",
+                    "AccessReason": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "(ファイル システム|Kernel Object)",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\PWHashes.txt",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\PWHashes.txt",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "DELETE",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Security-Auditing",
+                    "EventID": 4660,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトが削除されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "直前のイベントID: 4656で取得されたハンドル",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "直前のイベントID: 4656で取得されたハンドル",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "Category": "詳細なファイル共有",
+                    "Description": "クライアントに必要なアクセスを付与できるかどうかについて、ネットワーク共有オブジェクトがチェックされました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\Windows",
+                    "RelativeTargetName": "system32\\DumpExt.dll",
+                    "AccessList": "DELETEを含む",
+                    "AccessReason": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "Category": "詳細なファイル共有",
+                    "Description": "クライアントに必要なアクセスを付与できるかどうかについて、ネットワーク共有オブジェクトがチェックされました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\Windows",
+                    "RelativeTargetName": "system32\\DumpExt.dll",
+                    "AccessList": "DELETEを含む",
+                    "AccessReason": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "system32\\DumpExt.dll",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "system32\\DumpExt.dll",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Security-Auditing",
+                    "EventID": 4660,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトが削除されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルの識別ID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "直前のイベントID: 4656で取得されたハンドル",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "Category": "詳細なファイル共有",
+                    "Description": "クライアントに必要なアクセスを付与できるかどうかについて、ネットワーク共有オブジェクトがチェックされました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[送信元ポート番号]",
+                    "ShareName": "\\\\*\\ADMIN$",
+                    "ShareLocalPath": "\\??\\C:\\Windows",
+                    "RelativeTargetName": "system32\\DumpSvc.exe",
+                    "AccessList": "DELETEを含む",
+                    "AccessReason": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\DumpSvc.exe",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\System32\\DumpSvc.exe",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ResourceAttributes": "",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Microsoft-Windows-Security-Auditing",
+                    "EventID": 4660,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトが削除されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルの識別ID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "直前のイベントID: 4656で取得されたハンドル",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "Category": "ログオフ",
+                    "Description": "アカウントがログオフしました。",
+                    "TargetUserSid": "[ユーザSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetLogonId": "[イベント4624で記録されたログオンID]",
+                    "LogonType": 0,
+                    "Note": ""
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "DumpSvc.exe",
+                    "Operation": [
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpSvc.exe",
+                    "Operation": [
+                        "FILE_CREATE",
+                        "SECURITY_CHANGE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpSvc.exe",
+                    "Operation": [
+                        "DATA_EXTEND",
+                        "FILE_CREATE",
+                        "SECURITY_CHANGE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpSvc.exe",
+                    "Operation": [
+                        "DATA_EXTEND",
+                        "DATA_OVERWRITE",
+                        "FILE_CREATE",
+                        "SECURITY_CHANGE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpSvc.exe",
+                    "Operation": [
+                        "BASIC_INFO_CHANGE",
+                        "DATA_EXTEND",
+                        "DATA_OVERWRITE",
+                        "FILE_CREATE",
+                        "SECURITY_CHANGE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpExt.dll",
+                    "Operation": [
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpExt.dll",
+                    "Operation": [
+                        "FILE_CREATE",
+                        "SECURITY_CHANGE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpExt.dll",
+                    "Operation": [
+                        "DATA_EXTEND",
+                        "FILE_CREATE",
+                        "SECURITY_CHANGE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpExt.dll",
+                    "Operation": [
+                        "DATA_EXTEND",
+                        "DATA_OVERWRITE",
+                        "FILE_CREATE",
+                        "SECURITY_CHANGE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpExt.dll",
+                    "Operation": [
+                        "BASIC_INFO_CHANGE",
+                        "DATA_EXTEND",
+                        "DATA_OVERWRITE",
+                        "FILE_CREATE",
+                        "SECURITY_CHANGE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpExt.dll",
+                    "Operation": [
+                        "BASIC_INFO_CHANGE",
+                        "CLOSE",
+                        "DATA_EXTEND",
+                        "DATA_OVERWRITE",
+                        "FILE_CREATE",
+                        "SECURITY_CHANGE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt",
+                    "Operation": [
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt",
+                    "Operation": [
+                        "DATA_EXTEND"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt",
+                    "Operation": [
+                        "CLOSE",
+                        "DATA_EXTEND"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt.Obfuscated",
+                    "Operation": [
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt.Obfuscated",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_CREATE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt.Obfuscated",
+                    "Operation": [
+                        "DATA_EXTEND"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt.Obfuscated",
+                    "Operation": [
+                        "CLOSE",
+                        "DATA_EXTEND"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt",
+                    "Operation": [
+                        "DATA_TRUNCATION"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt",
+                    "Operation": [
+                        "CLOSE",
+                        "DATA_TRUNCATION"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt",
+                    "Operation": [
+                        "DATA_EXTEND"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt",
+                    "Operation": [
+                        "DATA_EXTEND",
+                        "DATA_OVERWRITE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt",
+                    "Operation": [
+                        "CLOSE",
+                        "DATA_EXTEND",
+                        "DATA_OVERWRITE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt.Obfuscated",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_DELETE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "PWHashes.txt",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_DELETE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpExt.dll",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_DELETE"
+                    ],
+                    "Note": "archive"
+                },
+                {
+                    "File": "DumpSvc.exe",
+                    "Operation": [
+                        "CLOSE",
+                        "FILE_DELETE"
+                    ],
+                    "Note": "archive"
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "Session Setup Request, NTLMSSP_AUTH, User: [ユーザー名]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request Tree: \\\\[ターゲットのNetBIOS名]\\ADMIN$",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FS_INFO/FileFsVolumeInformation File: system32\\DumpSvc.exe;GetInfo Request FS_INFO/FileFsAttributeInformation File: system32\\DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response;GetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: system32",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: system32",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request File: system32",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request SEC_INFO/SMB2_SEC_INFO_00 File: system32\\DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Request SEC_INFO/SMB2_SEC_INFO_00 File: system32\\DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Request FILE_INFO/SMB2_FILE_ENDOFFILE_INFO File: system32\\DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Request Len:59871 Off:0 File: system32\\DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Request FILE_INFO/SMB2_FILE_BASIC_INFO File: system32\\DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FILE_INFO/SMB2_NETWORK_OPEN_INFO File: system32\\DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: system32",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: system32",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request File: system32",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request SEC_INFO/SMB2_SEC_INFO_00 File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Request SEC_INFO/SMB2_SEC_INFO_00 File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Request FILE_INFO/SMB2_FILE_ENDOFFILE_INFO File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Request Len:65536 Off:0 File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Request Len:2569 Off:65536 File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Write Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Request FILE_INFO/SMB2_FILE_BASIC_INFO File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FILE_INFO/SMB2_NETWORK_OPEN_INFO File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request File: system32\\DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: system32\\PWHashes.txt",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: system32\\PWHashes.txt",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Request FILE_INFO/SMB2_FILE_EA_INFO File: system32\\PWHashes.txt;GetInfo Request FILE_INFO/SMB2_FILE_STREAM_INFO File: system32\\PWHashes.txt;GetInfo Request SEC_INFO/SMB2_SEC_INFO_00 File: system32\\PWHashes.txt",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "GetInfo Response;GetInfo Response;GetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request Len:251 Off:0 File: system32\\PWHashes.txt",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: system32\\PWHashes.txt",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: system32\\PWHashes.txt",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Request FILE_INFO/SMB2_FILE_DISPOSITION_INFO File: system32\\PWHashes.txt",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request File: system32\\PWHashes.txt",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: system32\\ErrorLog.txt",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response: STATUS_OBJECT_NAME_NOT_FOUND",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Request FILE_INFO/SMB2_FILE_DISPOSITION_INFO File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request File: system32\\DumpExt.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request File: system32\\DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response File: system32\\DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Request FILE_INFO/SMB2_FILE_DISPOSITION_INFO File: system32\\DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "SetInfo Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request File: system32\\DumpSvc.exe",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Disconnect Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Disconnect Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Logoff Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Logoff Response",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        }
+    ]
+}

@@ -1,0 +1,837 @@
+{
+    "Summary": {
+        "ToolName": "WinRS",
+        "Category": "コマンド実行",
+        "Description": "リモートホスト上でコマンドを実行する。",
+        "Usage": "BITSなどによりツールを送り込み、WinRSを用いてツールをリモートから実行する。",
+        "Availability": [
+            "",""
+        ],
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "Admin"
+        },
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "Admin",
+            "Protocol": ["5985/tcp"],
+            "Service": "Windows remote Management (WS-Management)",
+            "Notes": "WinRSを非管理者ユーザが実行するよう設定することは可能であるが、初期設定では管理者権限が必要。"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴",
+                "Microsoft-Windows-WinRM/Operational": "実行履歴"
+            },
+            "Target": {
+                "Prefetch": "実行履歴",
+                "Microsoft-Windows-WinRM/Operational": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴、5985/tcpによる通信"
+            },
+            "Target": {
+                "監査ポリシー・Sysmon": "実行履歴、5985/tcpによる通信"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "Microsoft-Windows-WinRM/Operationalログにおいて、イベント6・31が記録されており、セッションが確立している。"
+        ],
+        "Target": [
+            "winrshost.exeを親プロセスとする実行ファイルが実行されている。"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[実行プロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\winrs.exe",
+                    "CommandLine": "winrs -r:[接続先ホスト] [実行コマンド]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 6
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 31
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\winrs.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[直前のイベント5158でバインドしたポート]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 13
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\WINRS.EXE-[ハッシュ値].pf",
+                    "Process Name": "WINRS.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM#@\\WINRSHOST.EXE",
+                    "Note": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "C:\\Windows\\Prefetch\\WINRS.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "WINRS.EXE-[ハッシュ値].pf",
+                    "Operation": ["DataExtend|FileCreate|Close"],
+                    "Note": ""
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 91
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[実行プロセスID]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "ParentProcessName": "C:\\Windows\\System32\\winrshost.exe",
+                    "Note": "winrshost.exeより、指定された実行ファイルが呼び出される。実行ファイルのパスや、この後の動作はWinRSに指定されたコマンドラインにより異なる。"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\WINRSHOST.EXE-[ハッシュ値].pf",
+                    "Process Name": "WINRSHOST.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM32\\WINRSHOST.EXE",
+                    "Note": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "C:\\Windows\\Prefetch\\WINRSHOST.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "WINRSHOST.EXE-[ハッシュ値].pf",
+                    "Operation": ["DataExtend|FileCreate|Close"],
+                    "Note": ""
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "NewProcessId": "[実行プロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\winrs.exe",
+                    "CommandLine": "winrs -r:[接続先ホスト] [実行コマンド]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\winrs.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "winrs -r:[接続先ホスト] [実行コマンド]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "ImageLoaded": "[読み取ったDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルなどのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "\\lsass",
+                    "Image": "C:\\WINDOWS\\system32\\winrs.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "\\wkssvc",
+                    "Image": "C:\\WINDOWS\\system32\\winrs.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 2
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 29
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 6
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 31
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 11
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\winrs.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\winrs.exe",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\winrs.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[直前のイベント5158でバインドしたポート]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\winrs.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "5985"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 13
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 15
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 16
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 8
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 33
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 4
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 30
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[実行ユーザーSID]",
+                    "SubjectUserName": "[実行ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\winrs.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\winrs.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\WINRS.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\WINRS.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\WINRS.EXE-[文字列].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\WINRS.EXE-[ハッシュ値].pf",
+                    "Process Name": "WINRS.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM#@\\WINRSHOST.EXE",
+                    "Note": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "C:\\Windows\\Prefetch\\WINRS.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "WINRS.EXE-[ハッシュ値].pf",
+                    "Operation": ["DataExtend|FileCreate|Close"],
+                    "Note": ""
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "5985"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege-, SeBackupPrivilege-, SeRestorePrivilege-, SeTakeOwnershipPrivilege-, SeDebugPrivilege-, SeSystemEnvironmentPrivilege-, SeLoadDriverPrivilege-, SeImpersonatePrivilege-, SeDelegateSessionUserImpersonatePrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "ProcessName": "-",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "WS-ManagementListener",
+                    "ObjectType": "Unknown",
+                    "ObjectName": "Unknown",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 91
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\winrshost.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\WinrsHost.exe -Embedding"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\winrshost.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\WinrsHost.exe -Embedding",
+                    "User": "[ドメイン名]\\[ログオンユーザー名]",
+                    "LogonId": "[ログオンID]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Mutant",
+                    "ObjectName": "\\BaseNamedObjects\\[文字列]",
+                    "PrivilegeList": "DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, SYNCHRONIZE, ミュータント状態の照会",
+                    "ProcessName": "C:\\Windows\\System32\\winrshost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "-",
+                    "ObjectName": "-",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\winrshost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Semaphore",
+                    "ObjectName": "\\BaseNamedObjects\\[文字列]",
+                    "PrivilegeList": "DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, SYNCHRONIZE, セマフォ状態の照会, セマフォ状態の変更",
+                    "ProcessName": "C:\\Windows\\System32\\winrshost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "WS-ManagementListener",
+                    "ObjectType": "Unknown",
+                    "ObjectName": "Unknown",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[実行プロセスID]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "ParentProcessName": "C:\\Windows\\System32\\winrshost.exe",
+                    "Note": "winrshost.exeより、指定された実行ファイルが呼び出される。実行ファイルのパスや、この後の動作はWinRSに指定されたコマンドラインにより異なる。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス] [コマンドライン]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ログオンユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\winrshost.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\WinrsHost.exe -Embedding",
+                    "ParentUser": "[親プロセスの実行ユーザ]",
+                    "Note": "winrshost.exeより、指定された実行ファイルが呼び出される。実行ファイルのパスや、この後の動作はWinRSに指定されたコマンドラインにより異なる。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "[戻り値]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "Note": "winrshost.exeより呼び出された実行ファイルの終了。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ログオンユーザー名]",
+                    "Note": "winrshost.exeより呼び出された実行ファイルの終了。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ログオンユーザーSID]",
+                    "SubjectUserName": "[ログオンユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessName": "C:\\Windows\\System32\\winrshost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "Image": "C:\\Windows\\System32\\winrshost.exe",
+                    "User": "[ドメイン名]\\[ログオンユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\WINRSHOST.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C::\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\WINRSHOST.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C::\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C::\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\WINRSHOST.EXE-[文字列].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetLogonId": "[イベント4624で記録されたログオンID]",
+                    "LogonType": 3
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\WINRSHOST.EXE-[ハッシュ値].pf",
+                    "Process Name": "WINRSHOST.EXE",
+                    "Process Path": "C:\\WINDOWS\\SYSTEM32\\WINRSHOST.EXE",
+                    "Note": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "C:\\Windows\\Prefetch\\WINRSHOST.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "WINRSHOST.EXE-[ハッシュ値].pf",
+                    "Operation": ["DataExtend|FileCreate|Close"],
+                    "Note": ""
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "POST /wsman HTTP/1.1",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "5985",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "HTTP/1.1 200",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "5985",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "POST /wsman HTTP/1.1 (application/http-kerberos-session-encrypted)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "5985",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "HTTP/1.1 200 (application/http-kerberos-session-encrypted)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "5985",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "POST /wsman HTTP/1.1 (application/http-kerberos-session-encrypted)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "5985",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "HTTP/1.1 200 (application/http-kerberos-session-encrypted)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "5985",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "POST /wsman HTTP/1.1 (application/http-kerberos-session-encrypted)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "5985",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "HTTP/1.1 200 (application/http-kerberos-session-encrypted)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "5985",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "POST /wsman HTTP/1.1 (application/http-kerberos-session-encrypted)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "5985",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "HTTP/1.1 200 (application/http-kerberos-session-encrypted)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "5985",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "POST /wsman HTTP/1.1 (application/http-kerberos-session-encrypted)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "5985",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "HTTP/1.1 200 (application/http-kerberos-session-encrypted)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "5985",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "POST /wsman HTTP/1.1 (application/http-kerberos-session-encrypted)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "5985",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "HTTP/1.1 204",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "5985",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        }
+    ]
+}

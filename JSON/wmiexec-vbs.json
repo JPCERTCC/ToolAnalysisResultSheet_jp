@@ -1,0 +1,2783 @@
+{
+    "Summary": {
+        "ToolName": "wmiexec.vbs",
+        "Category": "コマンド実行",
+        "Description": "Windowsのシステム管理に使用する。",
+        "Usage": "リモートホストで、スクリプトなどを実行する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": [
+                "135/tcp",
+                "445/tcp",
+                "ハイポート/tcp"
+            ]
+        },
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "User",
+            "Protocol": [
+                "135/tcp",
+                "445/tcp",
+                "ハイポート/tcp"
+            ],
+            "Service": ""
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            },
+            "Target": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴"
+            },
+            "Target": {
+                "監査ポリシー・Sysmon": "実行履歴",
+                "監査ポリシー": "ファイルの作成・削除履歴、共有パスの使用履歴"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Target": [
+            "接続先: \"WMI_SHARE\"共有が作成され、削除されている (イベント5145、5144)"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "cscript [スクリプト名] /cmd [接続先ホスト] [ドメイン名]\\[ユーザー名] \"[パスワード]\" [実行コマンド]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "\"C:\\Windows\\System32\\cmd.exe\" /c net use \\\\[接続先ホスト] \"[パスワード]\" /user:[ドメイン名]\\[ユーザー名]",
+                    "ParentProcessName": "C:\\Windows\\System32\\cscript.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\net.exe",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "net use \\\\[接続先ホスト] \"[パスワード]\" /user:[ドメイン名]\\[ユーザー名]",
+                    "ParentProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "CommandLine": "net use \\\\[接続先ホスト] \"[パスワード]\" /user:[ドメイン名]\\[ユーザー名]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\cmd.exe",
+                    "ParentCommandLine": "\"C:\\Windows\\System32\\cmd.exe\" /c net use \\\\[接続先IPアドレス] \"[パスワード]\" /user:[ドメイン名]\\[ユーザー名]",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-SmbClient/Connectivity",
+                    "EventID": 30830,
+                    "Server name": "[接続先ホスト]",
+                    "ServerSocketAddress": "[接続先IPアドレス]:[接続先ポート番号]",
+                    "Transport": "TCPIP",
+                    "InstanceName": "\\Device\\LanmanRedirector",
+                    "Port Origin": "The port was selected from the global registry settings."
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\svchost.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "135",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "Category": "フィルタリング プラットフォームの接続",
+                    "Description": "Windows フィルターリング プラットフォームで、接続が許可されました。",
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\cscript.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "\"C:\\Windows\\System32\\cmd.exe\" /c net use \\\\[接続先IPアドレス] /del",
+                    "ParentProcessName": "C:\\Windows\\System32\\cscript.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-SmbClient/Connectivity",
+                    "EventID": 30807,
+                    "Status": "3221225673 (ネットワーク名は削除されました。)",
+                    "SessionId": "[セッションID]",
+                    "TreeId": "[ツリーID]",
+                    "ServerName": "\\[接続先IPアドレス]\\WMI_SHARE"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "net use \\\\[接続先IPアドレス] /del",
+                    "ParentProcessName": "C:\\Windows\\System32\\cmd.exe"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "CSCRIPT.EXE-[ハッシュ値].pf",
+                    "Process Name": "CSCRIPT.EXE",
+                    "Process Path": "\\VOLUME{GUID}\\WINDOWS\\SYSTEM32\\CSCRIPT.EXE",
+                    "Note": "実行履歴、アクセスしたファイル"
+                },
+                {
+                    "File": "NET.EXE-[ハッシュ値].pf",
+                    "Process Name": "NET.EXE",
+                    "Process Path": "\\VOLUME{GUID}\\WINDOWS\\SYSTEM32\\NET.EXE",
+                    "Note": "実行履歴、アクセスしたファイル"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script",
+                    "Type": "-",
+                    "Value": ""
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script\\Settings",
+                    "Type": "-",
+                    "Value": ""
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script\\Settings\\Telemetry",
+                    "Type": "-",
+                    "Value": ""
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script\\Settings\\Telemetry\\cscript.exe",
+                    "Type": "-",
+                    "Value": "VBScriptSetScriptStateStarted: 2F 58 11 00 00 00 00 00"
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script Host",
+                    "Type": "-",
+                    "Value": ""
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script Host\\Settings",
+                    "Type": "-",
+                    "Value": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\CSCRIPT.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                },
+                {
+                    "Path": ".\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": ".\\Windows\\WinSxS\\amd64_microsoft-windows-scripting_31bf3856ad364e35_10.0.26100.1591_none_e4284e3cb060c8bf\\cscript.exe",
+                    "Operation": [
+                        "Close"
+                    ]
+                },
+                {
+                    "File": ".\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "FileCreate"
+                    ]
+                },
+                {
+                    "File": ".\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend",
+                        "FileCreate"
+                    ]
+                },
+                {
+                    "File": ".\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend",
+                        "FileCreate",
+                        "Close"
+                    ]
+                },
+                {
+                    "File": "CSCRIPT.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "FileCreate"
+                    ]
+                },
+                {
+                    "File": "CSCRIPT.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend",
+                        "FileCreate"
+                    ]
+                },
+                {
+                    "File": "CSCRIPT.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend",
+                        "FileCreate",
+                        "Close"
+                    ]
+                },
+                {
+                    "File": "NET.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "RenameOldName+DataExtend+FileCreate+Close"
+                    ]
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5142,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ShareName": "\\\\*\\WMI_SHARE",
+                    "ShareLocalPath": "C:\\windows\\temp"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\LanmanServer\\Shares\\WMI_SHARE",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\cmd.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "cmd.exe /c [実行コマンド] > C:\\windows\\temp\\wmi.dll 2>&1",
+                    "ParentProcessName": "C:\\Windows\\System32\\wbem\\WmiPrvSE.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\WMI_SHARE",
+                    "ShareLocalPath": "\\??\\C:\\windows\\temp",
+                    "RelativeTargetName": "wmi.dll",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), ReadEA, ReadAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "Category": "プロセス作成",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "cmd.exe /c del C:\\windows\\temp\\wmi.dll /F > nul 2>&1",
+                    "ParentProcessName": "C:\\Windows\\System32\\wbem\\WmiPrvSE.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4659,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Temp\\wmi.dll",
+                    "HandleId": "0x0",
+                    "TransactionId": "{00000000-0000-0000-0000-000000000000}",
+                    "AccessList": "[アクセス要求情報]",
+                    "AccessMask": "0x10000",
+                    "PrivilegeList": "SeRestorePrivilege",
+                    "ProcessId": "[実行プロセスID]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "CMD-[ハッシュ値].pf",
+                    "Process Name": "CMD.EXE",
+                    "Process Path": "\\VOLUME{[GUID]}\\WINDOWS\\SYSTEM32\\CMD.EXE",
+                    "Note": "実行履歴"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKLM\\SOFTWARE\\Microsoft\\Wbem\\Tracing\\Providers\\CIMWin32 @ root/CIMV2\\[タイムスタンプ]",
+                    "Type": "REG_SZ",
+                    "Value": "\"ProcessID: [プロセスID]\""
+                },
+                {
+                    "Path": "HKLM\\SOFTWARE\\Microsoft\\Wbem\\Tracing\\Providers\\smbwmiv2 @ ROOT/Microsoft/Windows/Smb\\[タイムスタンプ]",
+                    "Type": "REG_SZ",
+                    "Value": "\"ProcessID: [プロセスID]\""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\CMD.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "CMD.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "CLOSE+DATA_EXTEND+FILE_CREATE\nDATA_EXTEND+FILE_CREATE\nFILE_CREATE"
+                    ],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "wmi.dll",
+                    "Operation": [
+                        "CLOSE+DATA_EXTEND+FILE_CREATE\nDATA_EXTEND+FILE_CREATE\nFILE_CREATE\nRENAME_OLD_NAME"
+                    ],
+                    "Note": "archive"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "cscript [スクリプト名] /cmd [接続先ホスト] [ドメイン名]\\[ユーザー名] \"[パスワード]\" [実行コマンド]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cscript.exe",
+                    "CommandLine": "cscript [スクリプト名] /cmd [接続先ホスト] [ドメイン名]\\[ユーザー名] \"[パスワード]\" [実行コマンド]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\cscript.exe",
+                    "TargetObject": "HKLM\\SOFTWARE\\Microsoft\\Windows Script Host\\Settings",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\cscript.exe",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script Host\\Settings",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "\"C:\\Windows\\System32\\cmd.exe\" /c net use \\\\[接続先ホスト] \"[パスワード]\" /user:[ドメイン名]\\[ユーザー名]",
+                    "ParentProcessName": "C:\\Windows\\System32\\cscript.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "CommandLine": "\"C:\\Windows\\System32\\cmd.exe\" /c net use \\\\[接続先ホスト] \"[パスワード]\" /user:[ドメイン名]\\[ユーザー名]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\cscript.exe",
+                    "ParentCommandLine": "cscript [スクリプト名] /cmd [接続先ホスト] [ドメイン名]\\[ユーザー名] \"[パスワード]\" [実行コマンド]",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\cscript.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\Windows\\System32\\cmd.exe",
+                    "GrantedAccess": "0x1FFFFF"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\cscript.exe",
+                    "TargetObject": "HKLM\\SOFTWARE\\Microsoft\\Wbem",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\cscript.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\net.exe",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "net use \\\\[接続先ホスト] \"[パスワード]\" /user:[ドメイン名]\\[ユーザー名]",
+                    "ParentProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "CommandLine": "net use \\\\[接続先ホスト] \"[パスワード]\" /user:[ドメイン名]\\[ユーザー名]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\cmd.exe",
+                    "ParentCommandLine": "\"C:\\Windows\\System32\\cmd.exe\" /c net use \\\\[接続先IPアドレス] \"[パスワード]\" /user:[ドメイン名]\\[ユーザー名]",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\Windows\\System32\\cmd.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\WINDOWS\\system32\\net.exe",
+                    "GrantedAccess": "0x1FFFFF"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-SmbClient/Connectivity",
+                    "EventID": 30830,
+                    "Server name": "[接続先ホスト]",
+                    "ServerSocketAddress": "[接続先IPアドレス]:[接続先ポート番号]",
+                    "Transport": "TCPIP",
+                    "InstanceName": "\\Device\\LanmanRedirector",
+                    "Port Origin": "The port was selected from the global registry settings."
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4648,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "TargetUserName": "[指定されたユーザー名]",
+                    "TargetDomainName": "[指定されたドメイン名]",
+                    "TargetServerName": "[ログオン先ホスト名]",
+                    "TargetInfo": "[ログオン先ホスト名]",
+                    "ProcessId": "0x4",
+                    "ProcessName": "-",
+                    "IpAddress": "[接続先IPアドレス]",
+                    "IpPort": "[接続先ポート番号]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\net.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\CMD.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\CMD.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\CMD.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\CSCRIPT.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\CSCRIPT.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\CSCRIPT.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\svchost.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "135",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\lsass.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "88",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4648,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "TargetUserName": "[指定されたユーザー名]",
+                    "TargetDomainName": "[指定されたドメイン名]",
+                    "TargetServerName": "[ログオン先ホスト名]",
+                    "TargetInfo": "RPCSS/[ログオン先ホスト名]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "IpAddress": "[接続先IPアドレス]",
+                    "IpPort": "135"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\cscript.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4648,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "TargetUserName": "[指定されたユーザー名]",
+                    "TargetDomainName": "[指定されたドメイン名]",
+                    "TargetServerName": "[ログオン先ホスト名]",
+                    "TargetInfo": "host/[ログオン先ホスト名]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\cscript.exe",
+                    "IpAddress": "[接続先IPアドレス]",
+                    "IpPort": "[接続先ポート番号]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe",
+                    "Protocol": "tcp",
+                    "Initiated": "True",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "135"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cscript.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": "True",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "\"C:\\Windows\\System32\\cmd.exe\" /c net use \\\\[接続先IPアドレス] /del",
+                    "ParentProcessName": "C:\\Windows\\System32\\cscript.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "\"C:\\Windows\\System32\\cmd.exe\" /c net use \\\\[接続先IPアドレス] /del",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "Medium",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\cscript.exe",
+                    "ParentCommandLine": "cscript [スクリプト名] /cmd [接続先IPアドレス] [ドメイン名]\\[ユーザー名] \"[パスワード]\" [実行コマンド]",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\cscript.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\Windows\\System32\\cmd.exe",
+                    "GrantedAccess": "0x1FFFFF"
+                },
+                {
+                    "Channel": "Microsoft-Windows-SmbClient/Connectivity",
+                    "EventID": 30807,
+                    "Status": "3221225673 (ネットワーク名は削除されました。)",
+                    "SessionId": "[セッションID]",
+                    "TreeId": "[ツリーID]",
+                    "ServerName": "\\[接続先IPアドレス]\\WMI_SHARE"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\cscript.exe",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script\\Settings\\Telemetry\\cscript.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\cscript.exe",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script\\Settings\\Telemetry\\cscript.exe\\VBScriptSetScriptStateStarted",
+                    "Details": "QWORD (0x00000000-0x0011582f)",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cscript.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\cscript.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "net use \\\\[接続先IPアドレス] /del",
+                    "ParentProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "CommandLine": "net use \\\\[接続先IPアドレス] /del",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\cmd.exe",
+                    "ParentCommandLine": "\"C:\\Windows\\System32\\cmd.exe\" /c net use \\\\[接続先IPアドレス] /del",
+                    "ParentUser": "[親プロセスの実行ユーザ]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\Windows\\System32\\cmd.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\WINDOWS\\system32\\net.exe",
+                    "GrantedAccess": "0x1FFFFF"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\net.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\net.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\CMD.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "CSCRIPT.EXE-[ハッシュ値].pf",
+                    "Process Name": "CSCRIPT.EXE",
+                    "Process Path": "\\VOLUME{GUID}\\WINDOWS\\SYSTEM32\\CSCRIPT.EXE",
+                    "Note": "実行履歴、アクセスしたファイル"
+                },
+                {
+                    "File": "NET.EXE-[ハッシュ値].pf",
+                    "Process Name": "NET.EXE",
+                    "Process Path": "\\VOLUME{GUID}\\WINDOWS\\SYSTEM32\\NET.EXE",
+                    "Note": "実行履歴、アクセスしたファイル"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script",
+                    "Type": "-",
+                    "Value": ""
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script\\Settings",
+                    "Type": "-",
+                    "Value": ""
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script\\Settings\\Telemetry",
+                    "Type": "-",
+                    "Value": ""
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script\\Settings\\Telemetry\\cscript.exe",
+                    "Type": "-",
+                    "Value": "VBScriptSetScriptStateStarted: 2F 58 11 00 00 00 00 00"
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script Host",
+                    "Type": "-",
+                    "Value": ""
+                },
+                {
+                    "Path": "HKU\\[ユーザーSID]\\Software\\Microsoft\\Windows Script Host\\Settings",
+                    "Type": "-",
+                    "Value": ""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\CSCRIPT.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                },
+                {
+                    "Path": ".\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": ".\\Windows\\WinSxS\\amd64_microsoft-windows-scripting_31bf3856ad364e35_10.0.26100.1591_none_e4284e3cb060c8bf\\cscript.exe",
+                    "Operation": [
+                        "Close"
+                    ]
+                },
+                {
+                    "File": ".\\Windows\\Prefetch\\NET.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend",
+                        "FileCreate",
+                        "Close"
+                    ]
+                },
+                {
+                    "File": "CSCRIPT.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend",
+                        "FileCreate",
+                        "Close"
+                    ]
+                },
+                {
+                    "File": "NET.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "DataExtend",
+                        "FileCreate",
+                        "Close"
+                    ]
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "445",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "NULL SID",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "0x0",
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ElevatedToken": true
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\IPC$",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": "False",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "445"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\svchost.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "135",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\svchost.exe",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "[接続先ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "NULL SID",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "[ログオンID]",
+                    "TargetUserSid": "[ログオンユーザーSID]",
+                    "TargetUserName": "[ログオンユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ElevatedToken": true
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[コンピューターアカウント]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\wbem\\WmiPrvSE.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe -secured -Embedding",
+                    "ParentProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\wbem\\WmiPrvSE.exe",
+                    "CommandLine": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe -secured -Embedding",
+                    "CurrentDirectory": "C:\\WINDOWS\\system32\\",
+                    "User": "NT AUTHORITY\\NETWORK SERVICE",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "System",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\svchost.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\svchost.exe -k DcomLaunch -p",
+                    "ParentUser": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5142,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ShareName": "\\\\*\\WMI_SHARE",
+                    "ShareLocalPath": "C:\\windows\\temp"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\LanmanServer\\Shares",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\LanmanServer\\Shares\\WMI_SHARE",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\LanmanServer\\Shares\\Security",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\LanmanServer\\Shares\\Security\\WMI_SHARE",
+                    "Details": "Binary Data",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\cmd.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "cmd.exe /c [実行コマンド] > C:\\windows\\temp\\wmi.dll 2>&1",
+                    "ParentProcessName": "C:\\Windows\\System32\\wbem\\WmiPrvSE.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "CommandLine": "cmd.exe /c [実行コマンド] > C:\\windows\\temp\\wmi.dll 2>&1",
+                    "CurrentDirectory": "C:\\WINDOWS\\system32\\",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\wbem\\WmiPrvSE.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe -secured -Embedding",
+                    "ParentUser": "NT AUTHORITY\\NETWORK SERVICE"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\WINDOWS\\system32\\cmd.exe",
+                    "GrantedAccess": "0x1FFFFF"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WMI-Activity/Operational",
+                    "EventID": 5858,
+                    "Id": "[イベントID（GUID）]",
+                    "ClientMachine": "[接続先ホスト名]",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "ClientProcessId": "[プロセスID]",
+                    "Component": "Provider",
+                    "Operation": "Start IWbemServices::ExecMethod - ROOT\\Microsoft\\Windows\\Smb : MSFT_SmbShare::FireShareChangeEvent",
+                    "ResultCode": "0x80041007",
+                    "PossibleCause": "Unknown"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "\\Device\\ConDrv",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\conhost.exe",
+                    "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0xffffffff -ForceV1",
+                    "CurrentDirectory": "C:\\WINDOWS",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\cmd.exe",
+                    "ParentCommandLine": "cmd.exe /c [実行コマンド] > C:\\windows\\temp\\wmi.dll 2>&1",
+                    "ParentUser": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\cmd.exe",
+                    "TargetFilename": "C:\\Windows\\Temp\\wmi.dll",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Temp\\wmi.dll",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "[要求された権限]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "[実行コマンド]",
+                    "ParentProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行コマンドのパス]",
+                    "CommandLine": "[実行コマンド]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\cmd.exe",
+                    "ParentCommandLine": "cmd.exe /c [実行コマンド] > C:\\windows\\temp\\wmi.dll 2>&1",
+                    "ParentUser": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Temp\\wmi.dll",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行コマンドのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行コマンドのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行コマンドのパス]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe",
+                    "User": "NT AUTHORITY\\NETWORK SERVICE",
+                    "Protocol": "tcp",
+                    "Initiated": "False",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "135"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": "False",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "[接続先ポート番号]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5140,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\WMI_SHARE",
+                    "ShareLocalPath": "\\??\\C:\\windows\\temp",
+                    "AccessList": "ReadData (または ListDirectory)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5145,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectType": "File",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "ShareName": "\\\\*\\WMI_SHARE",
+                    "ShareLocalPath": "\\??\\C:\\windows\\temp",
+                    "RelativeTargetName": "wmi.dll",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), ReadEA, ReadAttributes"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "NULL SID",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\cmd.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "cmd.exe /c del C:\\windows\\temp\\wmi.dll /F > nul 2>&1",
+                    "ParentProcessName": "C:\\Windows\\System32\\wbem\\WmiPrvSE.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "CommandLine": "cmd.exe /c del C:\\windows\\temp\\wmi.dll /F > nul 2>&1",
+                    "CurrentDirectory": "C:\\WINDOWS\\system32\\",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\wbem\\WmiPrvSE.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe -secured -Embedding",
+                    "ParentUser": "NT AUTHORITY\\NETWORK SERVICE"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\WINDOWS\\system32\\cmd.exe",
+                    "GrantedAccess": "0x1FFFFF"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[親プロセスID]",
+                    "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0xffffffff -ForceV1",
+                    "ParentProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "\\Device\\ConDrv",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\conhost.exe",
+                    "CommandLine": "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0xffffffff -ForceV1",
+                    "CurrentDirectory": "C:\\WINDOWS",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\cmd.exe",
+                    "ParentCommandLine": "cmd.exe /c del C:\\windows\\temp\\wmi.dll /F > nul 2>&1",
+                    "ParentUser": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5144,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ShareName": "\\\\*\\WMI_SHARE",
+                    "ShareLocalPath": "C:\\windows\temp"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "DeleteValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\LanmanServer\\Shares\\Security\\WMI_SHARE",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "DeleteValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\LanmanServer\\Shares\\WMI_SHARE",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4659,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Temp\\wmi.dll",
+                    "HandleId": "0x0",
+                    "TransactionId": "{00000000-0000-0000-0000-000000000000}",
+                    "AccessList": "[アクセス要求情報]",
+                    "AccessMask": "0x10000",
+                    "PrivilegeList": "SeRestorePrivilege",
+                    "ProcessId": "[実行プロセスID]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Temp\\wmi.dll",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "SeRestorePrivilege",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\cmd.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\cmd.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\CMD.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\WMIPRVSE.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetLogonId": "[イベント4624で記録されたログオンID]",
+                    "LogonType": 3
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4634,
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetLogonId": "[イベント4624で記録されたログオンID]",
+                    "LogonType": 3
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "CMD-[ハッシュ値].pf",
+                    "Process Name": "CMD.EXE",
+                    "Process Path": "\\VOLUME{[GUID]}\\WINDOWS\\SYSTEM32\\CMD.EXE",
+                    "Note": "実行履歴"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKLM\\SOFTWARE\\Microsoft\\Wbem\\Tracing\\Providers\\CIMWin32 @ root/CIMV2\\[タイムスタンプ]",
+                    "Type": "REG_SZ",
+                    "Value": "\"ProcessID: [プロセスID]\""
+                },
+                {
+                    "Path": "HKLM\\SOFTWARE\\Microsoft\\Wbem\\Tracing\\Providers\\smbwmiv2 @ ROOT/Microsoft/Windows/Smb\\[タイムスタンプ]",
+                    "Type": "REG_SZ",
+                    "Value": "\"ProcessID: [プロセスID]\""
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\CMD.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "InUse"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "CMD.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "CLOSE+DATA_EXTEND+FILE_CREATE"
+                    ],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "wmi.dll",
+                    "Operation": [
+                        "CLOSE+DATA_EXTEND+FILE_CREATE",
+                        "RENAME_OLD_NAME"
+                    ],
+                    "Note": "archive"
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "Session message; Negotiate Protocol",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Negotiate Protocol Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Request, NTLMSSP_NEGOTIATE",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Response, Error: STATUS_MORE_PROCESSING_REQUIRED, NTLMSSP_CHALLENGE",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Request, NTLMSSP_AUTH, User: [ドメイン名]\\\\[ユーザー名]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Setup Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request, Tree: '\\\\\\\\[接続先IPアドレス]\\\\IPC$'",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Response, Tree: '\\\\\\\\[接続先IPアドレス]\\\\IPC$'",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Response FSCTL_QUERY_NETWORK_INTERFACE_INFO",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Bind: call_id: 2, Fragment: Single, 2 context items: IOXIDResolver V0.0 (32bit NDR), IOXIDResolver V0.0 (6cb71c2c-9812-4540-0300-000000000000)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "135",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Bind_ack: call_id: 2, Fragment: Single, max_xmit: 5840 max_recv: 5840, 2 results: Acceptance, Negotiate ACK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "135",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "ServerAlive2 request IOXIDResolver V0",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "135",
+            "Protocol": "tcp",
+            "Application": "IOXIDResolver"
+        },
+        {
+            "Operation": "ServerAlive2 response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "135",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IOXIDResolver"
+        },
+        {
+            "Operation": "Bind: call_id: 3, Fragment: Single, 1 context items: ISystemActivator V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "135",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Bind_ack: call_id: 3, Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "135",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context: call_id: 3, Fragment: Single, 1 context items: ISystemActivator V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "135",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: 3, Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "135",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemoteCreateInstance request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "135",
+            "Protocol": "tcp",
+            "Application": "ISystemActivator"
+        },
+        {
+            "Operation": "RemoteCreateInstance response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "135",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "ISystemActivator"
+        },
+        {
+            "Operation": "Bind: call_id: 2, Fragment: Single, 3 context items: IRemUnknown2 V0.0 (32bit NDR), IRemUnknown2 V0.0 (64bit NDR), IRemUnknown2 V0.0 (6cb71c2c-9812-4540-0300-000000000000)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Bind_ack: call_id: 2, Fragment: Single, max_xmit: 5840 max_recv: 5840, 3 results: Provider rejection, Acceptance, Negotiate ACK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context: call_id: 2, Fragment: Single, 1 context items: IRemUnknown2 V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: 2, Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context: call_id: 2, Fragment: Single, 1 context items: IRemUnknown2 V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: 2, Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemQueryInterface request IID[1]=IWBEMLOGINCLIENTID",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "RemQueryInterface response S_OK[1] -> S_OK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "RemQueryInterface request IID[1]=???[Long frame (4 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "RemQueryInterface response -> S_FALSE[Long frame (56 bytes)]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "Alter_context: call_id: 4, Fragment: Single, 1 context items: IWBEMLOGINCLIENTID V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: 4, Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "SetClientInfo request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IWBEMLOGINCLIENTID"
+        },
+        {
+            "Operation": "SetClientInfo response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IWBEMLOGINCLIENTID"
+        },
+        {
+            "Operation": "Alter_context: call_id: 5, Fragment: Single, 1 context items: IWBEMLOGINCLIENTIDEX V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: 5, Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "SetClientInfoEx request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IWBEMLOGINCLIENTIDEX"
+        },
+        {
+            "Operation": "SetClientInfoEx response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IWBEMLOGINCLIENTIDEX"
+        },
+        {
+            "Operation": "Alter_context: call_id: 6, Fragment: Single, 1 context items: IWBEMLEVEL1LOGIN V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: 6, Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "EstablishPosition request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IWBEMLEVEL1LOGIN"
+        },
+        {
+            "Operation": "EstablishPosition response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IWBEMLEVEL1LOGIN"
+        },
+        {
+            "Operation": "NTLMLogin request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IWBEMLEVEL1LOGIN"
+        },
+        {
+            "Operation": "NTLMLogin response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IWBEMLEVEL1LOGIN"
+        },
+        {
+            "Operation": "RemRelease request Cnt=0[Long frame (80 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "RemRelease response -> S_OK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "Alter_context: call_id: 9, Fragment: Single, 1 context items: IWBEMSERVICES V0.0 (32bit NDR), NTLMSSP_NEGOTIATE",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: 9, Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance, NTLMSSP_CHALLENGE",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "AUTH3: call_id: 9, Fragment: Single, NTLMSSP_AUTH, User: [ドメイン名]\\\\[ユーザー名]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: 9, Fragment: 1st, Ctx: 5 [DCE/RPC 1st fragment, reas: #168]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: 9, Fragment: Mid, Ctx: 5 [DCE/RPC Mid fragment, reas: #168]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: 12, Fragment: 1st, Ctx: 5 [DCE/RPC 1st fragment, reas: #181]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: 12, Fragment: Mid, Ctx: 5 [DCE/RPC Mid fragment, reas: #181]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: 12, Fragment: Mid, Ctx: 5 [DCE/RPC Mid fragment, reas: #181]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Ioctl Request FSCTL_DFS_GET_REFERRALS",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Ioctl Response, Error: STATUS_FS_DRIVER_REQUIRED",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request, Tree: '\\\\\\\\[接続先ホスト]\\\\WMI_SHARE'",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Response, Tree: '\\\\\\\\[接続先ホスト]\\\\WMI_SHARE'",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Request, File: wmi.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Create Response, File: wmi.dll",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Request Len:348 Off:0, File: wmi.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Read Response, File: wmi.dll",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Response: call_id: 15, Fragment: 1st, Ctx: 5 [DCE/RPC 1st fragment, reas: #215]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: 15, Fragment: Mid, Ctx: 5 [DCE/RPC Mid fragment, reas: #215]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: 15, Fragment: Mid, Ctx: 5 [DCE/RPC Mid fragment, reas: #215]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "RemQueryInterface request IID[1]=???[Long frame (4 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "RemQueryInterface response -> S_FALSE[Long frame (56 bytes)]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "Alter_context: call_id: 19, Fragment: Single, 1 context items: IWbemFetchSmartEnum V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: 19, Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Request: call_id: 19, Fragment: Single, opnum: 3, Ctx: 6 IWbemFetchSmartEnum V0",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: 19, Fragment: Single, Ctx: 6 IWbemFetchSmartEnum V0",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context: call_id: 20, Fragment: Single, 1 context items: IWbemWCOSmartEnum V0.0 (32bit NDR)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Alter_context_resp: call_id: 20, Fragment: Single, max_xmit: 5840 max_recv: 5840, 1 results: Acceptance",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Request: call_id: 20, Fragment: Single, opnum: 3, Ctx: 7 IWbemWCOSmartEnum V0",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: 20, Fragment: Single, Ctx: 7 IWbemWCOSmartEnum V0",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: 21, Fragment: 1st, Ctx: 5 [DCE/RPC 1st fragment, reas: #237]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Response: call_id: 21, Fragment: Mid, Ctx: 5 [DCE/RPC Mid fragment, reas: #237]",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Lease Break Notification, Error: STATUS_FILE_CLOSED",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Request, File: wmi.dll",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Close Response, Error: STATUS_NETWORK_NAME_DELETED",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request, Tree: '\\\\\\\\[接続先IPアドレス]\\\\WMI_SHARE'",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Response, Error: STATUS_BAD_NETWORK_NAME",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Request, Tree: '\\\\\\\\[接続先IPアドレス]\\\\WMI_SHARE'",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Request: call_id: 23, Fragment: Single, opnum: 3, Ctx: 7 IWbemWCOSmartEnum V0",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Tree Connect Response, Error: STATUS_BAD_NETWORK_NAME",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Response: call_id: 23, Fragment: Single, Ctx: 7 IWbemWCOSmartEnum V0",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "DCERPC"
+        },
+        {
+            "Operation": "Tree Connect Request, Tree: '\\\\\\\\[接続先IPアドレス]\\\\WMI_SHARE'",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Connect Response, Error: STATUS_BAD_NETWORK_NAME",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "RemRelease request Cnt=0[Long frame (56 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "RemRelease response -> S_OK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "RemRelease request Cnt=0[Long frame (32 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "RemRelease response -> S_OK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "RemRelease request Cnt=0[Long frame (32 bytes)]",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "[接続先ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "RemRelease response -> S_OK",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "[接続先ポート番号]",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "IRemUnknown2"
+        },
+        {
+            "Operation": "Tree Disconnect Request, Tree: '\\\\\\\\[接続先IPアドレス]\\\\IPC$'",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Tree Disconnect Response, Tree: '\\\\\\\\[接続先IPアドレス]\\\\IPC$'",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Logoff Request",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "445",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        },
+        {
+            "Operation": "Session Logoff Response",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "445",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "SMB2"
+        }
+    ]
+}

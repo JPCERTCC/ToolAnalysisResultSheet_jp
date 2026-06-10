@@ -1,0 +1,1597 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Fake wpad</title>
+        <link rel="stylesheet" type="text/css" href="common/style.css" />
+        <script type="text/javascript" src="common/script.js"></script>
+    </head>
+    <body>
+        <h1 class="title">Fake wpad</h1>
+            <h2 class="toc" id="toc"><a href="#toc" class="collapse" id="a-toc" onclick="showhide('toc');">-</a> 目次</h2>
+                <div class="section" id="div-ToC">
+                    <ul>
+                        <li><a href="#Summary">ツール概要</a></li>
+                        <li><a href="#ExecCondition">ツール動作概要</a></li>
+                        <li><a href="#Findings">ログから得られる情報</a></li>
+                        <li><a href="#SuccessCondition">実行成功時に確認できる痕跡</a></li>
+                        <li><a href="#KeyEvents">実行時に記録される主要な情報</a></li>
+                        <li><a href="#Details-Source">詳細情報: 接続元</a></li>
+                        <li><a href="#Details-Target">詳細情報: 接続先</a></li>
+                    </ul>
+                    <p class="toc_command"><a href="#" onclick="collapseall('s');">全てのセクションを開く</a> | <a href="#" onclick="collapseall('h');">全てのセクションを閉じる</a></p>
+                    <hr class="section_divider" />
+                </div><!-- End of div-ToC -->
+            <h2 class="section" id="Summary"><a href="#Summary" class="collapse" id="a-Summary" onclick="showhide('Summary');">-</a> ツール概要</h2>
+                <div class="section" id="div-Summary">
+                    <dl class="table">
+                        <dt class="table">カテゴリ</dt>
+                            <dd class="table">通信の不正中継</dd>
+                        <dt class="table">説明</dt>
+                            <dd class="table">wpadサーバーとして動作し、クライアントからの通信内容を取得・変更する。</dd>
+                        <dt class="table">攻撃時における想定利用例</dt>
+                            <dd class="table">クライアントから外部Webサイトへの通信を不正中継することでレスポンスを改変し、攻撃者のサイトに誘導する不正なURLを埋め込む。</dd>
+                    </dl>
+                </div><!-- End of div-Summary -->
+            <h2 class="section" id="ExecCondition"><a href="#ExecCondition" class="collapse" id="a-ExecCondition" onclick="showhide('ExecCondition');">-</a> ツール動作概要</h2>
+                <div class="section" id="div-ExecCondition">
+                    <h3 class="subsection" id="ExecCondition-Overview"><a href="#ExecCondition-Overview" class="collapse" id="a-ExecCondition-Overview" onclick="showhide('ExecCondition-Overview');">-</a> 概要</h3>
+                        <div class="section" id="div-ExecCondition-Overview">
+                            <table class="border">
+                                <thead>
+                                    <tr class="border">
+                                        <th class="border_header">項目</th>
+                                        <th class="border_header">接続元</th>
+                                        <th class="border_header">接続先</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border">
+                                        <td class="border_header">通信プロトコル</td>
+                                        <td class="border"><ul>
+                                    <li>80/tcp</li>
+                                    <li>8888/tcp</li>
+                                        </ul></td>
+                                        <td class="border"><ul>
+                                    <li>80/tcp</li>
+                                    <li>8888/tcp</li>
+                                        </ul></td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">権限</td>
+                                        <td class="border">User</td>
+                                        <td class="border">Admin</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">ドメインへの所属</td>
+                                        <td class="border">不要</td>
+                                        <td class="border">不要</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">サービス</td>
+                                        <td class="border">-</td>
+                                        <td class="border">-</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">OS</td>
+                                        <td class="border">Windows</td>
+                                        <td class="border">Windows</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">備考</td>
+                                        <td class="border">-</td>
+                                        <td class="border">Windowsファイアウォールで受信を許可する変更が必要なため、管理者権限が必要</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div><!-- End of div-ExecCondition-Overview -->
+                    <h3 class="subsection" id="ExecCondition-Tested"><a href="#ExecCondition-Tested" class="collapse" id="a-ExecCondition-Tested" onclick="showhide('ExecCondition-Tested');">-</a> 動作確認環境</h3>
+                        <div class="section" id="div-ExecCondition-Tested">
+                            <table class="border">
+                                <thead>
+                                    <tr class="border">
+                                        <th class="border_header">環境</th>
+                                        <th class="border_header">動作可否</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border">
+                                        <td class="border_header">Windows 7 + Windows Server 2012</td>
+                                        <td class="border">動作する</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">Windows 10 + Windows Server 2012</td>
+                                        <td class="border">動作する</td>
+                                    </tr>
+                                    <tr class="border">
+                                        <td class="border_header">Windows 11 + Windows Server 2025</td>
+                                        <td class="border">動作しない</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div><!-- end of div-ExecCondition-Tested -->
+                </div><!-- end of div-ExecCondition -->
+            <h2 class="section" id="Findings"><a href="#Findings" class="collapse" id="a-Findings" onclick="showhide('Findings');">-</a> ログから得られる情報</h2>
+                <div class="section" id="div-Findings">
+                    <dl class="table">
+                        <dt class="table">標準設定</dt>
+                            <dd class="table"><ul>
+                                <li>接続元<ul>
+                                    <li>レジストリ: 最後に取得されたプロキシ設定（レジストリ）が記録される ※通常時からwpadを使用している場合は区別出来ない</li>
+                                    </ul></li>
+                                <li>接続先<ul>
+                                    <li>Prefetch: 実行履歴</li>
+                                    </ul></li>
+                                        </ul></dd>
+                        <dt class="table">追加設定</dt>
+                            <dd class="table"><ul>
+                                <li>接続元<ul>
+                                    <li>監査ポリシー・Sysmon: 検体を実行しているホストに対して、80/tcp及び8888/tcpで通信していることが記録される</li>
+                                    <li>監査ポリシー: wpad.datのキャッシュが作成されたことが記録される</li>
+                                    </ul></li>
+                                <li>接続先<ul>
+                                    <li>監査ポリシー: 80/tcp及び8888/tcpをリッスンしたことが記録される。wpad.datや、プロキシのログであるproxy.logに対するハンドルの要求が記録される</li>
+                                    </ul></li>
+                                        </ul></dd>
+                    </dl>
+                </div><!-- End of div-Findings -->
+            <h2 class="section" id="SuccessCondition"><a href="#SuccessCondition" class="collapse" id="a-SuccessCondition" onclick="showhide('SuccessCondition');">-</a> 実行成功時に確認できる痕跡</h2>
+                <div class="section" id="div-SuccessCondition">
+                    <ul>
+                        <li>接続元<ul>
+                            <li>本来プロキシやHTTPサーバーで無いはずのホストと、80/tcp及び8888/tcpによる通信を行っている。</li>
+                                </ul></li>
+                        <li>接続先<ul>
+                            <li>本来プロキシやHTTPサーバーで無いはずのホストが、80/tcp及び8888/tcpをリッスンしている。wpad.dat・proxy.logが作成されている。</li>
+                                </ul></li>
+                    </ul>
+                </div><!-- End of div-SuccessCondition -->
+            <h2 class="section" id="KeyEvents"><a href="#KeyEvents" class="collapse" id="a-KeyEvents" onclick="showhide('KeyEvents');">-</a> 実行時に記録される主要な情報</h2>
+                <div class="section" id="div-KeyEvents">
+                    <h3 class="subsection" id="KeyEvents-Source"><a href="#KeyEvents-Source" class="collapse" id="a-KeyEvents-Source" onclick="showhide('KeyEvents-Source');">-</a> 接続元</h3>
+                        <div class="section" id="div-KeyEvents-Source">
+                            <h4>イベントログ</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ログ</th>
+                                            <th class="border_header">イベントID</th>
+                                            <th class="border_header">タスクのカテゴリ</th>
+                                            <th class="border_header">イベント内容</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: 4</li>
+                                                    <li><span class="strong">Image</span>: System</li>
+                                                    <li><span class="strong">Protocol</span>: udp</li>
+                                                    <li><span class="strong">SourceIp</span>: [送信元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [送信元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: 137</li>
+                                                    <li><span class="strong">DestinationIp</span>: [送信先IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [送信先ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: 137</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">12</td>
+                                            <td class="border">Registry object added or deleted</td>
+                                            <td class="border">Registry object added or deleted
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: [処理の種類]</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">TargetObject</span>: \REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\{[GUID]} 配下にWPADの設定が保存される</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4663</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトへのアクセスが試行されました。
+                                                <ul>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: C:\Users\[ユーザー名]\AppData\Local\Microsoft\Windows\Temporary Internet Files\Content.IE5\[文字列]\wpad[1].htm</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteDataまたはAddFile</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">4</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">SourceIp</span>: [送信元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [送信元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: [送信元ポート番号]</li>
+                                                    <li><span class="strong">DestinationIp</span>: [送信先IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [送信先ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: 8888</li>
+                                                </ul></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>レジストリエントリ</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">パス</th>
+                                            <th class="border_header">値</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">HKEY_USERS\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\WpadLastNetwork</td>
+                                            <td class="border">{[GUID]}</td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">HKEY_USERS\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad 配下</td>
+                                            <td class="border">(複数データ)</td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>MFT</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">パス</th>
+                                            <th class="border_header">ヘッダフラグ</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">[ドライブ名]:\Users\[ユーザー名]\AppData\Local\Microsoft\Windows\Temporary Internet Files\Content.IE5\[文字列]\wpad[1].htm</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">InUse</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>USNジャーナル</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ファイル名</th>
+                                            <th class="border_header">処理</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">wpad[1].htm</td>
+                                            <td class="border"><ul>
+                                                <li>BASIC_INFO_CHANGE</li>
+                                                <li>CLOSE</li>
+                                                <li>DATA_EXTEND</li>
+                                                <li>FILE_CREATE</li>
+                                                    </ul></td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                        </div><!-- End of div-KeyEvents-Source -->
+                    <h3 class="subsection" id="KeyEvents-Target"><a href="#KeyEvents-Target" class="collapse" id="a-KeyEvents-Target" onclick="showhide('KeyEvents-Target');">-</a> 接続先</h3>
+                        <div class="section" id="div-KeyEvents-Target">
+                            <h4>イベントログ</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ログ</th>
+                                            <th class="border_header">イベントID</th>
+                                            <th class="border_header">タスクのカテゴリ</th>
+                                            <th class="border_header">イベント内容</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">1</td>
+                                            <td class="border">Process Create</td>
+                                            <td class="border">Process Create
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [発生日時 (UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">CommandLine</span>: [実行コマンドのコマンドライン]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: 4</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: System</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 137</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [ブロードキャストアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 137</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 17 (UDP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: 4</li>
+                                                    <li><span class="strong">Image</span>: System</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: udp</li>
+                                                    <li><span class="strong">SourceIp</span>: [送信元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [送信元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: 137</li>
+                                                    <li><span class="strong">DestinationIp</span>: [送信先IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [送信先ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: 137</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">4</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">SourceIp</span>: [送信元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [送信元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: 80</li>
+                                                    <li><span class="strong">DestinationIp</span>: [送信先IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [送信先ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: [送信先ポート番号]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">5</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">SourceIp</span>: [送信元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [送信元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: 8888</li>
+                                                    <li><span class="strong">DestinationIp</span>: [送信先IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [送信先ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: [送信先ポート番号]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">6</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4663</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトへのアクセスが試行されました。
+                                                <ul>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: [実行ファイルのフォルダー]\proxy.log</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteData, AppendData</li>
+                                                </ul></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>Prefetch</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">Prefetchファイル</th>
+                                            <th class="border_header">プロセス名</th>
+                                            <th class="border_header">プロセスパス</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">C:\Windows\Prefetch\[実行ファイル名]-[ハッシュ値].pf</td>
+                                            <td class="border"><br /></td>
+                                            <td class="border"><br /></td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>MFT</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">パス</th>
+                                            <th class="border_header">ヘッダフラグ</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">[ドライブ名]:\[実行ファイルのパス]\proxy.log</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">InUse</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>USNジャーナル</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ファイル名</th>
+                                            <th class="border_header">処理</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">proxy.log</td>
+                                            <td class="border"><ul>
+                                                <li>DataExtend</li>
+                                                <li>Close</li>
+                                                    </ul></td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                        </div><!-- End of div-KeyEvents-Target -->
+                </div><!-- End of div-KeyEvents -->
+            <h2 class="section" id="Details"><a href="#Details" class="collapse" id="a-Details" onclick="showhide('Details');">-</a> 詳細情報</h2>
+                <div class="section" id="div-Details">
+                    <h3 class="subsection" id="Details-Source"><a href="#Details-Source" class="collapse" id="a-Details-Source" onclick="showhide('Details-Source');">-</a> 接続元</h3>
+                        <div class="section" id="div-Details-Source">
+                            <h4>イベントログ</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ログ</th>
+                                            <th class="border_header">イベントID</th>
+                                            <th class="border_header">タスクのカテゴリ</th>
+                                            <th class="border_header">イベント内容</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: 4</li>
+                                                    <li><span class="strong">Image</span>: System</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: udp</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: 137</li>
+                                                    <li><span class="strong">DestinationIp</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [接続先ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: 137</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: System</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 着信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [送信元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 137</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [送信先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 137</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 17 (UDP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">1</td>
+                                            <td class="border">Process Create</td>
+                                            <td class="border">Process Create
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">CommandLine</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">CurrentDirectory</span>: [作業ディレクトリ]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">LogonId</span>: [ログオンID]</li>
+                                                    <li><span class="strong">IntegrityLevel</span>: Medium</li>
+                                                    <li><span class="strong">Hashes</span>: [実行ファイルのハッシュ値]</li>
+                                                    <li><span class="strong">ParentProcessId</span>: [親プロセスID]</li>
+                                                    <li><span class="strong">ParentImage</span>: [親プロセスの実行ファイル]</li>
+                                                    <li><span class="strong">ParentCommandLine</span>: [親プロセスのコマンドライン]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">4</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4688</td>
+                                            <td class="border">Process Creation</td>
+                                            <td class="border">新しいプロセスが作成されました。
+                                                <ul>
+                                                    <li><span class="strong">作成元サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス ID</span>: [新しく作成されたプロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: TokenElevationTypeDefault(1)</li>
+                                                    <li><span class="strong">プロセス情報 > 作成元プロセス ID</span>: [親プロセスID]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">5</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">12</td>
+                                            <td class="border">Registry object added or deleted</td>
+                                            <td class="border">Registry object added or deleted
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: [処理の種類]</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">TargetObject</span>: \REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\{[GUID]}</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">6</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">13</td>
+                                            <td class="border">Registry value set</td>
+                                            <td class="border">Registry value set
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: SetValue</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">TargetObject</span>: \REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\{[GUID}\WpadDecisionReason</li>
+                                                    <li><span class="strong">Details</span>: DWORD:0x00000000</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">7</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">13</td>
+                                            <td class="border">Registry value set</td>
+                                            <td class="border">Registry value set
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: SetValue</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">TargetObject</span>: \REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\{[GUID]}\WpadDecisionTime</li>
+                                                    <li><span class="strong">Details</span>: Binary Data</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">8</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">13</td>
+                                            <td class="border">Registry value set</td>
+                                            <td class="border">Registry value set
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: SetValue</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">TargetObject</span>: \REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\{[GUID]}\WpadDecision</li>
+                                                    <li><span class="strong">Details</span>: DWORD:0x00000001</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">9</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">13</td>
+                                            <td class="border">Registry value set</td>
+                                            <td class="border">Registry value set
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: SetValue</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">TargetObject</span>: \REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\{[GUID]}\WpadNetworkName</li>
+                                                    <li><span class="strong">Details</span>: ネットワーク</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">10</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">12</td>
+                                            <td class="border">Registry object added or deleted</td>
+                                            <td class="border">Registry object added or deleted
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: CreateKey</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">TargetObject</span>: \REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\{[GUID]}\[MACアドレス]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">11</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">12</td>
+                                            <td class="border">Registry object added or deleted</td>
+                                            <td class="border">Registry object added or deleted
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: CreateKey</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">TargetObject</span>: \REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\[MACアドレス]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">12</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">13</td>
+                                            <td class="border">Registry value set</td>
+                                            <td class="border">Registry value set
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: SetValue</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">TargetObject</span>: \REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\[MACアドレス]\WpadDecisionReason</li>
+                                                    <li><span class="strong">Details</span>: DWORD:0x00000000</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">13</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">13</td>
+                                            <td class="border">Registry value set</td>
+                                            <td class="border">Registry value set
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: SetValue</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">TargetObject</span>: \REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\[MACアドレス]\WpadDecisionTime</li>
+                                                    <li><span class="strong">Details</span>: Binary Data</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">14</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">13</td>
+                                            <td class="border">Registry value set</td>
+                                            <td class="border">Registry value set
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: SetValue</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">TargetObject</span>: \REGISTRY\USER\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\[MACアドレス]\WpadDecision</li>
+                                                    <li><span class="strong">Details</span>: DWORD:0x00000001</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">15</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">DestinationIp</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [接続先ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: 80</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">16</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: \device\harddiskvolume2\program files\internet explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">17</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: \device\harddiskvolume2\program files\internet explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 80</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">18</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">11</td>
+                                            <td class="border">File created</td>
+                                            <td class="border">File created
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">TargetFilename</span>: C:\Users\[ユーザー名]\AppData\Local\Microsoft\Windows\Temporary Internet Files\Content.IE5\[文字列]\wpad[1].htm</li>
+                                                    <li><span class="strong">CreationUtcTime</span>: [ファイル作成日時 (UTC)]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">19</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4656</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが要求されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: File</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: C:\Users\[ユーザー名]\AppData\Local\Microsoft\Windows\Temporary Internet Files\Content.IE5\[文字列]\wpad[1].htm</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [ハンドルID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteDataまたはAddFileを含む</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">20</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4663</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトへのアクセスが試行されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: File</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: C:\Users\[ユーザー名]\AppData\Local\Microsoft\Windows\Temporary Internet Files\Content.IE5\[文字列]\wpad[1].htm</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベント4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [プロセス名] ハンドルを閉じたプロセス名 (C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteDataまたはAddFile</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">21</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4658</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが閉じました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベント4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">22</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\Program Files\Internet Explorer\iexplore.exe</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">DestinationIp</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [接続先ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: 8888</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">23</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5158</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、ローカル ポートへのバインドが許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: \device\harddiskvolume2\program files\internet explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">24</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: \device\harddiskvolume2\program files\internet explorer\iexplore.exe</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 8888</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>レジストリエントリ</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">パス</th>
+                                            <th class="border_header">値</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">HKEY_USERS\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\WpadLastNetwork</td>
+                                            <td class="border">{[GUID]}</td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">HKEY_USERS\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\[MACアドレス]\WpadDecisionReason</td>
+                                            <td class="border">0x00000000</td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">HKEY_USERS\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\[MACアドレス]\WpadDecisionTime</td>
+                                            <td class="border">([バイナリ値])</td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">4</td>
+                                            <td class="border">HKEY_USERS\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\[MACアドレス]\WpadDecision</td>
+                                            <td class="border">0x00000001</td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">5</td>
+                                            <td class="border">HKEY_USERS\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\{[GUID]}\[MACアドレス]</td>
+                                            <td class="border">(値の設定無し)</td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">6</td>
+                                            <td class="border">HKEY_USERS\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\{[GUID]}\WpadDecisionReason</td>
+                                            <td class="border">0x00000000</td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">7</td>
+                                            <td class="border">HKEY_USERS\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\{[GUID]}\WpadDecisionTime</td>
+                                            <td class="border">([バイナリ値])</td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">8</td>
+                                            <td class="border">HKEY_USERS\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\{[GUID]}\WpadDecision</td>
+                                            <td class="border">0x00000001</td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">9</td>
+                                            <td class="border">HKEY_USERS\[ユーザーSID]\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Wpad\{[GUID]}\WpadNetworkName</td>
+                                            <td class="border">ネットワーク</td>
+                                            <td class="border"><br /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>MFT</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">パス</th>
+                                            <th class="border_header">ヘッダフラグ</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">[ドライブ名]:\Users\[ユーザー名]\AppData\Local\Microsoft\Windows\Temporary Internet Files\Content.IE5\[文字列]\wpad[1].htm</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">InUse</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>USNジャーナル</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ファイル名</th>
+                                            <th class="border_header">処理</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">wpad[1].htm</td>
+                                            <td class="border"><ul>
+                                                <li>FILE_CREATE</li>
+                                                    </ul></td>
+                                            <td class="border">archive|not_indexed</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">wpad[1].htm</td>
+                                            <td class="border"><ul>
+                                                <li>BASIC_INFO_CHANGE</li>
+                                                <li>FILE_CREATE</li>
+                                                    </ul></td>
+                                            <td class="border">archive|not_indexed</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">wpad[1].htm</td>
+                                            <td class="border"><ul>
+                                                <li>BASIC_INFO_CHANGE</li>
+                                                <li>DATA_EXTEND</li>
+                                                <li>FILE_CREATE</li>
+                                                    </ul></td>
+                                            <td class="border">archive|not_indexed</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">4</td>
+                                            <td class="border">wpad[1].htm</td>
+                                            <td class="border"><ul>
+                                                <li>BASIC_INFO_CHANGE</li>
+                                                <li>CLOSE</li>
+                                                <li>DATA_EXTEND</li>
+                                                <li>FILE_CREATE</li>
+                                                    </ul></td>
+                                            <td class="border">archive|not_indexed</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                        </div><!-- End of div-Details-Source -->
+                    <h3 class="subsection" id="Details-Target"><a href="#Details-Target" class="collapse" id="a-Details-Target" onclick="showhide('Details-Target');">-</a> 接続先</h3>
+                        <div class="section" id="div-Details-Target">
+                            <h4>イベントログ</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ログ</th>
+                                            <th class="border_header">イベントID</th>
+                                            <th class="border_header">タスクのカテゴリ</th>
+                                            <th class="border_header">イベント内容</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">1</td>
+                                            <td class="border">Process Create</td>
+                                            <td class="border">Process Create
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">CommandLine</span>: [実行コマンドのコマンドライン]</li>
+                                                    <li><span class="strong">CurrentDirectory</span>: [作業ディレクトリ]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">LogonId</span>: [ログオンID]</li>
+                                                    <li><span class="strong">IntegrityLevel</span>: Medium</li>
+                                                    <li><span class="strong">Hashes</span>: [実行ファイルのハッシュ値]</li>
+                                                    <li><span class="strong">ParentProcessId</span>: [親プロセスID]</li>
+                                                    <li><span class="strong">ParentImage</span>: [親プロセスの実行ファイル]</li>
+                                                    <li><span class="strong">ParentCommandLine</span>: [親プロセスのコマンドライン]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4688</td>
+                                            <td class="border">Process Creation</td>
+                                            <td class="border">新しいプロセスが作成されました。
+                                                <ul>
+                                                    <li><span class="strong">作成元サブジェクト > セキュリティ ID</span>: [ユーザのSID]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">作成元サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス ID</span>: [新しく作成されたプロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > 新しいプロセス名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">プロセス情報 > トークン昇格の種類</span>: TokenElevationTypeDefault(1)</li>
+                                                    <li><span class="strong">プロセス情報 > 作成元プロセス ID</span>: [親プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > 作成元プロセス名</span>: [親プロセス名]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: 4</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: System</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 137</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: ブロードキャストアドレス</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 137</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 17 (UDP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">4</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: System</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 着信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: ブロードキャストアドレス</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 137</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 137</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 17 (UDP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">5</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: 4</li>
+                                                    <li><span class="strong">Image</span>: System</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: udp</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続先ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: 137</li>
+                                                    <li><span class="strong">DestinationIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: 137</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">6</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: System</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 送信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 137</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: 137</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 17 (UDP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">7</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続先ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: 80</li>
+                                                    <li><span class="strong">DestinationIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: [接続元ポート番号]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">8</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: System</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 着信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 80</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">9</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4656</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが要求されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: File</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: [wpad.datプロキシ設定ファイルのパス]</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [ハンドルID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: [要求された権限]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">10</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4658</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが閉じました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベント4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">11</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">12</td>
+                                            <td class="border">Registry object added or deleted</td>
+                                            <td class="border">Registry object added or deleted
+                                                <ul>
+                                                    <li><span class="strong">EventType</span>: CreateKey</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">TargetObject</span>: \REGISTRY\MACHINE\SYSTEM\ControlSet001\services\Tcpip\Parameters</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">12</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">DestinationIp</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [接続先ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: 80</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">13</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行ファイルのパス</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 着信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 80</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">14</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">3</td>
+                                            <td class="border">Network connection detected</td>
+                                            <td class="border">Network connection detected
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">User</span>: [ドメイン名]\[ユーザー名]</li>
+                                                    <li><span class="strong">Protocol</span>: tcp</li>
+                                                    <li><span class="strong">SourceIp</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">SourceHostname</span>: [接続先ホスト名]</li>
+                                                    <li><span class="strong">SourcePort</span>: 8888</li>
+                                                    <li><span class="strong">DestinationIp</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">DestinationHostname</span>: [接続元ホスト名]</li>
+                                                    <li><span class="strong">DestinationPort</span>: [接続元ポート番号]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">15</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">5156</td>
+                                            <td class="border">Filtering Platform Connection</td>
+                                            <td class="border">Windows フィルターリング プラットフォームで、接続が許可されました。
+                                                <ul>
+                                                    <li><span class="strong">アプリケーション情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">アプリケーション情報 > アプリケーション名</span>: 実行ファイルのパス</li>
+                                                    <li><span class="strong">ネットワーク情報 > 方向</span>: 着信</li>
+                                                    <li><span class="strong">ネットワーク情報 > 送信元アドレス</span>: [接続先IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > ソース ポート</span>: 8888</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先アドレス</span>: [接続元IPアドレス]</li>
+                                                    <li><span class="strong">ネットワーク情報 > 宛先ポート</span>: [接続元ポート番号]</li>
+                                                    <li><span class="strong">ネットワーク情報 > プロトコル</span>: 6 (TCP)</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">16</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">11</td>
+                                            <td class="border">File created</td>
+                                            <td class="border">File created
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">TargetFilename</span>: [実行ファイルのフォルダ]\proxy.log</li>
+                                                    <li><span class="strong">CreationUtcTime</span>: [ファイル作成日時 (UTC)]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">17</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4656</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが要求されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: File</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: [実行ファイルのフォルダー]\proxy.log</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [ハンドルID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteDataまたはAddFile、AppendDataを含む</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">18</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4663</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトへのアクセスが試行されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: [対象の区分]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: [実行ファイルのフォルダー]\proxy.log</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベント4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteData, AppendData</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">19</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4658</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが閉じました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザのSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベント4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">20</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">11</td>
+                                            <td class="border">File created</td>
+                                            <td class="border">File created
+                                                <ul>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: C:\Windows\System32\svchost.exe</li>
+                                                    <li><span class="strong">TargetFilename</span>: C:\Windows\Prefetch\[実行ファイル名]-[ハッシュ値].pf</li>
+                                                    <li><span class="strong">CreationUtcTime</span>: [ファイル作成日時 (UTC)]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">21</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4656</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが要求されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: File</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: C:\Windows\Prefetch\[実行ファイル名]-[ハッシュ値].pf</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [ハンドルID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteDataまたはAddFile、AppendDataを含む</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">22</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4663</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトへのアクセスが試行されました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクトの種類</span>: File</li>
+                                                    <li><span class="strong">オブジェクト > オブジェクト名</span>: C:\Windows\Prefetch\[実行ファイル名]-[ハッシュ値].pf</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベント4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                    <li><span class="strong">アクセス要求情報 > アクセス</span>: WriteDataまたはAddFile, AppendData</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">23</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4658</td>
+                                            <td class="border">File System</td>
+                                            <td class="border">オブジェクトに対するハンドルが閉じました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">オブジェクト > ハンドル ID</span>: [直前のイベント4656で取得されたハンドル]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: C:\Windows\System32\svchost.exe</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">24</td>
+                                            <td class="border">Microsoft-Windows-Sysmon/Operational</td>
+                                            <td class="border">5</td>
+                                            <td class="border">Process terminated</td>
+                                            <td class="border">Process terminated.
+                                                <ul>
+                                                    <li><span class="strong">UtcTime</span>: [終了日時 (UTC)]</li>
+                                                    <li><span class="strong">ProcessId</span>: [プロセスID]</li>
+                                                    <li><span class="strong">Image</span>: [実行ファイルのパス]</li>
+                                                </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">25</td>
+                                            <td class="border">Security</td>
+                                            <td class="border">4689</td>
+                                            <td class="border">Process Termination</td>
+                                            <td class="border">プロセスが終了しました。
+                                                <ul>
+                                                    <li><span class="strong">サブジェクト > セキュリティ ID</span>: [ユーザーSID]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント名</span>: [ユーザー名]</li>
+                                                    <li><span class="strong">サブジェクト > アカウント ドメイン</span>: [ドメイン名]</li>
+                                                    <li><span class="strong">サブジェクト > ログオン ID</span>: [ログオンID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス ID</span>: [プロセスID]</li>
+                                                    <li><span class="strong">プロセス情報 > プロセス名</span>: [実行ファイルのパス]</li>
+                                                </ul></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>Prefetch</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">Prefetchファイル</th>
+                                            <th class="border_header">プロセス名</th>
+                                            <th class="border_header">プロセスパス</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">C:\Windows\Prefetch\[実行ファイル名]-[ハッシュ値].pf</td>
+                                            <td class="border">[実行ファイル名]</td>
+                                            <td class="border">[実行ファイルのパス]</td>
+                                            <td class="border">Last run(最終実行日時)</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>MFT</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">パス</th>
+                                            <th class="border_header">ヘッダフラグ</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">[ドライブ名]:\Windows\Prefetch\[実行ファイル名]-[ハッシュ値].pf</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">InUse</td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">[ドライブ名]:\[実行ファイルのパス]\proxy.log</td>
+                                            <td class="border">FILE</td>
+                                            <td class="border">InUse</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            <h4>USNジャーナル</h4>
+                                <table class="border">
+                                    <thead>
+                                        <tr class="border">
+                                            <th class="border_header">#</th>
+                                            <th class="border_header">ファイル名</th>
+                                            <th class="border_header">処理</th>
+                                            <th class="border_header">備考</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border">
+                                            <td class="border_header">1</td>
+                                            <td class="border">[実行ファイル名]-[ハッシュ値].pf</td>
+                                            <td class="border"><ul>
+                                                <li>FILE_CREATE</li>
+                                                    </ul></td>
+                                            <td class="border"><ul>
+                                                <li>archive|not_indexed</li>
+                                                    </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">2</td>
+                                            <td class="border">[実行ファイル名]-[ハッシュ値].pf</td>
+                                            <td class="border"><ul>
+                                                <li>DATA_EXTEND</li>
+                                                <li>FILE_CREATE</li>
+                                                    </ul></td>
+                                            <td class="border"><ul>
+                                                <li>archive|not_indexed</li>
+                                                    </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">3</td>
+                                            <td class="border">[実行ファイル名]-[ハッシュ値].pf</td>
+                                            <td class="border"><ul>
+                                                <li>CLOSE</li>
+                                                <li>DATA_EXTEND</li>
+                                                <li>FILE_CREATE</li>
+                                                    </ul></td>
+                                            <td class="border"><ul>
+                                                <li>archive|not_indexed</li>
+                                                    </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">4</td>
+                                            <td class="border">proxy.log</td>
+                                            <td class="border"><ul>
+                                                <li>FILE_CREATE</li>
+                                                    </ul></td>
+                                            <td class="border"><ul>
+                                                <li>archive</li>
+                                                    </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">5</td>
+                                            <td class="border">proxy.log</td>
+                                            <td class="border"><ul>
+                                                <li>DATA_EXTEND</li>
+                                                <li>FILE_CREATE</li>
+                                                    </ul></td>
+                                            <td class="border"><ul>
+                                                <li>archive</li>
+                                                    </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">6</td>
+                                            <td class="border">proxy.log</td>
+                                            <td class="border"><ul>
+                                                <li>CLOSE</li>
+                                                <li>DATA_EXTEND</li>
+                                                <li>FILE_CREATE</li>
+                                                    </ul></td>
+                                            <td class="border"><ul>
+                                                <li>archive</li>
+                                                    </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">7</td>
+                                            <td class="border">proxy.log</td>
+                                            <td class="border"><ul>
+                                                <li>DATA_EXTEND</li>
+                                                    </ul></td>
+                                            <td class="border"><ul>
+                                                <li>archive</li>
+                                                    </ul></td>
+                                        </tr>
+                                        <tr class="border">
+                                            <td class="border_header">8</td>
+                                            <td class="border">proxy.log</td>
+                                            <td class="border"><ul>
+                                                <li>CLOSE</li>
+                                                <li>DATA_EXTEND</li>
+                                                    </ul></td>
+                                            <td class="border"><ul>
+                                                <li>archive</li>
+                                                    </ul></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                        </div><!-- End of div-Details-Target -->
+                </div><!-- End of div-Details -->
+    </body>
+</html>

@@ -1,0 +1,401 @@
+{
+    "Summary": {
+        "ToolName": "Mimikatz （パスワードハッシュ入手 sekurlsa::tickets）",
+        "Category": "パスワード、ハッシュ入手",
+        "Description": "ログオンしているセッションのチケットを取得する。",
+        "Usage": "取得したチケットを利用してリモートホストにログインする。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "false"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "Admin"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "実行履歴",
+                "監査ポリシー": "lsass.exeからのプロセス メモリの読み取り",
+                "監査ポリシー・Sysmon・USNジャーナル": "チケットを出力したファイルが生成された記録"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "出力したチケットファイル(.kirbiファイル)が生成されている"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス]",
+                    "User": "[実行ユーザー]"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4703,
+                    "Category": "Token Right Adjusted Events",
+                    "Description": "A token right was adjusted.",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "TargetUserSid": "[対象ユーザーSID]",
+                    "TargetUserName": "[対象ユーザー名]",
+                    "TargetDomainName": "[対象ドメイン名]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "EnabledPrivilegeList": "SeDebugPrivilege"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "Process",
+                    "ObjectName": "\\Device\\HarddiskVolume2\\Windows\\System32\\lsass.exe",
+                    "AccessList": "プロセス メモリからの読み取り",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[サービス名].kirbi",
+                    "AccessList": "WriteDataまたはAddFile、AppendData",
+                    "ProcessName": "[実行ファイルのパス]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[サービス名]-[ドメイン名].kirbi",
+                    "Operation": ["CLOSE+DATA_EXTEND+FILE_CREATE"]
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "Category": "Process Create",
+                    "Description": "Process Create",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "CommandLine": "[実行ファイルのパス]",
+                    "CurrentDirectory": "[作業ディレクトリ]",
+                    "User": "[実行ユーザー]",
+                    "LogonId": "[ログオンセッションのID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[実行ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスのプロセスID]",
+                    "ParentImage": "[親プロセスの実行ファイル]",
+                    "ParentCommandLine": "[親プロセスのコマンドライン]"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4688,
+                    "Category": "プロセス作成",
+                    "Description": "新しいプロセスが作成されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "LogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "NewProcessId": "[実行プロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "TokenElevationType": "TokenElevationTypeFull(2)",
+                    "ProcessId": "[新プロセスを作成した親プロセスのプロセスID]",
+                    "ParentProcessName": "[新プロセスを作成した親プロセスのパス]"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4673,
+                    "Category": "重要な特権の使用",
+                    "Description": "特権のあるサービスが呼び出されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "PrivilegeList": "SeTcbPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4673,
+                    "Category": "重要な特権の使用",
+                    "Description": "特権のあるサービスが呼び出されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "PrivilegeList": "SeTcbPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "Category": "File created",
+                    "Description": "File created",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4656,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "LogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteData (または AddFile)、AppendData",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "LogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile)、AppendData",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "LogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4703,
+                    "Category": "Token Right Adjusted Events",
+                    "Description": "A token right was adjusted.",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "LogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "TargetUserSid": "[対象ユーザーSID]",
+                    "TargetUserName": "[対象ユーザー名]",
+                    "TargetDomainName": "[対象ドメイン名]",
+                    "TargetLogonId": "[対象ユーザーのセッションID]",
+                    "ProcessName": "[実行ファイルのパス]",
+                    "ProcessId": "[実行プロセスID]",
+                    "EnabledPrivilegeList": "SeDebugPrivilege",
+                    "DisabledPrivilegeList": "-"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4656,
+                    "Category": "ファイル システム / その他のオブジェクト アクセス イベント",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "Process",
+                    "ObjectName": "\\Device\\HarddiskVolume2\\Windows\\System32\\lsass.exe",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "プロセス メモリからの読み取り",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "Process",
+                    "ObjectName": "\\Device\\HarddiskVolume2\\Windows\\System32\\lsass.exe",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "プロセス メモリからの読み取り",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4656,
+                    "Category": "ファイル システム / その他のオブジェクト アクセス イベント",
+                    "Description": "オブジェクトに対するハンドルが要求されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[サービス名].kirbi",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteDataまたはAddFile、AppendData",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4663,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトへのアクセスが試行されました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "ObjectType": "File",
+                    "ObjectName": "[カレントディレクトリ]\\[サービス名].kirbi",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteDataまたはAddFile、AppendData",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4658,
+                    "Category": "ファイル システム",
+                    "Description": "オブジェクトに対するハンドルが閉じました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "セキュリティ",
+                    "EventID": 4689,
+                    "Category": "プロセス終了",
+                    "Description": "プロセスが終了しました。",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "LogonId": "[プロセスを実行したユーザーのセッションID]",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "Category": "Process terminated",
+                    "Description": "Process terminated.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "C:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Process Name": "[実行ファイル名]",
+                    "Process Path": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": "[ドライブ名]:\\Windows\\Prefetch\\[実行ファイル名]-[文字列].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                },
+                {
+                    "Path": "[カレントディレクトリ]\\[サービス名].kirbi",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": ["FILE_CREATE"],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": ["DATA_EXTEND+FILE_CREATE"],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "[実行ファイル名]-[文字列].pf",
+                    "Operation": ["CLOSE+DATA_EXTEND+FILE_CREATE"],
+                    "Note": "archive+not_indexed"
+                },
+                {
+                    "File": "[サービス名]-[ドメイン名].kirbi",
+                    "Operation": ["FILE_CREATE"],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[サービス名]-[ドメイン名].kirbi",
+                    "Operation": ["DATA_EXTEND+FILE_CREATE"],
+                    "Note": "archive"
+                },
+                {
+                    "File": "[サービス名]-[ドメイン名].kirbi",
+                    "Operation": ["CLOSE+DATA_EXTEND+FILE_CREATE"],
+                    "Note": "archive"
+                }
+            ]
+        }
+    }
+}

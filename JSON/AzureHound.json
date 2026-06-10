@@ -1,0 +1,1108 @@
+{
+    "Summary": {
+        "ToolName": "AzureHound",
+        "Category": "情報収集",
+        "Description": "BloodHoundで攻撃対象調査をする際にAzure用のデータコレクタとして使用される。オプションで指定するとJSONファイルが1つ生成される。SharpHoundと組み合わせてハイブリット構成の分析ができる。",
+        "Usage": "Entra IDの情報を収集し、攻撃対象候補の調査を行う。侵害済みのアカウントからより高位のアカウントへの権限昇格経路を調査する。Entra ID設定に悪用可能な脆弱性が存在するか調査する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "none",
+            "Windows 10 + Windows Server 2012": "none",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": true,
+            "Privilege": "標準ユーザー",
+            "Protocol": [
+                "53/udp",
+                "80/tcp",
+                "443/tcp"
+            ],
+            "Note": "HTTPSによる443/tcpのため、環境によっては443/udpも発生し得る。"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "BloodHoundにデータ投入するJSONファイルの作成が記録される。Azure関連の通信があったことが記録される",
+                "パケットキャプチャ": "次のドメインへのHTTP(S)通信が発生する：wdcp.microsoft.com, cp601.prod.do.dsp.mp.microsoft.com, login.microsoftonline.com, graph.microsoft.com, management.azure.com。また、Microsoft Azure宛の通信が記録される。"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Source": [
+            "Microsoft Azure、Microsoft Sign-in、Microsoft Graph APIの通信が記録されている",
+            "BloodHoundに投入するJSONファイルが作成される（オプションで出力先をファイルにした場合。オプションで指定しない場合は標準出力される）"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Microsoft Azure]",
+                    "DestPort": "80",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Microsoft Sign-in]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Microsoft Graph API]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Azure Resource Manager Provider API]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[実行ファイルのフォルダパス]\\[出力先ファイル名]",
+                    "HandleId": "[直前のイベントID: 4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATE"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": [
+                        "CREATE",
+                        "EXTEND",
+                        "CLOSE"
+                    ],
+                    "Note": "ARCHIVE|NOINDEX"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "[実行ファイルのパス]",
+                    "CommandLine": "\"[実行ファイルのパス]\" list -u [ユーザープリンシパル名 (UPN)] -p [ユーザーパスワード] -t [EntraID プライマリドメイン] -o [出力先ファイル名]",
+                    "ProcessId": "[親プロセスID]",
+                    "ParentProcessName": "[実行ファイルのパス]",
+                    "Note": "Community版はパスワードを指定するが、Enterprise版は不要。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "[実行ファイルのパス]\" list -u [ユーザープリンシパル名 (UPN)] -p [ユーザーパスワード] -t [EntraID プライマリドメイン] -o [出力先ファイル名]",
+                    "CurrentDirectory": "[実行ファイルのフォルダパス]\\",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "ParentProcessId": "[親プロセスID]",
+                    "ParentUser": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4673,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "PrivilegeList": "SeProfileSingleProcessPrivilege",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "ImageLoaded": "[実行ファイルが読み込んだDLLファイルなど]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[読み込んだファイルのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetObject": "HKLM\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Note": "複数回発生。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Microsoft Sign-in]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Microsoft Graph API]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "ImageLoaded": "[実行ファイルのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Azure Resource Manager Provider API]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "System",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Microsoft Sign-in]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4703,
+                    "SubjectUserSid": "S-1-5-18",
+                    "SubjectUserName": "[接続元コンピューターアカウント名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "TargetUserSid": "S-1-5-18",
+                    "TargetUserName": "[接続元コンピューターアカウント名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe",
+                    "ProcessId": "[プロセスID]",
+                    "EnabledPrivilegeList": "SeAssignPrimaryTokenPrivilege, SeIncreaseQuotaPrivilege, SeSecurityPrivilege, SeTakeOwnershipPrivilege, SeLoadDriverPrivilege, SeSystemtimePrivilege, SeBackupPrivilege, SeRestorePrivilege, SeShutdownPrivilege, SeSystemEnvironmentPrivilege, SeUndockPrivilege, SeManageVolumePrivilege",
+                    "Note": "複数回発生。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 22,
+                    "QueryName": "login.microsoftonline.com",
+                    "QueryResults": "type: 5 login.mso.msidentity.com;type: 5 ak.privatelink.msidentity.com;type: 5 www.tm.a.prd.aadg.akadns.net;::ffff:[Microsoft Sign-in];::ffff:[IPアドレス];",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Microsoft Azure]",
+                    "DestPort": "80",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[Microsoft Sign-in]",
+                    "DestinationHostname": "-",
+                    "DestinationPort": "443",
+                    "Note": "複数回発生。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[Azure Resource Manager Provider API]",
+                    "DestinationHostname": "-",
+                    "DestinationPort": "443"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 22,
+                    "QueryName": "graph.microsoft.com",
+                    "QueryResults": "type: 5 ags.privatelink.msidentity.com;type: 5 www.tm.prd.ags.trafficmanager.net;::ffff:[Microsoft Graph API];::ffff:[IPアドレス];",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 22,
+                    "QueryName": "management.azure.com",
+                    "QueryResults": "type: 5 management.privatelink.azure.com;type: 5 arm-frontdoor-edge-geo.trafficmanager.net;type: 5 edge-management-azure-com.arm-0001.arm-msedge.net;type: 5 arm-0001.arm-msedge.net;::ffff:[Azure Resource Manager Provider API];",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[直前のイベントID: 5158でバインドしたポート]",
+                    "DestAddress": "[Microsoft Graph API]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[Microsoft Graph API]",
+                    "DestinationHostname": "-",
+                    "DestinationPort": "443"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\Windows\\System32\\svchost.exe",
+                    "User": "NT AUTHORITY\\NETWORK SERVICE",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[Microsoft Azure]",
+                    "DestinationHostname": "-",
+                    "DestinationPort": "80",
+                    "Note": "複数回発生。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Microsoft Sign-in]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Microsoft Sign-in]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Microsoft Sign-in]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[実行ファイルのフォルダパス]\\[出力先ファイル名]",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "TargetFilename": "[実行ファイルのフォルダパス]\\[出力先ファイル名]",
+                    "CreationUtcTime": "[ファイル作成日時（UTC）]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "[実行ファイルのフォルダパス]\\[出力先ファイル名]",
+                    "HandleId": "[直前のイベントID: 4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 22,
+                    "QueryName": "login.microsoftonline.com",
+                    "QueryResults": "type: 5 login.mso.msidentity.com;type: 5 ak.privatelink.msidentity.com;type: 5 www.tm.a.prd.aadg.akadns.net;::ffff:[Microsoft Sign-in];::ffff:[IPアドレス];",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[Microsoft Graph API]",
+                    "DestinationHostname": "-",
+                    "DestinationPort": "443"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Azure Resource Manager Provider API]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[Azure Resource Manager Provider API]",
+                    "DestPort": "443",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 22,
+                    "QueryName": "graph.microsoft.com",
+                    "QueryResults": "type: 5 ags.privatelink.msidentity.com;type: 5 www.tm.prd.ags.trafficmanager.net;::ffff:[Microsoft Graph API];::ffff:[IPアドレス];",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": "true",
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[Microsoft Sign-in]",
+                    "DestinationHostname": "-",
+                    "DestinationPort": "443",
+                    "Note": "複数回発生。"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 22,
+                    "QueryName": "management.azure.com",
+                    "QueryResults": "type: 5 management.privatelink.azure.com;type: 5 arm-frontdoor-edge-geo.trafficmanager.net;type: 5 edge-management-azure-com.arm-0001.arm-msedge.net;type: 5 arm-0001.arm-msedge.net;::ffff:[Azure Resource Manager Provider API];",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4689,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "Status": "0x0",
+                    "ProcessId": "[実行プロセスID]",
+                    "ProcessName": "[実行ファイルのパス]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "[実行ファイルのパス]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時（UTC）]",
+                    "ProcessId": "[実行プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時（UTC）]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベントID: 4690で複製したハンドル]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベントID: 4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベントID: 4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Process Name": "AZUREHOUND.EXE",
+                    "Process Path": "\\VOLUME{[ボリュームID]}\\[実行ファイル名]"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".[実行ファイルのパス]",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATE"
+                },
+                {
+                    "Path": ".[実行ファイルのフォルダパス]\\[出力先ファイル名]",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATE"
+                },
+                {
+                    "Path": ".\\Windows\\Prefetch\\[実行ファイル名]-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATE"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "[実行ファイル名]",
+                    "Operation": [
+                        "CLOSE"
+                    ],
+                    "Note": "NORMAL"
+                },
+                {
+                    "File": "[出力先ファイル名]",
+                    "Operation": [
+                        "CREATE",
+                        "EXTEND",
+                        "CLOSE"
+                    ],
+                    "Note": "ARCHIVE"
+                },
+                {
+                    "File": "[実行ファイル名]-[ハッシュ値].pf",
+                    "Operation": [
+                        "CREATE",
+                        "EXTEND",
+                        "CLOSE"
+                    ],
+                    "Note": "ARCHIVE|NOINDEX"
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "Standard query 0xeaba A login.microsoftonline.com",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[DNSサーバー]",
+            "Destination Port": "53",
+            "Protocol": "udp",
+            "Application": "DNS"
+        },
+        {
+            "Operation": "Standard query response 0xeaba A login.microsoftonline.com CNAME login.mso.msidentity.com CNAME ak.privatelink.msidentity.com CNAME www.tm.a.prd.aadg.akadns.net A [Microsoft Account Sign-in] A [IPアドレス]",
+            "Source Host": "[DNSサーバー]",
+            "Source Port": "53",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "udp",
+            "Application": "DNS"
+        },
+        {
+            "Operation": "Standard query 0xd06d A management.azure.com",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[DNSサーバー]",
+            "Destination Port": "53",
+            "Protocol": "udp",
+            "Application": "DNS"
+        },
+        {
+            "Operation": "Standard query response 0xd06d A management.azure.com CNAME management.privatelink.azure.com CNAME arm-frontdoor-edge-geo.trafficmanager.net CNAME edge-management-azure-com.arm-0001.arm-msedge.net CNAME arm-0001.arm-msedge.net A [Azure Resource Manager Provider API]",
+            "Source Host": "[DNSサーバー]",
+            "Source Port": "53",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "udp",
+            "Application": "DNS"
+        },
+        {
+            "Operation": "Client Hello (SNI=login.microsoftonline.com)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Hello Retry Request, Change Cipher Spec",
+            "Source Host": "[Microsoft Account Sign-in]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Change Cipher Spec",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Client Hello (SNI=login.microsoftonline.com)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Server Hello",
+            "Source Host": "[Microsoft Account Sign-in]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Client Hello (SNI=graph.microsoft.com)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Graph API]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Hello Retry Request, Change Cipher Spec",
+            "Source Host": "[Microsoft Graph API]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Change Cipher Spec",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Graph API]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Client Hello (SNI=graph.microsoft.com)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Graph API]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Server Hello, Application Data",
+            "Source Host": "[Microsoft Graph API]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Graph API]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[Microsoft Graph API]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Client Hello (SNI=login.microsoftonline.com)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Hello Retry Request, Change Cipher Spec",
+            "Source Host": "[Microsoft Account Sign-in]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Change Cipher Spec",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Client Hello (SNI=login.microsoftonline.com)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Hello Retry Request, Change Cipher Spec",
+            "Source Host": "[Microsoft Account Sign-in]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Change Cipher Spec",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Client Hello (SNI=login.microsoftonline.com)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Hello Retry Request, Change Cipher Spec",
+            "Source Host": "[Microsoft Account Sign-in]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Change Cipher Spec",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Client Hello (SNI=login.microsoftonline.com)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Server Hello",
+            "Source Host": "[Microsoft Account Sign-in]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[Microsoft Account Sign-in]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Server Hello",
+            "Source Host": "[Microsoft Account Sign-in]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[Microsoft Account Sign-in]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Microsoft Account Sign-in]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Client Hello (SNI=management.azure.com)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Azure Resource Manager Provider API]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Hello Retry Request, Change Cipher Spec",
+            "Source Host": "[Azure Resource Manager Provider API]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Change Cipher Spec",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Azure Resource Manager Provider API]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Server Hello",
+            "Source Host": "[Azure Resource Manager Provider API]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[Azure Resource Manager Provider API]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[Azure Resource Manager Provider API]",
+            "Destination Port": "443",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        },
+        {
+            "Operation": "Application Data",
+            "Source Host": "[Azure Resource Manager Provider API]",
+            "Source Port": "443",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "TLSv1.3"
+        }
+    ]
+}

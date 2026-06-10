@@ -1,0 +1,2088 @@
+{
+    "Summary": {
+        "ToolName": "WinRM",
+        "Category": "コマンド実行",
+        "Description": "リモート端末のシェルに接続する。",
+        "Usage": "接続したリモート端末にて悪意のあるコマンドを実行する。",
+        "TestedOn": {
+            "Windows 7 + Windows Server 2012": "true",
+            "Windows 10 + Windows Server 2012": "true",
+            "Windows 11 + Windows Server 2025": "true"
+        }
+    },
+    "ExecCondition": {
+        "Source": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "Admin",
+            "Protocol": [
+                "5985/tcp"
+            ]
+        },
+        "Target": {
+            "OS": "Windows",
+            "DomainMember": false,
+            "Privilege": "Admin",
+            "Protocol": [
+                "5985/tcp"
+            ],
+            "Service": "Windows Remote Management"
+        }
+    },
+    "Findings": {
+        "Original": {
+            "Source": {
+                "Prefetch": "実行履歴",
+                "イベントログ (Microsoft-Windows-WinRM/Operational)": "WinRM実行履歴"
+            },
+            "Target": {
+                "Prefetch": "実行履歴",
+                "イベントログ (Microsoft-Windows-WinRM/Operational)": "WinRM実行履歴"
+            }
+        },
+        "Additional": {
+            "Source": {
+                "監査ポリシー・Sysmon": "5985/tcpによる通信、レジストリアクセス、実行履歴",
+                "パケットキャプチャ": "5985/tcpによる通信"
+            },
+            "Target": {
+                "監査ポリシー・Sysmon": "5985/tcpによる通信、レジストリアクセス、実行履歴",
+                "パケットキャプチャ": "5985/tcpによる通信"
+            }
+        }
+    },
+    "SuccessCondition": {
+        "Target": [
+            "wsmprovhost.exe -Embeddingが実行されたことが記録されている。"
+        ]
+    },
+    "KeyEvents": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 6
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\windowspowershell\\v1.0\\powershell.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[直前のイベント5158でバインドしたポート]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)",
+                    "Note": "複数回発生"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Windows PowerShell",
+                    "EventID": 400,
+                    "NewEngineState": "Available",
+                    "PreviousEngineState": "None",
+                    "SequenceNumber": 13,
+                    "HostName": "ServerRemoteHost",
+                    "HostVersion": "1.0.0.0",
+                    "HostId": "[ホストID]",
+                    "HostApplication": "C:\\WINDOWS\\system32\\wsmprovhost.exe -Embedding",
+                    "EngineVersion": "5.1.26100.1591",
+                    "RunspaceId": "2b30e8dc-0b6a-4477-bcf4-c96bf2904781"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "WSMPROVHOST.EXE-[ハッシュ値].pf",
+                    "Process Name": "WSMPROVHOST.EXE",
+                    "Process Path": "\\VOLUME{01dc48a41be32910-f81be9cd}\\WINDOWS\\SYSTEM32\\WSMPROVHOST.EXE"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\WSMPROVHOST.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "WSMPROVHOST.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "CREATE",
+                        "EXTEND",
+                        "CLOSE"
+                    ],
+                    "Note": "ARCHIVE|NOINDEX"
+                }
+            ]
+        }
+    },
+    "Details": {
+        "Source": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Key",
+                    "ObjectName": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WSMAN",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, キー値の照会, サブキーの列挙, キー変更に関する通知",
+                    "ProcessId": "[プロセスID]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 8193
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 8194
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 2
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 29
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 6
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 31
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 10,
+                    "optionCode": 34,
+                    "optionName": "WSMAN_OPTION_USE_INTEARACTIVE_TOKEN",
+                    "optionValue": 0
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 10,
+                    "optionCode": 26,
+                    "optionName": "WSMAN_OPTION_UI_LANGUAGE",
+                    "optionValue": "ja-JP"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 10,
+                    "optionCode": 25,
+                    "optionName": "WSMAN_OPTION_LOCALE",
+                    "optionValue": "ja-JP"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 10,
+                    "optionCode": 1,
+                    "optionName": "WSMAN_OPTION_DEFAULT_OPERATION_TIMEOUTMS",
+                    "optionValue": "180000"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 10,
+                    "optionCode": 12,
+                    "optionName": "WSMAN_OPTION_TIMEOUTMS_CREATE_SHELL",
+                    "optionValue": "180000"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 10,
+                    "optionCode": 17,
+                    "optionName": "WSMAN_OPTION_TIMEOUTMS_CLOSE_SHELL",
+                    "optionValue": "60000"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 10,
+                    "optionCode": 16,
+                    "optionName": "WSMAN_OPTION_TIMEOUTMS_SIGNAL_SHELL",
+                    "optionValue": "60000"
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 8195
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 8197
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 11,
+                    "resourceUri": "http://schemas.microsoft.com/powershell/Microsoft.PowerShell",
+                    "shellId": "36890D96-C12F-45B2-BD31-4D440F43953C"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5158,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\windowspowershell\\v1.0\\powershell.exe",
+                    "SourcePort": "[送信元ポート番号]",
+                    "Protocol": "6 (TCP)",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[プロセスID]",
+                    "Application": "\\device\\harddiskvolume[ボリューム番号]\\windows\\system32\\windowspowershell\\v1.0\\powershell.exe",
+                    "Direction": "送信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[直前のイベント5158でバインドしたポート]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 8196,
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 12039,
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 8197,
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 13
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 15
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 13
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 8196,
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 12039,
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 15
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 13,
+                    "Category": "WSMan API call"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 15
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": true,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "5985"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "Category": "Network connection detected",
+                    "Description": "Network connection detected",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "5985",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 13,
+                    "Category": "Registry value set",
+                    "Description": "Registry value set",
+                    "EventType": "SetValue",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "TargetObject": "HKLM\\SOFTWARE\\Microsoft\\Wbem\\Tracing\\Providers\\WmiPerfClass @ root/CIMV2\\[数字]",
+                    "Details": "CreateClassEnumAsync: Win32_PerfRawData_PerfOS_Memory",
+                    "User": "NT AUTHORITY\\SYSTEM"
+                }
+            ],
+            "Registry": [
+                {
+                    "Path": "HKLM\\SOFTWARE\\Microsoft\\Wbem\\Tracing\\Providers\\WmiPerfClass @ root/CIMV2\\[数字]",
+                    "Type": "REG_SZ",
+                    "Value": "CreateClassEnumAsync: Win32_PerfRawData_PerfOS_Memory"
+                }
+            ]
+        },
+        "Target": {
+            "EventLogs": [
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "4",
+                    "Application": "System",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4776,
+                    "PackageName MICROSOFT_AUTHENTICATION_PACKAGE": "V1_0",
+                    "TargetUserName": "[ユーザー名]",
+                    "Workstation": "[ドメイン名]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "0x0",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "ElevatedToken": "特権",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Note": "複数回発生。送信元ポート番号は直前のイベント5156に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "Other Object Access Events",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[コンピューターアカウント名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "WS-Management Listener",
+                    "ObjectType": "Unknown",
+                    "ObjectName": "Unknown",
+                    "HandleId": "0x0",
+                    "AccessList": "不明な固有アクセス (ビット 0), 不明な固有アクセス (ビット 1), 不明な固有アクセス (ビット 2)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4690,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "SourceHandleId": "[複製元ハンドルID]",
+                    "SourceProcessId": "[複製元プロセスID]",
+                    "TargetHandleId": "[複製先ハンドルID]",
+                    "TargetProcessId": "[複製先プロセスID]",
+                    "Note": "複製元ハンドルIDは直前のイベント4656に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4688,
+                    "SubjectUserSid": "SYSTEM",
+                    "SubjectUserName": "[接続先コンピュータアカウント名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "NewProcessId": "[新しく実行されたプロセスのプロセスID]",
+                    "NewProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "TokenElevationType": "TokenElevationTypeDefault(1)",
+                    "CommandLine": "C:\\WINDOWS\\system32\\wsmprovhost.exe -Embedding",
+                    "ProcessId": "[プロセスID]",
+                    "ParentProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 1,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[実行ファイルのメタデータ]",
+                    "CommandLine": "C:\\WINDOWS\\system32\\wsmprovhost.exe -Embedding",
+                    "CurrentDirectory": "C:\\WINDOWS\\system32\\",
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "LogonId": "[ログオンID]",
+                    "IntegrityLevel": "High",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "ParentProcessId": "[プロセスID]",
+                    "ParentImage": "C:\\Windows\\System32\\svchost.exe",
+                    "ParentCommandLine": "C:\\WINDOWS\\system32\\svchost.exe -k DcomLaunch -p",
+                    "ParentUser": "NT AUTHORITY\\SYSTEM"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 7,
+                    "Category": "Image loaded",
+                    "Description": "Image loaded.",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "ImageLoaded": "[関連するDLLのパス]",
+                    "FileVersion・Description・Product・Company・OriginalFileName": "[DLLファイルのメタデータ]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Mutant",
+                    "ObjectName": "\\BaseNamedObjects\\SM0:6556:304:WilStaging_02",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "-",
+                    "ObjectName": "-",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Semaphore",
+                    "ObjectName": "\\BaseNamedObjects\\SM0:6556:304:WilStaging_02_p0",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Semaphore",
+                    "ObjectName": "\\BaseNamedObjects\\SM0:6556:304:WilStaging_02_p0h",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 18,
+                    "EventType": "ConnectPipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "PipeName": "\\lsass",
+                    "Image": "C:\\WINDOWS\\system32\\wsmprovhost.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\WINDOWS\\system32\\winlogon.exe",
+                    "GrantedAccess": "0x1400"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\Windows\\SystemApps\\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\\SearchHost.exe",
+                    "GrantedAccess": "0x1400"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\Program Files\\WindowsApps\\MicrosoftWindows.Client.WebExperience_424.1301.270.9_x64__cw5n1h2txyewy\\Dashboard\\Widgets.exe",
+                    "GrantedAccess": "0x1400"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\Windows\\System32\\RuntimeBroker.exe",
+                    "GrantedAccess": "0x1400"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 10,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "SourceProcessId": "[アクセス元プロセスID]",
+                    "SourceThreadId": "[アクセス元スレッドID]",
+                    "SourceImage": "C:\\WINDOWS\\system32\\wbem\\wmiprvse.exe",
+                    "TargetProcessId": "[アクセス先プロセスID]",
+                    "TargetImage": "C:\\WINDOWS\\system32\\DllHost.exe",
+                    "GrantedAccess": "0x1400"
+                },
+                {
+                    "Channel": "Microsoft-Windows-WinRM/Operational",
+                    "EventID": 91
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Key",
+                    "ObjectName": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WSMAN",
+                    "HandleId": "[直前のイベント4690で複製したハンドル]",
+                    "AccessList": "READ_CONTROL, キー値の照会, サブキーの列挙, キー変更に関する通知",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Mutant",
+                    "ObjectName": "\\BaseNamedObjects\\SM0:6556:304:WilStaging_02",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "-",
+                    "ObjectName": "-",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "Note": "オブジェクトハンドルIDは直前のイベント4674に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Semaphore",
+                    "ObjectName": "\\BaseNamedObjects\\SM0:6556:304:WilStaging_02_p0",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Semaphore",
+                    "ObjectName": "\\BaseNamedObjects\\SM0:6556:304:WilStaging_02_p0h",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Key",
+                    "ObjectName": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "-",
+                    "ObjectName": "-",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "Note": "オブジェクトハンドルIDは直前のイベント4674に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Key",
+                    "ObjectName": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "-",
+                    "ObjectName": "-",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "Note": "オブジェクトハンドルIDは直前のイベント4674に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Mutant",
+                    "ObjectName": "\\BaseNamedObjects\\SM0:6556:304:WilStaging_02",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "-",
+                    "ObjectName": "-",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Semaphore",
+                    "ObjectName": "\\BaseNamedObjects\\SM0:6556:304:WilStaging_02_p0",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Semaphore",
+                    "ObjectName": "\\BaseNamedObjects\\SM0:6556:304:WilStaging_02_p0h",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4776,
+                    "PackageName MICROSOFT_AUTHENTICATION_PACKAGE": "V1_0",
+                    "TargetUserName": "[ユーザー名]",
+                    "Workstation": "[ドメイン名]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "Category": "Logon",
+                    "Description": "アカウントが正常にログオンしました。",
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "0x0",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "ElevatedToken": "特権",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Note": "複数回発生、送信元ポート番号は直前のイベント5156に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "Other Object Access Events",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "WS-Management Listener",
+                    "ObjectType": "Unknown",
+                    "ObjectName": "Unknown",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "不明な固有アクセス (ビット 0), 不明な固有アクセス (ビット 1), 不明な固有アクセス (ビット 2)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4690,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "SourceHandleId": "[複製元ハンドルID]",
+                    "SourceProcessId": "[複製元プロセスID]",
+                    "TargetHandleId": "[複製先ハンドルID]",
+                    "TargetProcessId": "[複製先プロセスID]",
+                    "Note": "複製元ハンドルIDは直前のイベント4656に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4690で複製されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\__PSScriptPolicyTest_mjql0dp1.yhm.ps1",
+                    "HandleId": "[直前のイベント4690で複製したハンドル]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\__PSScriptPolicyTest_mjql0dp1.yhm.ps1",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "ResourceAttributes": "S:AI"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\wsmprovhost.exe",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\__PSScriptPolicyTest_mjql0dp1.yhm.ps1",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4690,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "SourceHandleId": "[複製元ハンドルID]",
+                    "SourceProcessId": "[複製元プロセスID]",
+                    "TargetHandleId": "[複製先ハンドルID]",
+                    "TargetProcessId": "[複製先プロセスID]",
+                    "Note": "複製元ハンドルIDは直前のイベント4656に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\__PSScriptPolicyTest_a2qs50nd.4b3.psm1",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "不明な固有アクセス (ビット 0), 不明な固有アクセス (ビット 1), 不明な固有アクセス (ビット 2)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\__PSScriptPolicyTest_a2qs50nd.4b3.psm1",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "ResourceAttributes": "S:AI"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\wsmprovhost.exe",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\__PSScriptPolicyTest_a2qs50nd.4b3.psm1",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4690,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "SourceHandleId": "[複製元ハンドルID]",
+                    "SourceProcessId": "[複製元プロセスID]",
+                    "TargetHandleId": "[複製先ハンドルID]",
+                    "TargetProcessId": "[複製先プロセスID]",
+                    "Note": "複製元ハンドルIDは直前のイベント4656に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\__PSScriptPolicyTest_mjql0dp1.yhm.ps1",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, ReadAttributes",
+                    "PrivilegeList": "SeBackupPrivilege, SeRestorePrivilege",
+                    "RestrictedSidCount": 0,
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\__PSScriptPolicyTest_mjql0dp1.yhm.ps1",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "ResourceAttributes": "S:AI"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4660,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "TransactionId": "{00000000-0000-0000-0000-000000000000}"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Image": "C:\\WINDOWS\\system32\\wsmprovhost.exe",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\__PSScriptPolicyTest_mjql0dp1.yhm.ps1",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "IsExecutable": false,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4690,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "SourceHandleId": "[複製元ハンドルID]",
+                    "SourceProcessId": "[複製元プロセスID]",
+                    "TargetHandleId": "[複製先ハンドルID]",
+                    "TargetProcessId": "[複製先プロセスID]",
+                    "Note": "複製元ハンドルIDは直前のイベント4656に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\__PSScriptPolicyTest_a2qs50nd.4b3.psm1",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, ReadAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "File",
+                    "ObjectName": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\__PSScriptPolicyTest_a2qs50nd.4b3.psm1",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "DELETE",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "ResourceAttributes": "S:AI"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4660,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "TransactionId": "{00000000-0000-0000-0000-000000000000}"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 23,
+                    "User": "[ドメイン名]\\[ユーザー名]",
+                    "Image": "C:\\WINDOWS\\system32\\wsmprovhost.exe",
+                    "TargetFilename": "C:\\Users\\[ユーザー名]\\AppData\\Local\\Temp\\__PSScriptPolicyTest_a2qs50nd.4b3.psm1",
+                    "Hashes": "[ファイルのハッシュ値]",
+                    "IsExecutable": false,
+                    "Archived": true
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 17,
+                    "EventType": "CreatePipe",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "PipeName": "\\PSHost.134090484551884513.6556.DefaultAppDomain.wsmprovhost",
+                    "Image": "C:\\WINDOWS\\system32\\wsmprovhost.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-PowerShell/Operational",
+                    "EventID": 53504,
+                    "param1": "[プロセスID]",
+                    "param2": "[アプリケーションドメイン]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Key",
+                    "ObjectName": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "-",
+                    "ObjectName": "-",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "Note": "オブジェクトハンドルIDは直前のイベント4674に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Key",
+                    "ObjectName": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "-",
+                    "ObjectName": "-",
+                    "PrivilegeList": "",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "Note": "オブジェクトハンドルIDは直前のイベント4674に記録されているもの。"
+                },
+                {
+                    "Channel": "Windows PowerShell",
+                    "EventID": 600,
+                    "ProviderName": "Registry",
+                    "NewProviderState": "Started",
+                    "SequenceNumber": 1,
+                    "HostName": "ServerRemoteHost",
+                    "HostVersion": "1.0.0.0",
+                    "HostId": "[ホストID]",
+                    "HostApplication": "C:\\WINDOWS\\system32\\wsmprovhost.exe -Embedding"
+                },
+                {
+                    "Channel": "Windows PowerShell",
+                    "EventID": 600,
+                    "ProviderName": "Alias",
+                    "NewProviderState": "Started",
+                    "SequenceNumber": 3,
+                    "HostName": "ServerRemoteHost",
+                    "HostVersion": "1.0.0.0",
+                    "HostId": "[ホストID]",
+                    "HostApplication": "C:\\WINDOWS\\system32\\wsmprovhost.exe -Embedding"
+                },
+                {
+                    "Channel": "Windows PowerShell",
+                    "EventID": 600,
+                    "ProviderName": "Environment",
+                    "NewProviderState": "Started",
+                    "SequenceNumber": 5,
+                    "HostName": "ServerRemoteHost",
+                    "HostVersion": "1.0.0.0",
+                    "HostId": "[ホストID]",
+                    "HostApplication": "C:\\WINDOWS\\system32\\wsmprovhost.exe -Embedding"
+                },
+                {
+                    "Channel": "Windows PowerShell",
+                    "EventID": 600,
+                    "ProviderName": "FileSystem",
+                    "NewProviderState": "Started",
+                    "SequenceNumber": 7,
+                    "HostName": "ServerRemoteHost",
+                    "HostVersion": "1.0.0.0",
+                    "HostId": "[ホストID]",
+                    "HostApplication": "C:\\WINDOWS\\system32\\wsmprovhost.exe -Embedding"
+                },
+                {
+                    "Channel": "Windows PowerShell",
+                    "EventID": 600,
+                    "ProviderName": "Function",
+                    "NewProviderState": "Started",
+                    "SequenceNumber": 9,
+                    "HostName": "ServerRemoteHost",
+                    "HostVersion": "1.0.0.0",
+                    "HostId": "[ホストID]",
+                    "HostApplication": "C:\\WINDOWS\\system32\\wsmprovhost.exe -Embedding"
+                },
+                {
+                    "Channel": "Windows PowerShell",
+                    "EventID": 600,
+                    "ProviderName": "Variable",
+                    "NewProviderState": "Started",
+                    "SequenceNumber": 11,
+                    "HostName": "ServerRemoteHost",
+                    "HostVersion": "1.0.0.0",
+                    "HostId": "[ホストID]",
+                    "HostApplication": "C:\\WINDOWS\\system32\\wsmprovhost.exe -Embedding"
+                },
+                {
+                    "Channel": "Windows PowerShell",
+                    "EventID": 400,
+                    "NewEngineState": "Available",
+                    "PreviousEngineState": "None",
+                    "SequenceNumber": 13,
+                    "HostName": "ServerRemoteHost",
+                    "HostVersion": "1.0.0.0",
+                    "HostId": "[ホストID]",
+                    "HostApplication": "C:\\WINDOWS\\system32\\wsmprovhost.exe -Embedding",
+                    "EngineVersion": "5.1.26100.1591",
+                    "RunspaceId": "2b30e8dc-0b6a-4477-bcf4-c96bf2904781"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4776,
+                    "PackageName MICROSOFT_AUTHENTICATION_PACKAGE": "V1_0",
+                    "TargetUserName": "[ユーザー名]",
+                    "Workstation": "[ドメイン名]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "0x0",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "ElevatedToken": "特権",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Note": "複数回発生、送信元ポート番号は直前のイベント5156に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "Other Object Access Events",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "WS-Management Listener",
+                    "ObjectType": "Unknown",
+                    "ObjectName": "Unknown",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "不明な固有アクセス (ビット 0), 不明な固有アクセス (ビット 1), 不明な固有アクセス (ビット 2)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Key",
+                    "ObjectName": "\\REGISTRY\\USER\\[ユーザーSID]\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "-",
+                    "ObjectName": "-",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "Note": "複数回発生、オブジェクトハンドルIDは直前のイベント4674に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Semaphore",
+                    "ObjectName": "\\BaseNamedObjects\\SM0:6556:304:WilStaging_02_p0",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4674,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Semaphore",
+                    "ObjectName": "\\BaseNamedObjects\\SM0:6556:304:WilStaging_02_p0h",
+                    "PrivilegeList": "SeTakeOwnershipPrivilege",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\wsmprovhost.exe",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Microsoft\\SystemCertificates 配下の複数キー・値",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\wsmprovhost.exe",
+                    "TargetObject": "HKU\\[ユーザーSID]\\Software\\Policies\\Microsoft\\SystemCertificates 配下の複数キー・値",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\wsmprovhost.exe",
+                    "TargetObject": "HKLM\\SOFTWARE\\Microsoft\\SystemCertificates 配下の複数キー・値",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\wsmprovhost.exe",
+                    "TargetObject": "HKLM\\SOFTWARE\\Policies\\Microsoft\\SystemCertificates 配下の複数キー・値",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4690,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "SourceHandleId": "[複製元ハンドルID]",
+                    "SourceProcessId": "[複製元プロセスID]",
+                    "TargetHandleId": "[複製先ハンドルID]",
+                    "TargetProcessId": "[複製先プロセスID]",
+                    "Note": "複製元ハンドルIDは直前のイベント4656に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Key",
+                    "ObjectName": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\SystemCertificates\\ROOT\\Certificates",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, READ_CONTROL, キー値の照会, キー値の設定, サブキーの作成, サブキーの列挙, キー変更に関する通知",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4690,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "SourceHandleId": "[複製元ハンドルID]",
+                    "SourceProcessId": "[複製元プロセスID]",
+                    "TargetHandleId": "[複製先ハンドルID]",
+                    "TargetProcessId": "[複製先プロセスID]",
+                    "Note": "複製元ハンドルIDは直前のイベント4656に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Key",
+                    "ObjectName": "\\REGISTRY\\MACHINE\\SOFTWARE\\Policies\\Microsoft\\SystemCertificates\\Root\\Certificates",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, READ_CONTROL, キー値の照会, キー値の設定, サブキーの作成, サブキーの列挙, キー変更に関する通知",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4690,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "SourceHandleId": "[複製元ハンドルID]",
+                    "SourceProcessId": "[複製元プロセスID]",
+                    "TargetHandleId": "[複製先ハンドルID]",
+                    "TargetProcessId": "[複製先プロセスID]",
+                    "Note": "複製元ハンドルIDは直前のイベント4656に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Key",
+                    "ObjectName": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\EnterpriseCertificates\\Root\\Certificates",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "DELETE, READ_CONTROL, キー値の照会, キー値の設定, サブキーの作成, サブキーの列挙, キー変更に関する通知",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 12,
+                    "EventType": "CreateKey",
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\wsmprovhost.exe",
+                    "TargetObject": "HKLM\\SOFTWARE\\Microsoft\\EnterpriseCertificates 配下の複数キー・値",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "5985",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4690,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "SourceHandleId": "[複製元ハンドルID]",
+                    "SourceProcessId": "[複製元プロセスID]",
+                    "TargetHandleId": "[複製先ハンドルID]",
+                    "TargetProcessId": "[複製先プロセスID]",
+                    "Note": "複製元ハンドルIDは直前のイベント4656に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "HandleId": "[ハンドルID]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "Category": "Registry",
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "ObjectServer": "Security",
+                    "ObjectType": "Key",
+                    "ObjectName": "\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WSMAN",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, キー値の照会, サブキーの列挙, キー変更に関する通知",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\wsmprovhost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)"
+                },
+                {
+                    "Channel": "Windows PowerShell",
+                    "EventID": 403,
+                    "NewEngineState": "Stopped",
+                    "PreviousEngineState": "Available",
+                    "SequenceNumber": 15,
+                    "HostName": "ServerRemoteHost",
+                    "HostVersion": "1.0.0.0",
+                    "HostId": "[ホストID]",
+                    "HostApplication": "C:\\WINDOWS\\system32\\wsmprovhost.exe -Embedding",
+                    "EngineVersion": "5.1.26100.1591",
+                    "RunspaceId": "2b30e8dc-0b6a-4477-bcf4-c96bf2904781",
+                    "PipelineId": "",
+                    "CommandName": "",
+                    "CommandType": "",
+                    "ScriptName": "",
+                    "CommandPath": "",
+                    "CommandLine": ""
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4776,
+                    "PackageName MICROSOFT_AUTHENTICATION_PACKAGE": "V1_0",
+                    "TargetUserName": "[ユーザー名]",
+                    "Workstation": "[ドメイン名]",
+                    "Status": "0x0"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "Category": "Logon",
+                    "Description": "アカウントが正常にログオンしました。",
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "0x0",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "ElevatedToken": "特権",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Note": "複数回発生、送信元ポート番号は直前のイベント5156に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "5985",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 5156,
+                    "ProcessId": "[実行プロセスID]",
+                    "Application": "[実行ファイルのパス]",
+                    "Direction": "着信",
+                    "SourceAddress": "[接続元IPアドレス]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestAddress": "[接続先IPアドレス]",
+                    "DestPort": "5985",
+                    "Protocol": "6 (TCP)",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4776,
+                    "PackageName MICROSOFT_AUTHENTICATION_PACKAGE": "V1_0",
+                    "TargetUserName": "[ユーザー名]",
+                    "Workstation": "[ドメイン名]",
+                    "Status": "0x0",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4624,
+                    "SubjectUserSid": "S-1-0-0",
+                    "SubjectUserName": "-",
+                    "SubjectDomainName": "-",
+                    "SubjectLogonId": "0x0",
+                    "TargetUserSid": "[ユーザーSID]",
+                    "TargetUserName": "[ユーザー名]",
+                    "TargetDomainName": "[ドメイン名]",
+                    "TargetLogonId": "[ログオンID]",
+                    "ElevatedToken": "特権",
+                    "LogonType": 3,
+                    "WorkstationName": "[接続元ホスト名]",
+                    "IpAddress": "[接続元IPアドレス]",
+                    "IpPort": "[接続元ポート番号]",
+                    "Note": "複数回発生、送信元ポート番号は直前のイベント5156に記録されているもの。"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4672,
+                    "SubjectUserSid": "[ユーザーSID]",
+                    "SubjectUserName": "[ユーザー名]",
+                    "SubjectDomainName": "[ドメイン名]",
+                    "SubjectLogonId": "[ログオンID]",
+                    "PrivilegeList": "SeSecurityPrivilege, SeBackupPrivilege, SeRestorePrivilege, SeTakeOwnershipPrivilege, SeDebugPrivilege, SeSystemEnvironmentPrivilege, SeLoadDriverPrivilege, SeImpersonatePrivilege, SeDelegateSessionUserImpersonatePrivilege",
+                    "Note": "複数回発生"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 5,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\Windows\\System32\\wsmprovhost.exe",
+                    "User": "[ドメイン名]\\[ユーザー名]"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4656,
+                    "ObjectName": "C:\\Windows\\Prefetch\\WSMPROVHOST.EXE-[ハッシュ値].pf",
+                    "HandleId": "[ハンドルID]",
+                    "AccessList": "READ_CONTROL, SYNCHRONIZE, ReadData (または ListDirectory), WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance), ReadEA, WriteEA, ReadAttributes, WriteAttributes",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4663,
+                    "ObjectName": "C:\\Windows\\Prefetch\\WSMPROVHOST.EXE-[ハッシュ値].pf",
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "AccessList": "WriteData (または AddFile), AppendData (または AddSubdirectory または CreatePipeInstance)",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Security",
+                    "EventID": 4658,
+                    "HandleId": "[直前のイベント4656で取得されたハンドル]",
+                    "ProcessId": "[プロセスID]",
+                    "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 11,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "C:\\WINDOWS\\system32\\svchost.exe",
+                    "TargetFilename": "C:\\Windows\\Prefetch\\WSMPROVHOST.EXE-[ハッシュ値].pf",
+                    "CreationUtcTime": "[ファイル作成日時(UTC)]"
+                },
+                {
+                    "Channel": "Microsoft-Windows-Sysmon/Operational",
+                    "EventID": 3,
+                    "UtcTime": "[発生日時(UTC)]",
+                    "ProcessId": "[プロセスID]",
+                    "Image": "System",
+                    "User": "NT AUTHORITY\\SYSTEM",
+                    "Protocol": "tcp",
+                    "Initiated": false,
+                    "SourceIp": "[接続元IPアドレス]",
+                    "SourceHostname": "[接続元ホスト名]",
+                    "SourcePort": "[接続元ポート番号]",
+                    "DestinationIp": "[接続先IPアドレス]",
+                    "DestinationHostname": "[接続先ホスト名]",
+                    "DestinationPort": "5985",
+                    "Note": "複数回発生"
+                }
+            ],
+            "Prefetch": [
+                {
+                    "File": "WSMPROVHOST.EXE-[ハッシュ値].pf",
+                    "Process Name": "WSMPROVHOST.EXE",
+                    "Process Path": "\\VOLUME{01dc48a41be32910-f81be9cd}\\WINDOWS\\SYSTEM32\\WSMPROVHOST.EXE"
+                }
+            ],
+            "MFT": [
+                {
+                    "Path": ".\\Windows\\Prefetch\\WSMPROVHOST.EXE-[ハッシュ値].pf",
+                    "Flag": "FILE",
+                    "Note": "ALLOCATED"
+                }
+            ],
+            "USNJournal": [
+                {
+                    "File": "WSMPROVHOST.EXE-[ハッシュ値].pf",
+                    "Operation": [
+                        "CREATE",
+                        "EXTEND",
+                        "CLOSE"
+                    ],
+                    "Note": "ARCHIVE|NOINDEX"
+                }
+            ]
+        }
+    },
+    "Packets": [
+        {
+            "Operation": "POST /wsman?PSVersion=5.1.26100.1591 HTTP/1.1 , NTLMSSP_NEGOTIATE",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "5985",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "HTTP/1.1 401 , NTLMSSP_CHALLENGE",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "5985",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "POST /wsman?PSVersion=5.1.26100.1591 HTTP/1.1 , NTLMSSP_AUTH, User: [ドメイン名]\\\\[ユーザー名] (application/http-spnego-session-encrypted)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "5985",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "HTTP/1.1 200 (application/http-spnego-session-encrypted)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "5985",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "POST /wsman?PSVersion=5.1.26100.1591 HTTP/1.1 , NTLMSSP_NEGOTIATE",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "5985",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "HTTP/1.1 401 , NTLMSSP_CHALLENGE",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "5985",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "POST /wsman?PSVersion=5.1.26100.1591 HTTP/1.1 , NTLMSSP_AUTH, User: [ドメイン名]\\\\[ユーザー名] (application/http-spnego-session-encrypted)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "5985",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "HTTP/1.1 200 (application/http-spnego-session-encrypted)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "5985",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "POST /wsman?PSVersion=5.1.26100.1591 HTTP/1.1 (application/http-spnego-session-encrypted)",
+            "Source Host": "[接続元IPアドレス]",
+            "Source Port": "[接続元ポート番号]",
+            "Destination Host": "[接続先IPアドレス]",
+            "Destination Port": "5985",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        },
+        {
+            "Operation": "HTTP/1.1 200 (application/http-spnego-session-encrypted)",
+            "Source Host": "[接続先IPアドレス]",
+            "Source Port": "5985",
+            "Destination Host": "[接続元IPアドレス]",
+            "Destination Port": "[接続元ポート番号]",
+            "Protocol": "tcp",
+            "Application": "HTTP"
+        }
+    ],
+    "Note": [
+        "パケットキャプチャにおいて、暗号化されていない場合WMIや認証の通信を確認することが可能である。"
+    ]
+}
